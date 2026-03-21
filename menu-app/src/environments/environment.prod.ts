@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: '/api',
-  hubUrl: '/hubs/orders'
+  apiUrl: 'https://api.tabverse.in/api',
+  hubUrl: 'https://api.tabverse.in/hubs/orders'
 };

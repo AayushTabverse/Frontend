@@ -61,9 +61,8 @@ jobs:
 
       - name: Configure App Service settings
         run: |
-          RG=$(az webapp show --name tabverse --query resourceGroup -o tsv)
-          az webapp config set --resource-group "$RG" --name tabverse --startup-file "node server.js"
-          az webapp config appsettings set --resource-group "$RG" --name tabverse --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false WEBSITE_RUN_FROM_PACKAGE=0
+          az webapp config set --resource-group "TabVerse-RG" --name tabverse --startup-file "node server.js"
+          az webapp config appsettings set --resource-group "TabVerse-RG" --name tabverse --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false WEBSITE_RUN_FROM_PACKAGE=0
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3

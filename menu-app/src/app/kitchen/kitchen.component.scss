@@ -1,0 +1,156 @@
+.kds {
+  min-height: 100vh;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
+}
+
+.kds-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #16213e;
+
+  h1 { margin: 0; font-size: 1.4rem; }
+
+  .header-stats {
+    display: flex;
+    gap: 12px;
+
+    .stat {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+
+      &.pending { background: #f39c12; color: #000; }
+      &.preparing { background: #e67e22; color: white; }
+      &.ready { background: #27ae60; color: white; }
+    }
+  }
+
+  .logout-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+}
+
+.kds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.kds-card {
+  background: #222;
+  border-radius: 12px;
+  overflow: hidden;
+  border-top: 4px solid #666;
+
+  &.pending { border-top-color: #f39c12; }
+  &.accepted { border-top-color: #3498db; }
+  &.preparing { border-top-color: #e67e22; animation: pulse 2s infinite; }
+  &.ready { border-top-color: #27ae60; }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.05);
+
+    .order-id { font-weight: 700; font-size: 1.1rem; }
+    .table-num {
+      background: rgba(255,255,255,0.1);
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    .time-ago { font-size: 0.8rem; color: #999; }
+  }
+
+  .card-items {
+    padding: 12px 16px;
+
+    .kds-item {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+
+      .qty {
+        font-weight: 700;
+        color: #e94560;
+        margin-right: 8px;
+        font-size: 1.1rem;
+      }
+
+      .name { font-size: 1rem; }
+
+      .item-notes, .item-mods {
+        font-size: 0.8rem;
+        color: #aaa;
+        padding-left: 28px;
+        margin-top: 2px;
+      }
+    }
+  }
+
+  .special {
+    padding: 8px 16px;
+    background: rgba(243, 156, 18, 0.1);
+    color: #f39c12;
+    font-size: 0.85rem;
+  }
+
+  .card-actions {
+    padding: 12px 16px;
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+
+      &.accept { background: #3498db; color: white; }
+      &.prepare { background: #e67e22; color: white; }
+      &.ready { background: #27ae60; color: white; }
+    }
+
+    .ready-badge {
+      display: block;
+      text-align: center;
+      padding: 10px;
+      background: rgba(39, 174, 96, 0.2);
+      color: #27ae60;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+  }
+}
+
+.empty-kitchen {
+  text-align: center;
+  padding: 100px 20px;
+  h2 { font-size: 2rem; margin-bottom: 8px; }
+  p { color: #999; }
+}
+
+.loading-kds {
+  text-align: center;
+  padding: 60px;
+  color: #999;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}

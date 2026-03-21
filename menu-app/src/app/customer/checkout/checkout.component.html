@@ -1,0 +1,46 @@
+<div class="checkout-page">
+  <header class="checkout-header">
+    <button class="back-btn" (click)="goBack()">← Back</button>
+    <h1>Checkout</h1>
+  </header>
+
+  <div class="checkout-content">
+    <div class="section">
+      <h2>Table</h2>
+      <p class="table-info">Auto-detected from QR scan</p>
+    </div>
+
+    <div class="section">
+      <h2>Order Summary</h2>
+      <div class="order-item" *ngFor="let item of items">
+        <span>{{ item.quantity }}x {{ item.menuItem.name }}</span>
+        <span>₹{{ item.menuItem.price * item.quantity | number:'1.0-0' }}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Special Instructions</h2>
+      <textarea
+        [(ngModel)]="specialInstructions"
+        placeholder="Any allergies or special requests..."
+        rows="3">
+      </textarea>
+    </div>
+
+    <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+    <div class="total-section">
+      <div class="total-row">
+        <span>Total (incl. GST)</span>
+        <strong>₹{{ total | number:'1.0-0' }}</strong>
+      </div>
+    </div>
+
+    <button
+      class="place-order-btn"
+      (click)="placeOrder()"
+      [disabled]="loading || items.length === 0">
+      {{ loading ? 'Placing Order...' : 'Place Order' }}
+    </button>
+  </div>
+</div>

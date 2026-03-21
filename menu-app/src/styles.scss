@@ -1,0 +1,239 @@
+/* Global Styles - QR Menu Ordering App */
+
+// ── CSS Custom Properties ──
+:root {
+  --bg-primary: #f5f5f5;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1a1a2e;
+  --bg-header: #1a1a2e;
+  --bg-input: #ffffff;
+  --bg-hover: #f0f0f0;
+  --bg-tab: #f8f8f8;
+
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+  --text-on-dark: #ffffff;
+
+  --border-color: #dddddd;
+  --border-light: #eeeeee;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --shadow-strong: rgba(0, 0, 0, 0.12);
+
+  --accent: #e94560;
+  --accent-hover: #d63851;
+  --success: #27ae60;
+  --success-hover: #219a52;
+  --warning: #f39c12;
+  --danger: #dc3545;
+  --info: #3498db;
+  --brand: #1a1a2e;
+}
+
+body.dark-mode {
+  --bg-primary: #121212;
+  --bg-card: #1e1e1e;
+  --bg-sidebar: #0d0d1a;
+  --bg-header: #0d0d1a;
+  --bg-input: #2a2a2a;
+  --bg-hover: #2a2a2a;
+  --bg-tab: #1a1a1a;
+
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-muted: #888888;
+
+  --border-color: #333333;
+  --border-light: #2a2a2a;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --shadow-strong: rgba(0, 0, 0, 0.5);
+
+  --brand: #0d0d1a;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+// ── Dark Mode Toggle Button (shared) ──
+.dark-mode-toggle {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+  &:hover { background: rgba(255,255,255,0.25); }
+}
+
+/* Mobile-first responsive */
+@media (max-width: 768px) {
+  .admin-layout .sidebar {
+    width: 60px;
+    .brand, a, .logout-btn { font-size: 0; text-align: center; }
+  }
+}
+
+// ── Collapsible Admin Sidebar (shared) ──
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.admin-layout .sidebar {
+  width: 220px;
+  background: var(--bg-sidebar, #1a1a2e);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: width 0.3s ease;
+  overflow: hidden;
+
+  .sidebar-toggle {
+    padding: 10px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    font-size: 1.2rem;
+    text-align: right;
+    transition: all 0.2s;
+    &:hover { color: white; }
+  }
+
+  .brand {
+    padding: 14px 20px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    .sidebar-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+  }
+
+  a {
+    padding: 12px 20px;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    &:hover, &.active {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    &.active {
+      border-left: 3px solid var(--accent, #e94560);
+    }
+  }
+
+  .logout-btn {
+    margin-top: auto;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    &:hover { color: var(--accent, #e94560); }
+  }
+}
+
+.admin-layout .sidebar.collapsed {
+  width: 60px;
+
+  .brand {
+    padding: 14px 10px;
+    font-size: 1.2rem;
+    justify-content: center;
+    .brand-text { display: none; }
+    .sidebar-logo { width: 28px; height: 28px; }
+  }
+
+  a {
+    padding: 12px 0;
+    text-align: center;
+    font-size: 1.1rem;
+    .nav-text { display: none; }
+  }
+
+  .logout-btn {
+    padding: 12px 0;
+    text-align: center;
+    font-size: 1.1rem;
+    .nav-text { display: none; }
+  }
+
+  .sidebar-toggle {
+    text-align: center;
+  }
+}
+
+.admin-layout .content {
+  flex: 1;
+  margin-left: 220px;
+  padding: 24px;
+  background: var(--bg-primary, #f5f5f5);
+  transition: margin-left 0.3s ease;
+}
+
+.admin-layout .content.sidebar-collapsed {
+  margin-left: 60px;
+}
+
+.admin-layout .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 { margin: 0; font-size: 1.5rem; color: var(--text-primary, #1a1a2e); }
+  .welcome { color: var(--text-secondary, #666); font-size: 0.9rem; }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+

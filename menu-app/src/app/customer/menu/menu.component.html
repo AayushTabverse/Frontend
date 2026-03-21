@@ -1,0 +1,83 @@
+<div class="menu-page" *ngIf="!loading; else loadingTpl">
+  <!-- Header -->
+  <header class="menu-header">
+    <div class="header-left">
+      <img *ngIf="menu?.logoUrl" [src]="menu!.logoUrl" alt="Logo" class="restaurant-logo" />
+      <h1>{{ menu?.restaurantName }}</h1>
+    </div>
+    <div class="header-right">
+      <button class="theme-toggle" (click)="themeService.toggle()">
+        {{ themeService.isDark() ? '☀️' : '🌙' }}
+      </button>
+      <button class="cart-btn" (click)="goToCart()">
+        🛒 <span class="badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Category Tabs -->
+  <nav class="category-tabs" *ngIf="menu">
+    <button
+      *ngFor="let cat of menu.categories"
+      [class.active]="selectedCategory?.id === cat.id"
+      (click)="selectCategory(cat)">
+      {{ cat.name }}
+    </button>
+  </nav>
+
+  <!-- Menu Items -->
+  <div class="items-grid" *ngIf="selectedCategory">
+    <div class="menu-card" *ngFor="let item of selectedCategory.items">
+      <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="item-image" />
+      <div class="item-info">
+        <div class="item-header">
+          <span class="veg-badge" [class.veg]="item.isVeg" [class.non-veg]="!item.isVeg">
+            {{ item.isVeg ? '🟢' : '🔴' }}
+          </span>
+          <h3>{{ item.name }}</h3>
+        </div>
+        <p class="description" *ngIf="item.description">{{ item.description }}</p>
+        <div class="item-footer">
+          <span class="price">₹{{ item.price | number:'1.0-0' }}</span>
+          <div class="actions">
+            <button class="ar-btn" *ngIf="item.arModelUrl" (click)="viewAR(item)">
+              📱 View in AR
+            </button>
+            <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable">
+              {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="selectedCategory && selectedCategory.items.length === 0">
+    <p>No items available in this category.</p>
+  </div>
+
+  <!-- Social Links Footer -->
+  <footer class="social-footer" *ngIf="menu && (menu.instagramUrl || menu.facebookUrl || menu.twitterUrl || menu.websiteUrl)">
+    <p class="follow-label">Follow us</p>
+    <div class="social-links">
+      <a *ngIf="menu.instagramUrl" [href]="menu.instagramUrl" target="_blank" class="social-link instagram">📷 Instagram</a>
+      <a *ngIf="menu.facebookUrl" [href]="menu.facebookUrl" target="_blank" class="social-link facebook">📘 Facebook</a>
+      <a *ngIf="menu.twitterUrl" [href]="menu.twitterUrl" target="_blank" class="social-link twitter">🐦 Twitter</a>
+      <a *ngIf="menu.websiteUrl" [href]="menu.websiteUrl" target="_blank" class="social-link website">🌐 Website</a>
+    </div>
+    <a *ngIf="menu.googleMapsUrl" [href]="menu.googleMapsUrl" target="_blank" class="maps-link">📍 View on Google Maps</a>
+  </footer>
+
+  <!-- Floating Call Waiter Button -->
+  <button class="call-waiter-fab" (click)="callWaiter()" [disabled]="callingWaiter || waiterCalled"
+          [class.called]="waiterCalled">
+    {{ waiterCalled ? '✅ Waiter Notified!' : (callingWaiter ? '⏳ Calling...' : '🔔 Call Waiter') }}
+  </button>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading">
+    <div class="spinner"></div>
+    <p>Loading menu...</p>
+  </div>
+</ng-template>

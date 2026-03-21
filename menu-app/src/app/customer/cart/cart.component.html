@@ -1,0 +1,50 @@
+<div class="cart-page">
+  <header class="cart-header">
+    <button class="back-btn" (click)="goBack()">← Back</button>
+    <h1>Your Cart</h1>
+  </header>
+
+  <div class="cart-items" *ngIf="items.length > 0">
+    <div class="cart-item" *ngFor="let item of items">
+      <div class="item-details">
+        <span class="veg-indicator">{{ item.menuItem.isVeg ? '🟢' : '🔴' }}</span>
+        <div>
+          <h3>{{ item.menuItem.name }}</h3>
+          <p class="item-price">₹{{ item.menuItem.price | number:'1.0-0' }}</p>
+        </div>
+      </div>
+      <div class="quantity-controls">
+        <button (click)="decrement(item)">−</button>
+        <span>{{ item.quantity }}</span>
+        <button (click)="increment(item)">+</button>
+      </div>
+      <div class="item-total">
+        ₹{{ item.menuItem.price * item.quantity | number:'1.0-0' }}
+      </div>
+      <button class="remove-btn" (click)="remove(item)">✕</button>
+    </div>
+  </div>
+
+  <div class="empty-cart" *ngIf="items.length === 0">
+    <p>🛒 Your cart is empty</p>
+    <button (click)="goBack()">Browse Menu</button>
+  </div>
+
+  <div class="cart-summary" *ngIf="items.length > 0">
+    <div class="summary-row">
+      <span>Subtotal</span>
+      <span>₹{{ getSubtotal() | number:'1.0-0' }}</span>
+    </div>
+    <div class="summary-row">
+      <span>GST (5%)</span>
+      <span>₹{{ getTax() | number:'1.0-0' }}</span>
+    </div>
+    <div class="summary-row total">
+      <span>Total</span>
+      <span>₹{{ getGrandTotal() | number:'1.0-0' }}</span>
+    </div>
+    <button class="checkout-btn" (click)="checkout()">
+      Proceed to Checkout → ₹{{ getGrandTotal() | number:'1.0-0' }}
+    </button>
+  </div>
+</div>

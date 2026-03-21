@@ -1,0 +1,389 @@
+📌 1. PRODUCT OVERVIEW
+
+Product Type: SaaS QR-based Restaurant Ordering System
+Users:
+
+Customer (QR scan)
+
+Restaurant Admin
+
+Staff (Waiter / Kitchen)
+
+🧩 2. HIGH-LEVEL MODULES
+
+QR Ordering System
+
+Menu Management
+
+Order Management (KOT)
+
+Billing & Payments
+
+AR Menu
+
+Analytics
+
+Multi-tenant SaaS (critical)
+
+🧠 3. BACKEND REQUIREMENTS (.NET 8 API)
+🔐 3.1 Authentication & Authorization
+Roles:
+
+Super Admin (your SaaS)
+
+Restaurant Admin
+
+Staff (Waiter / Kitchen)
+
+Features:
+
+JWT authentication
+
+Role-based access control
+
+Multi-tenant isolation (tenant_id in all tables)
+
+🏢 3.2 Multi-Tenant Design
+Mandatory:
+
+Single DB
+
+Every table must include:
+
+tenant_id VARCHAR(36)
+🍽️ 3.3 Menu Management APIs
+Entities:
+
+Category
+
+Item
+
+Modifier (extra cheese, etc.)
+
+APIs:
+
+POST /menu/category
+
+POST /menu/item
+
+GET /menu?tenantId=
+
+PUT /menu/item/{id}
+
+DELETE /menu/item/{id}
+
+Item fields:
+
+Name
+
+Description
+
+Price
+
+Image URL
+
+IsAvailable
+
+ARModelUrl (important for AR)
+
+📱 3.4 QR & Table Management
+Entities:
+
+Table
+
+QR Code
+
+APIs:
+
+POST /table
+
+GET /table
+
+GET /menu/by-table/{tableId}
+
+👉 QR format:
+
+https://yourapp.com/menu/{tenantId}/{tableId}
+🧾 3.5 Order Management (CORE)
+Entities:
+
+Order
+
+OrderItem
+
+Order Status:
+
+Pending
+
+Accepted
+
+Preparing
+
+Ready
+
+Served
+
+Completed
+
+APIs:
+
+POST /order
+
+GET /orders/live
+
+PUT /order/status
+
+⚡ 3.6 Real-Time System
+
+Use:
+
+Azure SignalR Service
+
+Events:
+
+New order placed
+
+Order status update
+
+Kitchen alerts
+
+🖨️ 3.7 Printing System
+Approach:
+
+Store print jobs in DB/queue
+
+Entity:
+
+PrintQueue
+
+Fields:
+
+OrderId
+
+Status
+
+RetryCount
+
+API:
+
+GET /print/pending
+
+👉 Local agent will pull & print
+
+💳 3.8 Payments
+
+Use:
+
+Razorpay
+
+APIs:
+
+Create order
+
+Verify payment
+
+Webhook handler
+
+🧠 3.9 AR Support
+Store:
+
+ARModelUrl (GLB/ USDZ)
+
+API:
+
+Included in menu response
+
+📊 3.10 Analytics
+APIs:
+
+/analytics/top-items
+
+/analytics/sales
+
+/analytics/peak-hours
+
+🗂️ 3.11 Storage
+
+Use:
+
+Azure Blob Storage
+
+For:
+
+Images
+
+AR models
+
+QR codes
+
+🎨 4. FRONTEND REQUIREMENTS (Angular)
+👤 4.1 Customer App (PWA)
+Pages:
+1. Menu Page
+
+Category list
+
+Item cards
+
+Add to cart
+
+“View in AR” button
+
+2. AR View
+
+Use:
+
+Model Viewer
+
+Features:
+
+Rotate / zoom
+
+AR placement
+
+3. Cart
+
+Add/remove items
+
+Quantity update
+
+Total calculation
+
+4. Checkout
+
+Table auto-detected
+
+Payment options
+
+Place order
+
+5. Order Tracking
+
+Live status updates
+
+ETA display
+
+🧑‍💼 4.2 Admin Dashboard
+Modules:
+Dashboard
+
+Today sales
+
+Orders count
+
+Menu Management
+
+Add/edit/delete items
+
+Upload images + AR model
+
+Orders Panel
+
+Live orders
+
+Status change
+
+Table Management
+
+Add tables
+
+Generate QR
+
+👨‍🍳 4.3 Kitchen Dashboard (KDS)
+Features:
+
+Large screen UI
+
+Incoming orders
+
+Sound alert
+
+Mark as preparing / ready
+
+🔄 5. REAL-TIME FLOW
+Customer → API → DB  
+        → SignalR → Kitchen UI  
+        → Print Queue → Printer Agent
+🗄️ 6. DATABASE SCHEMA (HIGH LEVEL)
+Tables:
+
+Tenants
+
+Users
+
+Tables
+
+MenuCategories
+
+MenuItems
+
+Orders
+
+OrderItems
+
+Payments
+
+PrintQueue
+
+🧪 7. NON-FUNCTIONAL REQUIREMENTS
+
+Response time < 300ms
+
+99.9% uptime
+
+Mobile-first UI
+
+Offline fallback (basic)
+
+Secure APIs (HTTPS)
+
+🔐 8. SECURITY
+
+JWT auth
+
+Tenant isolation
+
+Rate limiting
+
+Input validation
+
+🚀 9. DEVOPS
+
+CI/CD pipeline (GitHub Actions)
+
+Separate environments (Dev / Prod)
+
+Logging + monitoring via Azure Application Insights
+
+📦 10. PHASE-WISE DELIVERY PLAN
+Phase 1 (MVP - 3–4 weeks)
+
+QR menu
+
+Order system
+
+Admin panel
+
+Phase 2
+
+Payments
+
+Real-time updates
+
+Phase 3
+
+AR menu
+
+Analytics
+
+✅ FINAL NOTE
+
+This is production-grade SaaS architecture, not just a small app.
+
+👉 Your biggest risks:
+
+Multi-tenant design mistakes
+
+Printing system complexity
+
+Real-time reliability

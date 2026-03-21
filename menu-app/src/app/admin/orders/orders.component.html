@@ -1,0 +1,41 @@
+<div class="orders-panel">
+  <div class="page-header">
+    <h1>Live Orders</h1>
+    <div class="order-counts" *ngIf="liveOrders">
+      <span class="count pending">{{ liveOrders.totalPending }} Pending</span>
+      <span class="count preparing">{{ liveOrders.totalPreparing }} Preparing</span>
+      <span class="count ready">{{ liveOrders.totalReady }} Ready</span>
+    </div>
+  </div>
+
+  <div class="orders-grid" *ngIf="liveOrders && liveOrders.orders.length > 0">
+    <div class="order-card" *ngFor="let order of liveOrders.orders"
+         [style.border-left-color]="getStatusColor(order.status)">
+      <div class="order-header">
+        <strong>#{{ order.orderNumber }}</strong>
+        <span class="table-badge">Table {{ order.tableNumber }}</span>
+        <span class="status" [style.background]="getStatusColor(order.status)">{{ order.status }}</span>
+      </div>
+      <div class="order-items">
+        <div *ngFor="let item of order.items" class="order-item-row">
+          <span>{{ item.quantity }}x {{ item.itemName }}</span>
+          <span class="notes" *ngIf="item.notes">📝 {{ item.notes }}</span>
+        </div>
+      </div>
+      <div class="order-footer">
+        <span class="total">₹{{ order.totalAmount | number:'1.0-0' }}</span>
+        <span class="time">{{ order.createdAt | date:'shortTime' }}</span>
+        <button *ngIf="getNextStatus(order.status)" class="advance-btn"
+                (click)="updateStatus(order, getNextStatus(order.status)!)">
+          → {{ getNextStatus(order.status) }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="liveOrders && liveOrders.orders.length === 0">
+    <p>No live orders at the moment.</p>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">Loading orders...</div>
+</div>

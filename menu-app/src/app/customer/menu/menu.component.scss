@@ -1,0 +1,320 @@
+.menu-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: 100px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-header, #1a1a2e);
+  color: var(--text-on-dark, white);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .restaurant-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+
+  h1 { font-size: 1.1rem; margin: 0; }
+
+  .theme-toggle {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    &:hover { background: rgba(255,255,255,0.25); }
+  }
+
+  .cart-btn {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    position: relative;
+    color: white;
+
+    .badge {
+      position: absolute;
+      top: -6px;
+      right: -8px;
+      background: var(--accent, #e94560);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+.category-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-tab, #f8f8f8);
+  position: sticky;
+  top: 60px;
+  z-index: 9;
+
+  &::-webkit-scrollbar { display: none; }
+
+  button {
+    white-space: nowrap;
+    padding: 8px 16px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 20px;
+    background: var(--bg-card, white);
+    color: var(--text-primary, #333);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+
+    &.active {
+      background: var(--bg-header, #1a1a2e);
+      color: var(--text-on-dark, white);
+      border-color: var(--bg-header, #1a1a2e);
+    }
+  }
+}
+
+.items-grid {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu-card {
+  display: flex;
+  background: var(--bg-card, white);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--shadow, rgba(0,0,0,0.08));
+  overflow: hidden;
+
+  .item-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .item-info {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .item-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      h3 { margin: 0; font-size: 0.95rem; color: var(--text-primary, #333); }
+    }
+
+    .description {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #666);
+      margin: 4px 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .price {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-primary, #1a1a2e);
+      }
+
+      .actions {
+        display: flex;
+        gap: 6px;
+
+        button {
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: none;
+          cursor: pointer;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+
+        .add-btn {
+          background: var(--accent, #e94560);
+          color: white;
+
+          &:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+          }
+        }
+
+        .ar-btn {
+          background: #0f3460;
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+// ── Social Footer ──
+.social-footer {
+  padding: 20px 16px;
+  text-align: center;
+  background: var(--bg-tab, #fafafa);
+  border-top: 1px solid var(--border-light, #eee);
+  margin-top: 16px;
+
+  .follow-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #888;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .social-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    &.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; }
+    &.facebook { background: #1877f2; color: white; }
+    &.twitter { background: #1da1f2; color: white; }
+    &.website { background: #1a1a2e; color: white; }
+  }
+
+  .maps-link {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: #e94560;
+    font-weight: 600;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ── Call Waiter FAB ──
+.call-waiter-fab {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  border: none;
+  border-radius: 50px;
+  background: #e94560;
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+  z-index: 50;
+  transition: all 0.3s;
+  max-width: 440px;
+
+  &:hover:not(:disabled) {
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 6px 24px rgba(233, 69, 96, 0.5);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+  &.called {
+    background: #27ae60;
+    box-shadow: 0 4px 20px rgba(39, 174, 96, 0.4);
+    animation: pulseGreen 1.5s ease-in-out;
+  }
+}
+
+@keyframes pulseGreen {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.05); }
+}
+
+// ── Loading / Empty ──
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #eee;
+    border-top: 4px solid #1a1a2e;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p { color: #666; margin-top: 12px; }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

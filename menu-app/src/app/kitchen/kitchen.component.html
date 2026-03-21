@@ -1,0 +1,57 @@
+<div class="kds">
+  <header class="kds-header">
+    <h1>🍳 Kitchen Display</h1>
+    <div class="header-stats" *ngIf="liveOrders">
+      <span class="stat preparing">{{ liveOrders.totalPreparing }} COOKING</span>
+      <span class="stat ready">{{ liveOrders.totalReady }} READY</span>
+    </div>
+    <button class="logout-btn" (click)="logout()">Logout</button>
+  </header>
+
+  <div class="kds-grid" *ngIf="liveOrders && !loading">
+    <div class="kds-card" *ngFor="let order of liveOrders.orders"
+         [class.pending]="order.status === 'Pending'"
+         [class.accepted]="order.status === 'Accepted'"
+         [class.preparing]="order.status === 'Preparing'"
+         [class.ready]="order.status === 'Ready'">
+
+      <div class="card-header">
+        <div class="order-id">#{{ order.orderNumber }}</div>
+        <div class="table-num">TABLE {{ order.tableNumber }}</div>
+        <div class="time-ago">{{ getTimeSince(order.createdAt) }}</div>
+      </div>
+
+      <div class="card-items">
+        <div class="kds-item" *ngFor="let item of order.items">
+          <span class="qty">{{ item.quantity }}x</span>
+          <span class="name">{{ item.itemName }}</span>
+          <div class="item-notes" *ngIf="item.notes">📝 {{ item.notes }}</div>
+          <div class="item-mods" *ngIf="item.modifiers">+ {{ item.modifiers }}</div>
+        </div>
+      </div>
+
+      <div class="special" *ngIf="order.specialInstructions">
+        ⚠️ {{ order.specialInstructions }}
+      </div>
+
+      <div class="card-actions">
+        <button *ngIf="order.status === 'Accepted'" class="btn prepare" (click)="startPreparing(order)">
+          🔥 START
+        </button>
+        <button *ngIf="order.status === 'Preparing'" class="btn ready" (click)="markReady(order)">
+          ✅ READY
+        </button>
+        <span *ngIf="order.status === 'Ready'" class="ready-badge">
+          WAITING FOR PICKUP
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-kitchen" *ngIf="liveOrders && liveOrders.orders.length === 0 && !loading">
+    <h2>All Clear! 🎉</h2>
+    <p>No pending orders</p>
+  </div>
+
+  <div class="loading-kds" *ngIf="loading">Loading orders...</div>
+</div>

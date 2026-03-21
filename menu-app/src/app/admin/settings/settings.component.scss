@@ -1,0 +1,106 @@
+/* Page-specific styles — sidebar & layout handled by global styles.scss */
+
+.toast {
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  &.success { background: #d4edda; color: #155724; }
+  &.error { background: #f8d7da; color: #842029; }
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+.settings-form {
+  max-width: 700px;
+}
+
+.form-section {
+  background: var(--bg-card, white);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px var(--shadow, rgba(0,0,0,0.06));
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+    color: var(--text-primary, #1a1a2e);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light, #eee);
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+
+  label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    color: #333;
+    font-weight: 600;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    background: var(--bg-input, white);
+    color: var(--text-primary, #333);
+    &:focus { border-color: var(--accent, #1a1a2e); outline: none; }
+  }
+}
+
+.logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: -4px;
+  margin-bottom: 12px;
+
+  img {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+  }
+
+  span {
+    font-size: 0.8rem;
+    color: #888;
+  }
+}
+
+.save-btn {
+  padding: 14px 32px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  &:hover { background: #219a52; }
+  &:disabled { background: #ccc; cursor: not-allowed; }
+}
+
+@media (max-width: 768px) {
+  .admin-layout { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px 0; }
+  .form-row { grid-template-columns: 1fr; }
+}

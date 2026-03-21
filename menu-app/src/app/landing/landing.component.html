@@ -1,0 +1,546 @@
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--                  TABVERSE LANDING PAGE                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- ── Navbar ── -->
+<nav class="navbar" [class.scrolled]="scrolled">
+  <div class="nav-container">
+    <a class="logo" routerLink="/">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">Tab<span class="accent">Verse</span></span>
+    </a>
+    <div class="nav-links">
+      <a (click)="scrollTo('features')">Features</a>
+      <a (click)="scrollTo('how-it-works')">How It Works</a>
+      <a (click)="scrollTo('pricing')">Pricing</a>
+      <a (click)="scrollTo('testimonials')">Reviews</a>
+    </div>
+    <div class="nav-actions">
+      <a routerLink="/admin/login" class="btn-ghost">Sign In</a>
+      <a routerLink="/admin/register" class="btn-primary-nav">Start Free Trial</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero Section ── -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-badge animate-fade-in">
+      <span class="badge-dot"></span>
+      Trusted by 500+ restaurants worldwide
+    </div>
+
+    <h1 class="hero-title animate-slide-up">
+      Your Restaurant,<br/>
+      <span class="gradient-text">Reimagined.</span>
+    </h1>
+
+    <p class="hero-subtitle animate-slide-up delay-1">
+      TabVerse transforms your restaurant with QR-powered ordering, real-time kitchen sync,
+      and AI-driven insights — all from a single elegant platform.
+    </p>
+
+    <div class="hero-cta animate-slide-up delay-2">
+      <a routerLink="/admin/register" class="btn-primary-hero">
+        Get Started Free
+        <span class="btn-arrow">→</span>
+      </a>
+      <a (click)="scrollTo('how-it-works')" class="btn-secondary-hero">
+        <span class="play-icon">▶</span>
+        See How It Works
+      </a>
+    </div>
+
+    <div class="hero-stats animate-fade-in delay-3">
+      <div class="hero-stat">
+        <span class="hero-stat-value">30%</span>
+        <span class="hero-stat-label">Faster Service</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">2x</span>
+        <span class="hero-stat-label">Table Turnover</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">Zero</span>
+        <span class="hero-stat-label">Order Errors</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-visual animate-scale-in delay-2">
+    <div class="phone-mockup">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="mock-header">
+            <span>🍽️ The Spice Kitchen</span>
+            <span class="mock-table">Table 5</span>
+          </div>
+          <div class="mock-search">🔍 Search menu...</div>
+          <div class="mock-category active">🔥 Popular</div>
+          <div class="mock-item">
+            <div class="mock-item-img">🍛</div>
+            <div class="mock-item-info">
+              <span class="mock-item-name">Butter Chicken</span>
+              <span class="mock-item-price">₹349</span>
+            </div>
+            <button class="mock-add">+</button>
+          </div>
+          <div class="mock-item">
+            <div class="mock-item-img">🥘</div>
+            <div class="mock-item-info">
+              <span class="mock-item-name">Paneer Tikka</span>
+              <span class="mock-item-price">₹249</span>
+            </div>
+            <button class="mock-add">+</button>
+          </div>
+          <div class="mock-item">
+            <div class="mock-item-img">🍜</div>
+            <div class="mock-item-info">
+              <span class="mock-item-name">Hakka Noodles</span>
+              <span class="mock-item-price">₹199</span>
+            </div>
+            <button class="mock-add pulse">+</button>
+          </div>
+          <div class="mock-cart">
+            <span>🛒 3 items</span>
+            <span class="mock-cart-total">₹797 →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="floating-card card-order animate-float">
+      <span class="card-icon">📦</span>
+      <div>
+        <span class="card-title">New Order!</span>
+        <span class="card-sub">Table 5 · 3 items</span>
+      </div>
+    </div>
+
+    <div class="floating-card card-kitchen animate-float-delayed">
+      <span class="card-icon">👨‍🍳</span>
+      <div>
+        <span class="card-title">Kitchen Notified</span>
+        <span class="card-sub">Preparing in 12 min</span>
+      </div>
+    </div>
+
+    <div class="floating-card card-ready animate-float-slow">
+      <span class="card-icon">✅</span>
+      <div>
+        <span class="card-title">Order Ready!</span>
+        <span class="card-sub">Serve to Table 5</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Brands / Social Proof ── -->
+<section class="brands-strip">
+  <div class="brands-container">
+    <p class="brands-label">POWERING THE NEXT GENERATION OF DINING</p>
+    <div class="brands-scroll">
+      <span class="brand-item">🍕 PizzaHub</span>
+      <span class="brand-item">🍣 Sushi Express</span>
+      <span class="brand-item">🥩 Steakhouse Co.</span>
+      <span class="brand-item">🌮 Taco Bell</span>
+      <span class="brand-item">🍔 Burger Lab</span>
+      <span class="brand-item">☕ Café Noir</span>
+      <span class="brand-item">🍕 PizzaHub</span>
+      <span class="brand-item">🍣 Sushi Express</span>
+      <span class="brand-item">🥩 Steakhouse Co.</span>
+      <span class="brand-item">🌮 Taco Bell</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features Section ── -->
+<section class="features-section" id="features">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-tag">FEATURES</span>
+      <h2>Everything your restaurant needs.<br/><span class="gradient-text">Nothing it doesn't.</span></h2>
+      <p>From QR ordering to kitchen displays, TabVerse handles it all with zero friction.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card" [class.active]="activeFeature === 0" (mouseenter)="selectFeature(0)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">📱</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>QR Code Ordering</h3>
+        <p>Customers scan, browse, and order — no app downloads needed. Beautiful mobile menus with photos and descriptions.</p>
+        <div class="feature-tag">Zero Contact</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 1" (mouseenter)="selectFeature(1)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">👨‍🍳</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>Kitchen Display System</h3>
+        <p>Real-time order feed with priority sorting, status updates, and automatic notifications when food is ready.</p>
+        <div class="feature-tag">Real-Time</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 2" (mouseenter)="selectFeature(2)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">📊</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>Smart Analytics</h3>
+        <p>Track revenue, top-selling items, peak hours, and order patterns with a beautiful admin dashboard.</p>
+        <div class="feature-tag">Data-Driven</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 3" (mouseenter)="selectFeature(3)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">🪑</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>Table Management</h3>
+        <p>Auto-generated QR codes per table, occupancy tracking, multi-order sessions, and one-tap bill generation.</p>
+        <div class="feature-tag">Organized</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 4" (mouseenter)="selectFeature(4)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">🔔</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>Call Waiter</h3>
+        <p>One-tap waiter calling with real-time notifications. No more waving hands or waiting — instant connection.</p>
+        <div class="feature-tag">Instant</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 5" (mouseenter)="selectFeature(5)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">📱</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>AR Menu Preview</h3>
+        <p>Let customers see dishes in 3D augmented reality before ordering. The future of food visualization.</p>
+        <div class="feature-tag">Futuristic</div>
+      </div>
+    </div>
+
+    <!-- Extra features row -->
+    <div class="bonus-features">
+      <div class="bonus-item">
+        <span>🌙</span>
+        <span>Dark Mode</span>
+      </div>
+      <div class="bonus-item">
+        <span>👥</span>
+        <span>Staff Management</span>
+      </div>
+      <div class="bonus-item">
+        <span>🧾</span>
+        <span>Bill History & CSV</span>
+      </div>
+      <div class="bonus-item">
+        <span>🏢</span>
+        <span>Multi-Tenant SaaS</span>
+      </div>
+      <div class="bonus-item">
+        <span>🔐</span>
+        <span>Role-Based Access</span>
+      </div>
+      <div class="bonus-item">
+        <span>⚡</span>
+        <span>Real-Time SignalR</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How It Works ── -->
+<section class="how-section" id="how-it-works">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-tag">HOW IT WORKS</span>
+      <h2>From scan to serve<br/>in <span class="gradient-text">3 simple steps.</span></h2>
+    </div>
+
+    <div class="steps-timeline">
+      <div class="step-item">
+        <div class="step-number">01</div>
+        <div class="step-visual">
+          <div class="step-phone">
+            <div class="step-screen">
+              <div class="qr-anim">
+                <div class="qr-square"></div>
+                <div class="qr-scan-line"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-content">
+          <h3>Scan the QR Code</h3>
+          <p>Each table has a unique QR code. Customers scan with their phone camera — no app needed. Instantly lands on your branded menu.</p>
+        </div>
+      </div>
+
+      <div class="step-connector">
+        <div class="connector-line"></div>
+        <div class="connector-dot"></div>
+      </div>
+
+      <div class="step-item reverse">
+        <div class="step-number">02</div>
+        <div class="step-visual">
+          <div class="step-phone">
+            <div class="step-screen">
+              <div class="order-anim">
+                <div class="order-item-anim" *ngFor="let i of [1,2,3]">
+                  <div class="order-dot"></div>
+                  <div class="order-line"></div>
+                  <div class="order-price"></div>
+                </div>
+                <div class="order-btn-anim">Place Order</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-content">
+          <h3>Browse & Order</h3>
+          <p>Explore the full menu with images, prices, veg/non-veg tags, and even AR food previews. Add to cart and order with one tap.</p>
+        </div>
+      </div>
+
+      <div class="step-connector">
+        <div class="connector-line"></div>
+        <div class="connector-dot"></div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-number">03</div>
+        <div class="step-visual">
+          <div class="step-phone">
+            <div class="step-screen">
+              <div class="track-anim">
+                <div class="track-status done">✓ Order Received</div>
+                <div class="track-status done">✓ Preparing</div>
+                <div class="track-status active">◉ Ready to Serve</div>
+                <div class="track-status">○ Served</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-content">
+          <h3>Track & Enjoy</h3>
+          <p>Real-time order tracking shows every status update. Kitchen and waiter get instant notifications. Zero wait confusion.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats Section ── -->
+<section class="stats-section">
+  <div class="section-container">
+    <div class="stats-grid">
+      <div class="stat-block" *ngFor="let stat of stats">
+        <span class="stat-value">{{ stat.value }}{{ stat.suffix }}</span>
+        <span class="stat-label">{{ stat.label }}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing Section ── -->
+<section class="pricing-section" id="pricing">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-tag">PRICING</span>
+      <h2>Simple, transparent pricing.<br/><span class="gradient-text">No surprises.</span></h2>
+      <p>Start free, scale as you grow. No credit card required.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount">
+          <span class="currency">₹</span>
+          <span class="amount">0</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="price-desc">Perfect for trying out TabVerse</p>
+        <ul class="price-features">
+          <li>✓ Up to 10 tables</li>
+          <li>✓ QR code ordering</li>
+          <li>✓ Basic kitchen display</li>
+          <li>✓ Order tracking</li>
+          <li>✓ 1 staff account</li>
+        </ul>
+        <a routerLink="/admin/register" class="price-btn">Start Free</a>
+      </div>
+
+      <div class="price-card popular">
+        <div class="popular-badge">Most Popular</div>
+        <div class="price-tier">Professional</div>
+        <div class="price-amount">
+          <span class="currency">₹</span>
+          <span class="amount">1,999</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="price-desc">For growing restaurants</p>
+        <ul class="price-features">
+          <li>✓ Unlimited tables</li>
+          <li>✓ Everything in Starter</li>
+          <li>✓ AR menu previews</li>
+          <li>✓ Analytics dashboard</li>
+          <li>✓ Staff management</li>
+          <li>✓ Bill history & CSV export</li>
+          <li>✓ Call waiter feature</li>
+          <li>✓ Dark mode</li>
+        </ul>
+        <a routerLink="/admin/register" class="price-btn primary">Get Started</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount">
+          <span class="currency"></span>
+          <span class="amount">Custom</span>
+          <span class="period"></span>
+        </div>
+        <p class="price-desc">For restaurant chains</p>
+        <ul class="price-features">
+          <li>✓ Everything in Pro</li>
+          <li>✓ Multi-location support</li>
+          <li>✓ Custom branding</li>
+          <li>✓ Priority support</li>
+          <li>✓ API access</li>
+          <li>✓ Dedicated account manager</li>
+        </ul>
+        <a class="price-btn">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Testimonials ── -->
+<section class="testimonials-section" id="testimonials">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-tag">TESTIMONIALS</span>
+      <h2>Loved by restaurant owners<br/><span class="gradient-text">everywhere.</span></h2>
+    </div>
+
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"TabVerse cut our order errors to literally zero. Customers love scanning and ordering themselves. Our waiters can focus on hospitality instead of writing orders."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">RP</div>
+          <div>
+            <strong>Raj Patel</strong>
+            <span>Owner, The Spice Kitchen</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"The kitchen display is a game-changer. Real-time updates mean no more missed orders. Setup took 15 minutes and we were live the same day."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">SM</div>
+          <div>
+            <strong>Sarah Mitchell</strong>
+            <span>Manager, Café Boulevard</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"AR menu previews blew our minds. Customers can see the dish in 3D before ordering! Our average order value increased 22% in the first month."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">AK</div>
+          <div>
+            <strong>Arjun Kumar</strong>
+            <span>Chef & Owner, Fusion Bites</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA Section ── -->
+<section class="cta-section">
+  <div class="cta-bg">
+    <div class="cta-orb cta-orb-1"></div>
+    <div class="cta-orb cta-orb-2"></div>
+  </div>
+  <div class="cta-content">
+    <h2>Ready to transform your restaurant?</h2>
+    <p>Join 500+ restaurants already using TabVerse. Set up in minutes, not days.</p>
+    <div class="cta-actions">
+      <a routerLink="/admin/register" class="btn-cta-primary">
+        Start Your Free Trial
+        <span class="btn-arrow">→</span>
+      </a>
+      <a routerLink="/admin/login" class="btn-cta-ghost">Sign In</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">Tab<span class="accent">Verse</span></span>
+        <p>Next-generation restaurant ordering platform powered by QR codes, real-time sync, and smart analytics.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Twitter">𝕏</a>
+          <a href="#" aria-label="Instagram">📷</a>
+          <a href="#" aria-label="LinkedIn">in</a>
+          <a href="#" aria-label="GitHub">⌂</a>
+        </div>
+      </div>
+
+      <div class="footer-links-group">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a (click)="scrollTo('features')">Features</a>
+          <a (click)="scrollTo('pricing')">Pricing</a>
+          <a (click)="scrollTo('how-it-works')">How It Works</a>
+          <a>Changelog</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a>About</a>
+          <a>Blog</a>
+          <a>Careers</a>
+          <a>Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a>Privacy Policy</a>
+          <a>Terms of Service</a>
+          <a>Cookie Policy</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© {{ currentYear }} TabVerse. All rights reserved.</span>
+      <span>Made with ❤️ for restaurants worldwide</span>
+    </div>
+  </div>
+</footer>

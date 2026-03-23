@@ -341,8 +341,45 @@
 
 .order-items { margin-bottom: 10px; }
 .order-item-row {
-  display: flex; justify-content: space-between; font-size: 0.85rem; padding: 2px 0;
-  .notes { font-size: 0.75rem; color: #888; }
+  display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 3px 0; gap: 8px;
+
+  .order-item-info {
+    display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0;
+    .notes { font-size: 0.75rem; color: #888; }
+  }
+
+  .order-item-actions {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+
+    .item-price { font-size: 0.78rem; color: #666; font-weight: 500; }
+
+    .cancel-item-btn {
+      width: 22px; height: 22px;
+      border: none; border-radius: 50%;
+      background: #fee2e2; color: #dc2626;
+      font-size: 0.65rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; line-height: 1;
+      &:hover { background: #dc2626; color: white; }
+    }
+
+    .cancel-confirm-inline {
+      display: flex; align-items: center; gap: 5px;
+      animation: fadeSlideIn 0.15s ease;
+      .cancel-msg { font-size: 0.72rem; color: #dc2626; font-weight: 600; white-space: nowrap; }
+      .cancel-yes {
+        padding: 2px 9px; border: none; border-radius: 4px;
+        background: #dc2626; color: white; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+        &:hover { background: #b91c1c; }
+        &:disabled { opacity: 0.6; cursor: not-allowed; }
+      }
+      .cancel-no {
+        padding: 2px 9px; border: 1px solid #d1d5db; border-radius: 4px;
+        background: white; color: #374151; font-size: 0.72rem; font-weight: 600; cursor: pointer;
+        &:hover { background: #f3f4f6; }
+      }
+    }
+  }
 }
 
 .order-footer {
@@ -421,11 +458,59 @@
 }
 
 .eo-items {
-  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;
-  .eo-item {
-    font-size: 0.75rem; color: #555;
-    background: #eee; padding: 2px 6px; border-radius: 4px;
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px;
+
+  .eo-item-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+
+    .eo-item {
+      color: #555;
+      background: #eee;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .eo-item-price {
+      color: #888;
+      font-size: 0.72rem;
+      margin-left: auto;
+    }
+
+    .cancel-item-btn {
+      width: 20px; height: 20px;
+      border: none; border-radius: 50%;
+      background: #fee2e2; color: #dc2626;
+      font-size: 0.6rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; line-height: 1; flex-shrink: 0;
+      &:hover { background: #dc2626; color: white; }
+    }
+
+    .cancel-confirm-inline {
+      display: flex; align-items: center; gap: 4px;
+      animation: fadeSlideIn 0.15s ease;
+      .cancel-msg { font-size: 0.7rem; color: #dc2626; font-weight: 600; white-space: nowrap; }
+      .cancel-yes {
+        padding: 1px 8px; border: none; border-radius: 4px;
+        background: #dc2626; color: white; font-size: 0.7rem; font-weight: 700; cursor: pointer;
+        &:hover { background: #b91c1c; }
+        &:disabled { opacity: 0.6; cursor: not-allowed; }
+      }
+      .cancel-no {
+        padding: 1px 8px; border: 1px solid #d1d5db; border-radius: 4px;
+        background: white; color: #374151; font-size: 0.7rem; font-weight: 600; cursor: pointer;
+        &:hover { background: #f3f4f6; }
+      }
+    }
   }
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .eo-total {

@@ -71,6 +71,12 @@ export class OrderService {
     );
   }
 
+  cancelOrderItem(orderId: string, itemId: string): Observable<OrderResponse> {
+    return this.http.delete<ApiResponse<OrderResponse>>(`${this.apiUrl}/${orderId}/items/${itemId}`).pipe(
+      map(res => res.data!)
+    );
+  }
+
   getOrderHistoryDownloadUrl(from: string, to: string): string {
     return `${this.apiUrl}/history/download?from=${from}&to=${to}`;
   }

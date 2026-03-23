@@ -31,6 +31,12 @@ export const routes: Routes = [
     loadComponent: () => import('./customer/ar-view/ar-view.component').then(m => m.ArViewComponent)
   },
 
+  // ── Tenant Public Website (subdomain or path-based) ──
+  {
+    path: 'website/:tenantId',
+    loadComponent: () => import('./customer/tenant-website/tenant-website.component').then(m => m.TenantWebsiteComponent)
+  },
+
   // ── Admin Routes (auth required) ──
   {
     path: 'admin/login',
@@ -58,6 +64,11 @@ export const routes: Routes = [
   {
     path: 'admin/tables',
     loadComponent: () => import('./admin/tables/tables.component').then(m => m.TablesComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'admin/website',
+    loadComponent: () => import('./admin/website-editor/website-editor.component').then(m => m.WebsiteEditorComponent),
     canActivate: [adminGuard]
   },
   {

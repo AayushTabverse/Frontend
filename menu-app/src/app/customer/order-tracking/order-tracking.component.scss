@@ -103,9 +103,94 @@
   .detail-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 8px 0;
     border-bottom: 1px solid #f0f0f0;
     font-size: 0.9rem;
+    gap: 8px;
+
+    .item-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+
+      .item-price {
+        font-weight: 500;
+      }
+
+      .cancel-item-btn {
+        width: 26px;
+        height: 26px;
+        border: none;
+        border-radius: 50%;
+        background: #fee2e2;
+        color: #dc2626;
+        font-size: 0.72rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        line-height: 1;
+
+        &:hover {
+          background: #dc2626;
+          color: white;
+        }
+      }
+
+      .cancel-confirm {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        animation: fadeSlide 0.15s ease;
+
+        .cancel-msg {
+          font-size: 0.75rem;
+          color: #dc2626;
+          white-space: nowrap;
+          font-weight: 600;
+        }
+
+        .cancel-yes {
+          padding: 3px 10px;
+          border: none;
+          border-radius: 5px;
+          background: #dc2626;
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+
+          &:hover { background: #b91c1c; }
+          &:disabled { opacity: 0.6; cursor: not-allowed; }
+        }
+
+        .cancel-no {
+          padding: 3px 10px;
+          border: 1px solid #d1d5db;
+          border-radius: 5px;
+          background: white;
+          color: #374151;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+
+          &:hover { background: #f3f4f6; }
+        }
+      }
+    }
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(6px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   .order-total {

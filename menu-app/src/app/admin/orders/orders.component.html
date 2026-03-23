@@ -18,8 +18,26 @@
       </div>
       <div class="order-items">
         <div *ngFor="let item of order.items" class="order-item-row">
-          <span>{{ item.quantity }}x {{ item.itemName }}</span>
-          <span class="notes" *ngIf="item.notes">📝 {{ item.notes }}</span>
+          <div class="item-info">
+            <span>{{ item.quantity }}x {{ item.itemName }}</span>
+            <span class="notes" *ngIf="item.notes">📝 {{ item.notes }}</span>
+          </div>
+          <div class="item-actions">
+            <span class="item-price">₹{{ item.totalPrice | number:'1.0-0' }}</span>
+            <!-- Confirm cancel prompt -->
+            <div class="cancel-confirm" *ngIf="confirmCancelItemId === item.id">
+              <span class="cancel-msg">Cancel this item?</span>
+              <button class="cancel-yes" (click)="cancelItem(order, item)" [disabled]="cancellingItemId === item.id">
+                {{ cancellingItemId === item.id ? '...' : 'Yes' }}
+              </button>
+              <button class="cancel-no" (click)="dismissCancel()">No</button>
+            </div>
+            <!-- Cancel trigger button -->
+            <button class="cancel-item-btn" *ngIf="confirmCancelItemId !== item.id && order.status !== 'Completed' && order.status !== 'Served'"
+                    (click)="promptCancelItem(item.id)" title="Cancel item">
+              ✕
+            </button>
+          </div>
         </div>
       </div>
       <div class="order-footer">

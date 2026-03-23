@@ -1,21 +1,24 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../services/order.service';
 import { SignalRService } from '../../services/signalr.service';
 import { AuthService } from '../../services/auth.service';
-import { OrderResponse, LiveOrdersResponse } from '../../models/api.models';
+import { OrderResponse, OrderItemResponse, LiveOrdersResponse } from '../../models/api.models';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-admin-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.scss'
 })
 export class OrdersComponent implements OnInit, OnDestroy {
   liveOrders?: LiveOrdersResponse;
   loading = true;
+  cancellingItemId: string | null = null;
+  confirmCancelItemId: string | null = null;
   private subs: Subscription[] = [];
 
   statusOptions = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed'];
@@ -71,6 +74,29 @@ export class OrdersComponent implements OnInit, OnDestroy {
   getNextStatus(currentStatus: string): string | null {
     const idx = this.statusOptions.indexOf(currentStatus);
     return idx < this.statusOptions.length - 1 ? this.statusOptions[idx + 1] : null;
+  }
+
+  promptCancelItem(itemId: string): void {
+    this.confirmCancelItemId = itemId;
+  }
+
+  dismissCancel(): void {
+    this.confirmCancelItemId = null;
+  }
+
+  cancelItem(order: OrderResponse, item: OrderItemResponse): void {
+    this.cancellingItemId = item.id;
+    this.orderService.cancelOrderItem(order.id, item.id).subscribe({
+      next: () => {
+        this.cancellingItemId = null;
+        this.confirmCancelItemId = null;
+        this.loadOrders();
+      },
+      error: () => {
+        this.cancellingItemId = null;
+        this.confirmCancelItemId = null;
+      }
+    });
   }
 
   ngOnDestroy(): void {

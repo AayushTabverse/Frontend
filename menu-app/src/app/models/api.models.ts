@@ -212,6 +212,121 @@ export interface BusinessSettings {
   currencyCode?: string;
 }
 
+// ── Website Content ──
+export interface GalleryImage {
+  url: string;
+  caption?: string;
+}
+
+export interface Testimonial {
+  name: string;
+  text?: string;
+  rating: number;
+  avatarUrl?: string;
+}
+
+export interface OperatingHour {
+  day: string;
+  openTime?: string;
+  closeTime?: string;
+  isClosed: boolean;
+}
+
+export interface Specialty {
+  title?: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface MenuCategoryWeb {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  items: MenuItemWeb[];
+}
+
+export interface MenuItemWeb {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  imageUrl?: string;
+  isVeg: boolean;
+  isAvailable: boolean;
+}
+
+export interface WebsiteContent {
+  restaurantName: string;
+  logoUrl?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  websiteUrl?: string;
+  googleMapsUrl?: string;
+  currencyCode?: string;
+
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImageUrl?: string;
+  heroCtaText?: string;
+  heroCtaLink?: string;
+
+  aboutTitle?: string;
+  aboutDescription?: string;
+  aboutImageUrl?: string;
+  chefName?: string;
+  chefImageUrl?: string;
+  chefQuote?: string;
+
+  specialties: Specialty[];
+  galleryImages: GalleryImage[];
+  testimonials: Testimonial[];
+  operatingHours: OperatingHour[];
+
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  fontFamily?: string;
+
+  metaTitle?: string;
+  metaDescription?: string;
+  announcementText?: string;
+  showAnnouncement: boolean;
+  isPublished: boolean;
+
+  menuHighlights?: MenuCategoryWeb[];
+}
+
+export interface UpdateWebsiteContent {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImageUrl?: string;
+  heroCtaText?: string;
+  heroCtaLink?: string;
+  aboutTitle?: string;
+  aboutDescription?: string;
+  aboutImageUrl?: string;
+  chefName?: string;
+  chefImageUrl?: string;
+  chefQuote?: string;
+  specialties?: Specialty[];
+  galleryImages?: GalleryImage[];
+  testimonials?: Testimonial[];
+  operatingHours?: OperatingHour[];
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  fontFamily?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  announcementText?: string;
+  showAnnouncement?: boolean;
+  isPublished?: boolean;
+}
+
 // ── Forgot Password ──
 export interface ForgotPasswordResponse {
   message: string;
@@ -237,4 +352,34 @@ export interface StaffResponse {
   isActive: boolean;
   createdAt: string;
   lastLoginAt?: string;
+}
+
+// ── Subdomain Management ──
+export interface SubdomainSuggestion {
+  subdomain: string;
+  fullDomain: string;
+  isAvailable: boolean;
+}
+
+export interface SubdomainSuggestionsResponse {
+  suggestions: SubdomainSuggestion[];
+}
+
+export interface CheckSubdomainResponse {
+  subdomain: string;
+  fullDomain: string;
+  isAvailable: boolean;
+  message: string;
+}
+
+export interface SubdomainResponse {
+  subdomain?: string;
+  fullDomain?: string;
+  isActive: boolean;
+  dnsStatus?: string;
+  message?: string;
+}
+
+export interface ClaimSubdomainRequest {
+  subdomain: string;
 }

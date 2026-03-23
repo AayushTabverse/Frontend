@@ -1,0 +1,337 @@
+<!-- Loading State -->
+<div class="tw-loading" *ngIf="loading">
+  <div class="tw-loader">
+    <div class="tw-loader-ring"></div>
+    <span>Loading...</span>
+  </div>
+</div>
+
+<!-- Error State -->
+<div class="tw-error" *ngIf="error && !loading">
+  <div class="tw-error-content">
+    <span class="tw-error-icon">🍽️</span>
+    <h2>Restaurant Not Found</h2>
+    <p>{{ error }}</p>
+  </div>
+</div>
+
+<!-- Website Content -->
+<div class="tenant-website" *ngIf="content && !loading && !error">
+
+  <!-- ═══════ ANNOUNCEMENT BANNER ═══════ -->
+  <div class="tw-announcement" *ngIf="content.showAnnouncement && content.announcementText">
+    <div class="tw-announcement-text">
+      <span class="tw-announcement-icon">📢</span>
+      {{ content.announcementText }}
+    </div>
+  </div>
+
+  <!-- ═══════ NAVIGATION ═══════ -->
+  <nav class="tw-nav" [class.scrolled]="navScrolled" [class.with-banner]="content.showAnnouncement && content.announcementText">
+    <div class="tw-nav-inner">
+      <div class="tw-nav-brand" (click)="scrollTo('home')">
+        <img *ngIf="content.logoUrl" [src]="content.logoUrl" [alt]="content.restaurantName" class="tw-nav-logo" />
+        <span class="tw-nav-name">{{ content.restaurantName }}</span>
+      </div>
+      <div class="tw-nav-links" [class.open]="mobileMenuOpen">
+        <a (click)="scrollTo('home')" [class.active]="activeSection === 'home'">Home</a>
+        <a (click)="scrollTo('about')" [class.active]="activeSection === 'about'">About</a>
+        <a *ngIf="content.specialties?.length" (click)="scrollTo('specialties')" [class.active]="activeSection === 'specialties'">Specialties</a>
+        <a *ngIf="content.menuHighlights?.length" (click)="scrollTo('menu')" [class.active]="activeSection === 'menu'">Menu</a>
+        <a *ngIf="content.galleryImages?.length" (click)="scrollTo('gallery')" [class.active]="activeSection === 'gallery'">Gallery</a>
+        <a *ngIf="content.testimonials?.length" (click)="scrollTo('testimonials')" [class.active]="activeSection === 'testimonials'">Reviews</a>
+        <a (click)="scrollTo('hours')" [class.active]="activeSection === 'hours'">Hours</a>
+        <a (click)="scrollTo('contact')" [class.active]="activeSection === 'contact'">Contact</a>
+      </div>
+      <button class="tw-hamburger" (click)="mobileMenuOpen = !mobileMenuOpen">
+        <span [class.open]="mobileMenuOpen"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════ HERO SECTION ═══════ -->
+  <section id="home" class="tw-hero" [style.backgroundImage]="content.heroImageUrl ? 'url(' + content.heroImageUrl + ')' : ''">
+    <div class="tw-hero-overlay"></div>
+    <div class="tw-hero-particles">
+      <div class="tw-particle" *ngFor="let p of [1,2,3,4,5,6,7,8]"></div>
+    </div>
+    <div class="tw-hero-content">
+      <div class="tw-hero-badge" *ngIf="content.restaurantName">
+        <span class="tw-hero-badge-line"></span>
+        <span>{{ content.restaurantName }}</span>
+        <span class="tw-hero-badge-line"></span>
+      </div>
+      <h1 class="tw-hero-title">{{ content.heroTitle || ('Welcome to ' + content.restaurantName) }}</h1>
+      <p class="tw-hero-subtitle">{{ content.heroSubtitle }}</p>
+      <div class="tw-hero-actions">
+        <button class="tw-btn tw-btn-primary" (click)="scrollTo('menu')" *ngIf="content.heroCtaText">
+          {{ content.heroCtaText }}
+          <span class="tw-btn-arrow">→</span>
+        </button>
+        <button class="tw-btn tw-btn-outline" (click)="scrollTo('about')">
+          Our Story
+        </button>
+      </div>
+    </div>
+    <div class="tw-hero-scroll" (click)="scrollTo('about')">
+      <div class="tw-scroll-indicator">
+        <div class="tw-scroll-dot"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ ABOUT SECTION ═══════ -->
+  <section id="about" class="tw-section tw-about">
+    <div class="tw-container">
+      <div class="tw-section-header">
+        <span class="tw-section-tag">Our Story</span>
+        <h2 class="tw-section-title">{{ content.aboutTitle || 'About Us' }}</h2>
+        <div class="tw-section-divider">
+          <span></span>
+          <span class="tw-divider-icon">✦</span>
+          <span></span>
+        </div>
+      </div>
+      <div class="tw-about-grid">
+        <div class="tw-about-text">
+          <p class="tw-about-description">{{ content.aboutDescription }}</p>
+          <div class="tw-about-chef" *ngIf="content.chefName">
+            <img *ngIf="content.chefImageUrl" [src]="content.chefImageUrl" [alt]="content.chefName" class="tw-chef-avatar" />
+            <div class="tw-chef-info">
+              <p class="tw-chef-quote" *ngIf="content.chefQuote">"{{ content.chefQuote }}"</p>
+              <h4 class="tw-chef-name">— {{ content.chefName }}</h4>
+              <span class="tw-chef-role">Head Chef</span>
+            </div>
+          </div>
+        </div>
+        <div class="tw-about-image" *ngIf="content.aboutImageUrl">
+          <div class="tw-about-image-wrapper">
+            <img [src]="content.aboutImageUrl" [alt]="content.restaurantName" />
+            <div class="tw-about-image-accent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ SPECIALTIES SECTION ═══════ -->
+  <section id="specialties" class="tw-section tw-specialties" *ngIf="content.specialties?.length">
+    <div class="tw-container">
+      <div class="tw-section-header">
+        <span class="tw-section-tag">What Makes Us Special</span>
+        <h2 class="tw-section-title">Our Specialties</h2>
+        <div class="tw-section-divider">
+          <span></span>
+          <span class="tw-divider-icon">✦</span>
+          <span></span>
+        </div>
+      </div>
+      <div class="tw-specialties-grid">
+        <div class="tw-specialty-card" *ngFor="let spec of content.specialties; let i = index" [style.animationDelay]="(i * 0.15) + 's'">
+          <div class="tw-specialty-icon">{{ spec.icon || '🍽️' }}</div>
+          <h3>{{ spec.title }}</h3>
+          <p>{{ spec.description }}</p>
+          <div class="tw-specialty-decoration"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ MENU HIGHLIGHTS ═══════ -->
+  <section id="menu" class="tw-section tw-menu" *ngIf="content.menuHighlights?.length">
+    <div class="tw-container">
+      <div class="tw-section-header">
+        <span class="tw-section-tag">Culinary Delights</span>
+        <h2 class="tw-section-title">Our Menu</h2>
+        <div class="tw-section-divider">
+          <span></span>
+          <span class="tw-divider-icon">✦</span>
+          <span></span>
+        </div>
+      </div>
+      <div class="tw-menu-categories">
+        <div class="tw-menu-category" *ngFor="let cat of content.menuHighlights">
+          <h3 class="tw-category-name">{{ cat.name }}</h3>
+          <div class="tw-menu-items-grid">
+            <div class="tw-menu-item" *ngFor="let item of cat.items">
+              <div class="tw-menu-item-image" *ngIf="item.imageUrl">
+                <img [src]="item.imageUrl" [alt]="item.name" loading="lazy" />
+                <div class="tw-veg-badge" [class.veg]="item.isVeg" [class.non-veg]="!item.isVeg">
+                  {{ item.isVeg ? '🟢' : '🔴' }}
+                </div>
+              </div>
+              <div class="tw-menu-item-info">
+                <div class="tw-menu-item-header">
+                  <h4>{{ item.name }}</h4>
+                  <span class="tw-menu-item-price">{{ content.currencyCode === 'USD' ? '$' : '₹' }}{{ item.price | number:'1.0-0' }}</span>
+                </div>
+                <p class="tw-menu-item-desc" *ngIf="item.description">{{ item.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ GALLERY SECTION ═══════ -->
+  <section id="gallery" class="tw-section tw-gallery" *ngIf="content.galleryImages?.length">
+    <div class="tw-container">
+      <div class="tw-section-header">
+        <span class="tw-section-tag">Visual Feast</span>
+        <h2 class="tw-section-title">Gallery</h2>
+        <div class="tw-section-divider">
+          <span></span>
+          <span class="tw-divider-icon">✦</span>
+          <span></span>
+        </div>
+      </div>
+      <div class="tw-gallery-grid" [class.gallery-2]="content.galleryImages.length === 2" [class.gallery-3]="content.galleryImages.length === 3" [class.gallery-4]="content.galleryImages.length >= 4">
+        <div class="tw-gallery-item" *ngFor="let img of content.galleryImages; let i = index" [style.animationDelay]="(i * 0.1) + 's'">
+          <img [src]="img.url" [alt]="img.caption || 'Gallery image'" loading="lazy" />
+          <div class="tw-gallery-overlay">
+            <span *ngIf="img.caption">{{ img.caption }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ TESTIMONIALS SECTION ═══════ -->
+  <section id="testimonials" class="tw-section tw-testimonials" *ngIf="content.testimonials?.length">
+    <div class="tw-container">
+      <div class="tw-section-header">
+        <span class="tw-section-tag">What People Say</span>
+        <h2 class="tw-section-title">Guest Reviews</h2>
+        <div class="tw-section-divider">
+          <span></span>
+          <span class="tw-divider-icon">✦</span>
+          <span></span>
+        </div>
+      </div>
+      <div class="tw-testimonials-grid">
+        <div class="tw-testimonial-card" *ngFor="let t of content.testimonials; let i = index" [style.animationDelay]="(i * 0.15) + 's'">
+          <div class="tw-testimonial-quote">"</div>
+          <p class="tw-testimonial-text">{{ t.text }}</p>
+          <div class="tw-testimonial-stars">
+            <span *ngFor="let s of getStarArray(t.rating)">★</span>
+            <span class="tw-star-empty" *ngFor="let s of getEmptyStarArray(t.rating)">★</span>
+          </div>
+          <div class="tw-testimonial-author">
+            <div class="tw-testimonial-avatar" *ngIf="t.avatarUrl">
+              <img [src]="t.avatarUrl" [alt]="t.name" />
+            </div>
+            <div class="tw-testimonial-avatar tw-avatar-placeholder" *ngIf="!t.avatarUrl">
+              {{ t.name.charAt(0) }}
+            </div>
+            <span class="tw-testimonial-name">{{ t.name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ OPERATING HOURS SECTION ═══════ -->
+  <section id="hours" class="tw-section tw-hours" *ngIf="content.operatingHours?.length">
+    <div class="tw-container">
+      <div class="tw-hours-wrapper">
+        <div class="tw-hours-info">
+          <div class="tw-section-header tw-left-align">
+            <span class="tw-section-tag">Plan Your Visit</span>
+            <h2 class="tw-section-title">Opening Hours</h2>
+            <div class="tw-section-divider">
+              <span></span>
+              <span class="tw-divider-icon">✦</span>
+              <span></span>
+            </div>
+          </div>
+          <div class="tw-hours-list">
+            <div class="tw-hours-item" *ngFor="let h of content.operatingHours"
+                 [class.closed]="h.isClosed">
+              <span class="tw-hours-day">{{ h.day }}</span>
+              <span class="tw-hours-dots"></span>
+              <span class="tw-hours-time" *ngIf="!h.isClosed">{{ h.openTime }} — {{ h.closeTime }}</span>
+              <span class="tw-hours-closed" *ngIf="h.isClosed">Closed</span>
+            </div>
+          </div>
+        </div>
+        <div class="tw-hours-image">
+          <div class="tw-hours-cta">
+            <span class="tw-cta-icon">📞</span>
+            <h3>Make a Reservation</h3>
+            <p *ngIf="content.phone">Call us at <strong>{{ content.phone }}</strong></p>
+            <p *ngIf="content.email">Or email <strong>{{ content.email }}</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ CONTACT / MAP SECTION ═══════ -->
+  <section id="contact" class="tw-section tw-contact">
+    <div class="tw-container">
+      <div class="tw-section-header">
+        <span class="tw-section-tag">Get In Touch</span>
+        <h2 class="tw-section-title">Contact Us</h2>
+        <div class="tw-section-divider">
+          <span></span>
+          <span class="tw-divider-icon">✦</span>
+          <span></span>
+        </div>
+      </div>
+      <div class="tw-contact-grid">
+        <div class="tw-contact-card" *ngIf="content.address">
+          <div class="tw-contact-icon">📍</div>
+          <h4>Visit Us</h4>
+          <p>{{ content.address }}</p>
+          <a *ngIf="content.googleMapsUrl" [href]="content.googleMapsUrl" target="_blank" class="tw-contact-link">
+            Get Directions →
+          </a>
+        </div>
+        <div class="tw-contact-card" *ngIf="content.phone || content.email">
+          <div class="tw-contact-icon">📱</div>
+          <h4>Reach Out</h4>
+          <p *ngIf="content.phone"><a [href]="'tel:' + content.phone">{{ content.phone }}</a></p>
+          <p *ngIf="content.email"><a [href]="'mailto:' + content.email">{{ content.email }}</a></p>
+        </div>
+        <div class="tw-contact-card" *ngIf="content.instagramUrl || content.facebookUrl || content.twitterUrl">
+          <div class="tw-contact-icon">🌐</div>
+          <h4>Follow Us</h4>
+          <div class="tw-social-links">
+            <a *ngIf="content.instagramUrl" [href]="content.instagramUrl" target="_blank" class="tw-social-icon">📷 Instagram</a>
+            <a *ngIf="content.facebookUrl" [href]="content.facebookUrl" target="_blank" class="tw-social-icon">📘 Facebook</a>
+            <a *ngIf="content.twitterUrl" [href]="content.twitterUrl" target="_blank" class="tw-social-icon">🐦 Twitter</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer class="tw-footer">
+    <div class="tw-container">
+      <div class="tw-footer-inner">
+        <div class="tw-footer-brand">
+          <img *ngIf="content.logoUrl" [src]="content.logoUrl" [alt]="content.restaurantName" class="tw-footer-logo" />
+          <span class="tw-footer-name">{{ content.restaurantName }}</span>
+        </div>
+        <div class="tw-footer-links">
+          <a (click)="scrollTo('home')">Home</a>
+          <a (click)="scrollTo('about')">About</a>
+          <a (click)="scrollTo('menu')">Menu</a>
+          <a (click)="scrollTo('contact')">Contact</a>
+        </div>
+        <div class="tw-footer-social" *ngIf="content.instagramUrl || content.facebookUrl || content.twitterUrl">
+          <a *ngIf="content.instagramUrl" [href]="content.instagramUrl" target="_blank">📷</a>
+          <a *ngIf="content.facebookUrl" [href]="content.facebookUrl" target="_blank">📘</a>
+          <a *ngIf="content.twitterUrl" [href]="content.twitterUrl" target="_blank">🐦</a>
+        </div>
+      </div>
+      <div class="tw-footer-bottom">
+        <p>&copy; {{ content.restaurantName }} · All rights reserved</p>
+        <p class="tw-powered-by">Powered by <strong>Tabverse</strong></p>
+      </div>
+    </div>
+  </footer>
+
+</div>

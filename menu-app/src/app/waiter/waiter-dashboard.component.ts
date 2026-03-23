@@ -12,7 +12,7 @@ import { SettingsService } from '../services/settings.service';
 import {
   TableResponse, MenuCategory, MenuItem,
   CreateOrderRequest, CreateOrderItemRequest,
-  OrderResponse, LiveOrdersResponse, TableSessionSummary
+  OrderResponse, OrderItemResponse, LiveOrdersResponse, TableSessionSummary
 } from '../models/api.models';
 import { Subscription } from 'rxjs';
 
@@ -78,6 +78,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
 
   statusOptions = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed'];
+  confirmCancelItemId: string | null = null;
+  cancellingItemId: string | null = null;
   private subs: Subscription[] = [];
 
   constructor(
@@ -464,6 +466,36 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   getNextStatus(current: string): string | null {
     const idx = this.statusOptions.indexOf(current);
     return idx < this.statusOptions.length - 1 ? this.statusOptions[idx + 1] : null;
+  }
+
+  // ── Cancel Order Item ──
+
+  promptCancelItem(itemId: string): void {
+    this.confirmCancelItemId = itemId;
+  }
+
+  dismissCancel(): void {
+    this.confirmCancelItemId = null;
+  }
+
+  cancelOrderItem(order: OrderResponse, item: OrderItemResponse): void {
+    this.cancellingItemId = item.id;
+    this.orderService.cancelOrderItem(order.id, item.id).subscribe({
+      next: () => {
+        this.cancellingItemId = null;
+        this.confirmCancelItemId = null;
+        this.successMessage = `Cancelled "${item.itemName}" from order #${order.orderNumber}`;
+        setTimeout(() => this.successMessage = '', 3000);
+        this.loadOrders();
+        if (this.selectedTable) this.loadTableSession(this.selectedTable.id);
+      },
+      error: (err) => {
+        this.cancellingItemId = null;
+        this.confirmCancelItemId = null;
+        this.errorMessage = err.error?.message || 'Failed to cancel item.';
+        setTimeout(() => this.errorMessage = '', 4000);
+      }
+    });
   }
 
   // ── Nav ──

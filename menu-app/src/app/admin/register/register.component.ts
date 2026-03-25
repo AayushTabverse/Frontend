@@ -431,6 +431,8 @@ import { AuthService } from '../../services/auth.service';
     @media (max-width: 520px) {
       .register-card { padding: 24px 20px; }
       .step-line { width: 24px; }
+      .btn-row { flex-direction: column; }
+      .review-row { flex-direction: column; gap: 2px; }
     }
   `]
 })

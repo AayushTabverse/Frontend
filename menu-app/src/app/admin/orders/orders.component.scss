@@ -197,3 +197,13 @@
   padding: 40px;
   color: #999;
 }
+
+@media (max-width: 768px) {
+  .orders-grid { grid-template-columns: 1fr !important; }
+  .order-card .order-header { flex-wrap: wrap; gap: 6px; }
+  .status-controls { flex-direction: column; gap: 6px; select, button { width: 100%; } }
+}
+
+@media (max-width: 480px) {
+  .tab-content { padding: 12px; }
+}

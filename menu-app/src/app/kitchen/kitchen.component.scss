@@ -154,3 +154,23 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.85; }
 }
+
+@media (max-width: 768px) {
+  .kds-header {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    h1 { font-size: 1.1rem; }
+    .header-stats { flex-wrap: wrap; gap: 8px; }
+    .stat { padding: 4px 12px; font-size: 0.8rem; }
+  }
+  .kds-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kds-header .logout-btn { width: 100%; text-align: center; }
+}

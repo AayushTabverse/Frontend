@@ -33,6 +33,7 @@ export class WebsiteEditorComponent implements OnInit {
   errorMessage = '';
   userName = '';
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
   activeTab = 'domain';
 
   // Editable fields bound to form

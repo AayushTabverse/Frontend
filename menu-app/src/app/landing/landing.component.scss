@@ -1510,3 +1510,11 @@ $gradient-text: linear-gradient(135deg, $accent-light, $coral, $teal);
   .cta-content h2 { font-size: 2rem; }
   .cta-actions { flex-direction: column; }
 }
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 1.8rem; }
+  .section-header h2 { font-size: 1.5rem; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .cta-content h2 { font-size: 1.5rem; }
+  .footer-links-group { flex-direction: column; gap: 24px; }
+}

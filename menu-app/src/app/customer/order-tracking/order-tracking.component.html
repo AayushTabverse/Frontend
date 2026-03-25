@@ -1,5 +1,9 @@
 <div class="tracking-page" *ngIf="!loading; else loadingTpl">
   <header class="tracking-header">
+    <div class="header-nav">
+      <button class="back-btn" (click)="goBackToMenu()" *ngIf="tenantId && tableId">← Menu</button>
+      <button class="orders-link" (click)="viewAllOrders()" *ngIf="tableId">All Orders</button>
+    </div>
     <h1>Order #{{ order?.orderNumber }}</h1>
     <span class="status-badge" [attr.data-status]="order?.status">{{ order?.status }}</span>
   </header>

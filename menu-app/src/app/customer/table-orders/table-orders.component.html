@@ -1,0 +1,49 @@
+<div class="table-orders-page" *ngIf="!loading; else loadingTpl">
+  <header class="orders-header">
+    <button class="back-btn" (click)="goBackToMenu()">← Back to Menu</button>
+    <h1>Your Orders</h1>
+  </header>
+
+  <!-- Active Orders -->
+  <section class="orders-section" *ngIf="activeOrders.length > 0">
+    <h2 class="section-title">Active Orders</h2>
+    <div class="order-card" *ngFor="let order of activeOrders" (click)="trackOrder(order)">
+      <div class="order-card-header">
+        <div class="order-number">
+          <span class="label">Order</span>
+          <span class="number">#{{ order.orderNumber }}</span>
+        </div>
+        <span class="status-badge" [class]="getStatusClass(order.status)">{{ order.status }}</span>
+      </div>
+      <div class="order-card-items">
+        <span *ngFor="let item of order.items; let last = last">
+          {{ item.quantity }}x {{ item.itemName }}{{ last ? '' : ', ' }}
+        </span>
+      </div>
+      <div class="order-card-footer">
+        <span class="order-total">₹{{ order.totalAmount | number:'1.0-0' }}</span>
+        <span class="track-link">Track →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="orders.length === 0">
+    <p>📋 No orders yet for this table</p>
+    <button (click)="goBackToMenu()">Browse Menu</button>
+  </div>
+
+  <!-- Order More Button -->
+  <div class="order-more" *ngIf="orders.length > 0">
+    <button class="order-more-btn" (click)="goBackToMenu()">
+      ➕ Order More Items
+    </button>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading">
+    <div class="spinner"></div>
+    <p>Loading orders...</p>
+  </div>
+</ng-template>

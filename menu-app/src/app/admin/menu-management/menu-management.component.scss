@@ -136,3 +136,15 @@
     color: #155724;
   }
 }
+
+@media (max-width: 768px) {
+  .menu-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+  .add-btn { width: 100%; text-align: center; }
+  .categories-bar { gap: 8px; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .category-chip { flex-shrink: 0; }
+  .items-grid { grid-template-columns: 1fr !important; }
+  .modal-overlay .modal { margin: 10px; max-height: 90vh; }
+  .modal .form-row { grid-template-columns: 1fr !important; }
+  .modal-actions { flex-direction: column; button { width: 100%; } }
+  .item-card .item-header { flex-direction: column; gap: 4px; .item-name { max-width: 100%; } }
+}

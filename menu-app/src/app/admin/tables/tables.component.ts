@@ -21,6 +21,7 @@ export class TablesComponent implements OnInit {
   showForm = false;
   formData = { tableNumber: '', label: '', capacity: 4 };
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
   // QR Dialog
   showQrDialog = false;

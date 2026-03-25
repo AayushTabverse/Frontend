@@ -27,6 +27,10 @@ export const routes: Routes = [
     loadComponent: () => import('./customer/order-tracking/order-tracking.component').then(m => m.OrderTrackingComponent)
   },
   {
+    path: 'table-orders/:tableId',
+    loadComponent: () => import('./customer/table-orders/table-orders.component').then(m => m.TableOrdersComponent)
+  },
+  {
     path: 'ar/:itemId',
     loadComponent: () => import('./customer/ar-view/ar-view.component').then(m => m.ArViewComponent)
   },

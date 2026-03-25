@@ -154,6 +154,29 @@ export interface TableSessionSummary {
   orders: OrderResponse[];
 }
 
+// ── Bills ──
+export interface BillResponse {
+  billNumber: string;
+  tableNumber: string;
+  tableLabel?: string;
+  orderCount: number;
+  totalItems: number;
+  subTotal: number;
+  tax: number;
+  totalAmount: number;
+  completedAt: string;
+  orders: OrderResponse[];
+}
+
+export interface PaginatedBillsResponse {
+  bills: BillResponse[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalRevenue: number;
+}
+
 // ── Table ──
 export interface TableResponse {
   id: string;
@@ -210,6 +233,12 @@ export interface BusinessSettings {
   websiteUrl?: string;
   googleMapsUrl?: string;
   currencyCode?: string;
+  upiQrCodeUrl?: string;
+  printerWidth?: string;
+  directPrint?: boolean;
+  cgstPercent?: number;
+  sgstPercent?: number;
+  serviceChargePercent?: number;
 }
 
 // ── Website Content ──

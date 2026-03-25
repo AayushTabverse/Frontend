@@ -59,3 +59,13 @@
     }
   }
 }
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 14px; .stat-value { font-size: 1.4rem; } }
+  .top-items { padding: 14px; overflow-x: auto; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+}

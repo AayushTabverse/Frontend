@@ -534,8 +534,6 @@
 }
 
 @media (max-width: 768px) {
-  .admin-layout { flex-direction: column; }
-  .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px 0; }
   .form-row { grid-template-columns: 1fr; }
   .hours-row { flex-wrap: wrap; gap: 8px; }
   .hours-inputs { width: 100%; }
@@ -836,4 +834,17 @@
       font-size: 0.85rem;
     }
   }
+}
+
+@media (max-width: 768px) {
+  .editor-layout { grid-template-columns: 1fr !important; }
+  .editor-tabs { width: 100% !important; position: static !important; flex-direction: row; overflow-x: auto; border-bottom: 1px solid #eee; border-right: none !important;
+    button { white-space: nowrap; padding: 10px 16px; font-size: 0.8rem; border-bottom: 2px solid transparent; border-left: none !important;
+      &.active { border-bottom-color: var(--accent, #e94560); border-left: none !important; }
+    }
+  }
+  .editor-panel { padding: 16px !important; }
+  .form-section .form-row { grid-template-columns: 1fr !important; }
+  .hours-row .hours-inputs { flex-direction: column; gap: 8px; }
+  .section-actions { flex-wrap: wrap; button { flex: 1; min-width: 120px; } }
 }

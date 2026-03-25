@@ -24,8 +24,21 @@ export class SettingsComponent implements OnInit {
     facebookUrl: '',
     twitterUrl: '',
     websiteUrl: '',
-    googleMapsUrl: ''
+    googleMapsUrl: '',
+    upiQrCodeUrl: '',
+    printerWidth: 'standard',
+    directPrint: false,
+    cgstPercent: 2.5,
+    sgstPercent: 2.5,
+    serviceChargePercent: 0
   };
+
+  printerWidthOptions = [
+    { value: 'standard', label: 'Standard (A4 / Letter)' },
+    { value: '2inch', label: 'Thermal 2" (58mm)' },
+    { value: '3inch', label: 'Thermal 3" (80mm)' },
+    { value: '4inch', label: 'Thermal 4" (112mm)' }
+  ];
 
   loading = true;
   saving = false;
@@ -33,6 +46,7 @@ export class SettingsComponent implements OnInit {
   errorMessage = '';
   userName = '';
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
   constructor(
     private settingsService: SettingsService,

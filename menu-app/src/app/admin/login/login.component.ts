@@ -122,6 +122,14 @@ import { AuthService } from '../../services/auth.service';
         font-weight: 600;
       }
     }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 28px 20px;
+        margin: 0 16px;
+        border-radius: 12px;
+      }
+    }
   `]
 })
 export class LoginComponent {

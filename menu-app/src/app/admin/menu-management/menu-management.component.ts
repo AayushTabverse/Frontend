@@ -18,6 +18,7 @@ export class MenuManagementComponent implements OnInit {
   categories: MenuCategory[] = [];
   loading = true;
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
   // Category form
   showCategoryForm = false;

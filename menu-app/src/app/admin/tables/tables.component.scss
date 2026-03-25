@@ -282,6 +282,29 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 768px) {
+  .tables-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    margin: 16px;
+    max-width: calc(100% - 32px);
+  }
+
+  .modal-actions {
+    flex-direction: column;
+
+    button { width: 100%; }
+  }
+
+  .table-card .table-actions {
+    flex-direction: column;
+
+    .qr-btn, .delete-btn { width: 100%; text-align: center; }
+  }
+}
+
 @media (max-width: 500px) {
   .qr-dialog {
     margin: 16px;

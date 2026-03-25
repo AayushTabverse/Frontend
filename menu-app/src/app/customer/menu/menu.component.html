@@ -9,8 +9,8 @@
       <button class="theme-toggle" (click)="themeService.toggle()">
         {{ themeService.isDark() ? '☀️' : '🌙' }}
       </button>
-      <button class="cart-btn" (click)="goToCart()">
-        🛒 <span class="badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+      <button class="orders-btn" *ngIf="tableId && activeOrders.length > 0" (click)="viewOrders()">
+        📋 <span class="badge">{{ activeOrders.length }}</span>
       </button>
     </div>
   </header>
@@ -43,9 +43,17 @@
             <button class="ar-btn" *ngIf="item.arModelUrl" (click)="viewAR(item)">
               📱 View in AR
             </button>
-            <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable">
-              {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
-            </button>
+            <!-- Quantity controls when item is in cart -->
+            <div class="qty-controls" *ngIf="getItemQuantity(item) > 0; else addBtnTpl">
+              <button class="qty-btn" (click)="decrementItem(item)">−</button>
+              <span class="qty-count">{{ getItemQuantity(item) }}</span>
+              <button class="qty-btn" (click)="incrementItem(item)">+</button>
+            </div>
+            <ng-template #addBtnTpl>
+              <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable">
+                {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
+              </button>
+            </ng-template>
           </div>
         </div>
       </div>
@@ -68,11 +76,26 @@
     <a *ngIf="menu.googleMapsUrl" [href]="menu.googleMapsUrl" target="_blank" class="maps-link">📍 View on Google Maps</a>
   </footer>
 
-  <!-- Floating Call Waiter Button -->
-  <button class="call-waiter-fab" (click)="callWaiter()" [disabled]="callingWaiter || waiterCalled"
-          [class.called]="waiterCalled">
-    {{ waiterCalled ? '✅ Waiter Notified!' : (callingWaiter ? '⏳ Calling...' : '🔔 Call Waiter') }}
-  </button>
+  <!-- Bottom Action Bar -->
+  <div class="bottom-action-bar">
+    <!-- Call Waiter Button -->
+    <button class="call-waiter-fab" (click)="callWaiter()" [disabled]="callingWaiter || waiterCalled"
+            [class.called]="waiterCalled">
+      {{ waiterCalled ? '✅ Notified' : (callingWaiter ? '⏳...' : '🔔 Call Waiter') }}
+    </button>
+
+    <!-- Cart Slide Bar -->
+    <div class="cart-slide-bar" *ngIf="cartCount > 0" (click)="goToCart()">
+      <div class="cart-slide-info">
+        <span class="cart-slide-count">🛒 {{ cartCount }} item{{ cartCount > 1 ? 's' : '' }}</span>
+        <span class="cart-slide-total">₹{{ cartTotal | number:'1.0-0' }}</span>
+      </div>
+      <div class="cart-slide-action">
+        <span>View Cart</span>
+        <span class="cart-arrow">→</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <ng-template #loadingTpl>

@@ -18,6 +18,7 @@ export class StaffComponent implements OnInit {
   loading = true;
   userName = '';
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
   // Add user form
   showAddForm = false;

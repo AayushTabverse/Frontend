@@ -67,6 +67,14 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   mergedBillItems: MergedBillItem[] = [];
   clearing = false;
   restaurantName = '';
+  upiQrCodeUrl = '';
+  printerWidth = 'standard';
+  directPrint = false;
+  cgstPercent = 2.5;
+  sgstPercent = 2.5;
+  serviceChargePercent = 0;
+  billCustomerName = '';
+  billCustomerMobile = '';
 
   // General
   loading = false;
@@ -76,6 +84,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   userName = '';
   isAdmin = false;
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
   statusOptions = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed'];
   confirmCancelItemId: string | null = null;
@@ -251,7 +260,15 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
 
   loadRestaurantName(): void {
     this.settingsService.getSettings().subscribe({
-      next: (s) => this.restaurantName = s.name || 'Restaurant',
+      next: (s) => {
+        this.restaurantName = s.name || 'Restaurant';
+        this.upiQrCodeUrl = s.upiQrCodeUrl || '';
+        this.printerWidth = s.printerWidth || 'standard';
+        this.directPrint = s.directPrint || false;
+        this.cgstPercent = s.cgstPercent ?? 2.5;
+        this.sgstPercent = s.sgstPercent ?? 2.5;
+        this.serviceChargePercent = s.serviceChargePercent ?? 0;
+      },
       error: () => this.restaurantName = 'Restaurant'
     });
   }
@@ -261,6 +278,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     if (!this.selectedTable || !this.tableSession) return;
     this.billSummary = this.tableSession;
     this.mergedBillItems = this.computeMergedItems(this.tableSession);
+    this.billCustomerName = '';
+    this.billCustomerMobile = '';
     this.showBillSummary = true;
   }
 
@@ -317,12 +336,16 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.showBillSummary = false;
     this.billSummary = null;
     this.mergedBillItems = [];
+    this.billCustomerName = '';
+    this.billCustomerMobile = '';
   }
 
   closeBillSummary(): void {
     this.showBillSummary = false;
     this.billSummary = null;
     this.mergedBillItems = [];
+    this.billCustomerName = '';
+    this.billCustomerMobile = '';
     this.deselectTable();
   }
 
@@ -333,29 +356,51 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     const items = this.mergedBillItems;
     const s = this.billSummary;
     const now = new Date().toLocaleString();
+    const pw = this.printerWidth;
+
+    // Width config per printer type
+    const widthMap: Record<string, { maxWidth: string; bodyPad: string; fontSize: string; titleSize: string; grandSize: string }> = {
+      '2inch': { maxWidth: '220px', bodyPad: '4px', fontSize: '10px', titleSize: '14px', grandSize: '14px' },
+      '3inch': { maxWidth: '300px', bodyPad: '8px', fontSize: '11px', titleSize: '16px', grandSize: '16px' },
+      '4inch': { maxWidth: '420px', bodyPad: '12px', fontSize: '12px', titleSize: '18px', grandSize: '18px' },
+      'standard': { maxWidth: '400px', bodyPad: '24px', fontSize: '13px', titleSize: '22px', grandSize: '20px' }
+    };
+    const cfg = widthMap[pw] || widthMap['standard'];
+    const isThermal = pw !== 'standard';
 
     const itemRows = items.map(i =>
       `<tr><td>${i.itemName}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">₹${i.unitPrice.toFixed(0)}</td><td style="text-align:right">₹${i.totalPrice.toFixed(0)}</td></tr>`
     ).join('');
 
+    const upiSection = this.upiQrCodeUrl ? `
+      <div class="upi-section">
+        <div class="upi-divider"></div>
+        <p class="upi-label">Scan to Pay via UPI</p>
+        <img src="${this.upiQrCodeUrl}" alt="UPI QR" class="upi-qr" />
+      </div>` : '';
+
     const html = `
       <html><head><title>Bill - Table ${s.tableNumber}</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; max-width: 400px; margin: 0 auto; color: #222; }
-        .header { text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px dashed #ccc; }
-        .restaurant { font-size: 22px; font-weight: 800; color: #1a1a2e; }
-        .brand { font-size: 10px; color: #aaa; margin-top: 2px; letter-spacing: 1px; }
-        .info { text-align: center; font-size: 13px; color: #666; margin-bottom: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-        th { text-align: left; font-size: 11px; text-transform: uppercase; color: #888; border-bottom: 1px solid #ddd; padding: 6px 4px; }
-        td { padding: 5px 4px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
-        .totals { border-top: 2px dashed #ccc; padding-top: 10px; margin-top: 4px; }
-        .total-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 14px; }
-        .total-row.grand { font-size: 20px; font-weight: 800; color: #e94560; padding-top: 8px; border-top: 2px solid #1a1a2e; margin-top: 6px; }
-        .footer { text-align: center; margin-top: 20px; padding-top: 12px; border-top: 1px dashed #ccc; font-size: 12px; color: #999; }
+        body { font-family: ${isThermal ? "'Courier New', monospace" : "'Segoe UI', Arial, sans-serif"}; padding: ${cfg.bodyPad}; max-width: ${cfg.maxWidth}; margin: 0 auto; color: #222; font-size: ${cfg.fontSize}; }
+        .header { text-align: center; margin-bottom: ${isThermal ? '8px' : '16px'}; padding-bottom: ${isThermal ? '6px' : '12px'}; border-bottom: 2px dashed #ccc; }
+        .restaurant { font-size: ${cfg.titleSize}; font-weight: 800; color: #1a1a2e; }
+        .brand { font-size: ${isThermal ? '8px' : '10px'}; color: #aaa; margin-top: 2px; letter-spacing: 1px; }
+        .info { text-align: center; font-size: ${cfg.fontSize}; color: #666; margin-bottom: ${isThermal ? '6px' : '12px'}; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: ${isThermal ? '6px' : '12px'}; }
+        th { text-align: left; font-size: ${isThermal ? '9px' : '11px'}; text-transform: uppercase; color: #888; border-bottom: 1px solid #ddd; padding: ${isThermal ? '3px 2px' : '6px 4px'}; }
+        td { padding: ${isThermal ? '3px 2px' : '5px 4px'}; font-size: ${cfg.fontSize}; border-bottom: 1px solid #f0f0f0; }
+        .totals { border-top: 2px dashed #ccc; padding-top: ${isThermal ? '6px' : '10px'}; margin-top: 4px; }
+        .total-row { display: flex; justify-content: space-between; padding: ${isThermal ? '2px 0' : '3px 0'}; font-size: ${cfg.fontSize}; }
+        .total-row.grand { font-size: ${cfg.grandSize}; font-weight: 800; color: #e94560; padding-top: ${isThermal ? '4px' : '8px'}; border-top: 2px solid #1a1a2e; margin-top: ${isThermal ? '4px' : '6px'}; }
+        .upi-section { text-align: center; margin-top: ${isThermal ? '8px' : '16px'}; padding-top: ${isThermal ? '6px' : '12px'}; }
+        .upi-divider { border-top: 1px dashed #ccc; margin-bottom: ${isThermal ? '6px' : '10px'}; }
+        .upi-label { font-size: ${isThermal ? '9px' : '11px'}; font-weight: 700; color: #555; margin-bottom: ${isThermal ? '4px' : '8px'}; text-transform: uppercase; letter-spacing: 0.5px; }
+        .upi-qr { width: ${isThermal ? '120px' : '160px'}; height: ${isThermal ? '120px' : '160px'}; object-fit: contain; }
+        .footer { text-align: center; margin-top: ${isThermal ? '8px' : '20px'}; padding-top: ${isThermal ? '6px' : '12px'}; border-top: 1px dashed #ccc; font-size: ${isThermal ? '8px' : '12px'}; color: #999; }
         .footer .brand-name { font-weight: 700; background: linear-gradient(90deg, #e94560, #0f3460); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        @media print { body { padding: 8px; } }
+        @media print { body { padding: ${isThermal ? '2px' : '8px'}; } }
       </style></head><body>
         <div class="header">
           <div class="restaurant">${this.restaurantName}</div>
@@ -364,6 +409,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
         <div class="info">
           Table: <strong>${s.tableNumber}</strong>${s.tableLabel ? ' — ' + s.tableLabel : ''}<br/>
           ${now}
+          ${this.billCustomerName ? '<br/>Name: <strong>' + this.billCustomerName + '</strong>' : ''}
+          ${this.billCustomerMobile ? '<br/>Mobile: <strong>' + this.billCustomerMobile + '</strong>' : ''}
         </div>
         <table>
           <thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead>
@@ -371,9 +418,12 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
         </table>
         <div class="totals">
           <div class="total-row"><span>Subtotal</span><span>₹${s.grandSubTotal.toFixed(0)}</span></div>
-          <div class="total-row"><span>Tax</span><span>₹${s.grandTax.toFixed(0)}</span></div>
+          ${this.cgstPercent > 0 ? `<div class="total-row"><span>CGST (${this.cgstPercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.cgstPercent / 100)}</span></div>` : ''}
+          ${this.sgstPercent > 0 ? `<div class="total-row"><span>SGST (${this.sgstPercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.sgstPercent / 100)}</span></div>` : ''}
+          ${this.serviceChargePercent > 0 ? `<div class="total-row"><span>Service Charge (${this.serviceChargePercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.serviceChargePercent / 100)}</span></div>` : ''}
           <div class="total-row grand"><span>Total</span><span>₹${s.grandTotal.toFixed(0)}</span></div>
         </div>
+        ${upiSection}
         <div class="footer">
           Thank you for dining with us!<br/>
           Powered by <span class="brand-name">TabVerse</span>
@@ -381,13 +431,33 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
       </body></html>
     `;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
+    if (this.directPrint) {
+      // Silent print via hidden iframe — works with Chrome --kiosk-printing
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.top = '-10000px';
+      iframe.style.left = '-10000px';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      document.body.appendChild(iframe);
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) return;
+      doc.open();
+      doc.write(html);
+      doc.close();
+      iframe.onload = () => {
+        iframe.contentWindow?.print();
+        setTimeout(() => document.body.removeChild(iframe), 3000);
+      };
+    } else {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
   }
 
   // ── AR ──
@@ -435,6 +505,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
         }),
         this.signalR.waiterCalled$.subscribe(() => {
           this.loadTables();
+          this.playNotificationSound();
           this.successMessage = '🔔 A customer is calling for a waiter!';
           setTimeout(() => this.successMessage = '', 5000);
         }),
@@ -449,6 +520,28 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.orderService.updateOrderStatus(order.id, newStatus).subscribe({
       next: () => this.loadOrders()
     });
+  }
+
+  private playNotificationSound(): void {
+    try {
+      const ctx = new AudioContext();
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.3, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      const now = ctx.currentTime;
+      playTone(880, now, 0.15);
+      playTone(1100, now + 0.15, 0.15);
+      playTone(1320, now + 0.3, 0.3);
+    } catch {}
   }
 
   getStatusColor(status: string): string {

@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
+import { SettingsService } from '../../services/settings.service';
 import { CreateOrderRequest } from '../../models/api.models';
 
 @Component({
@@ -13,21 +14,31 @@ import { CreateOrderRequest } from '../../models/api.models';
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss'
 })
-export class CheckoutComponent {
+export class CheckoutComponent implements OnInit {
   tenantId = '';
   tableId = '';
   specialInstructions = '';
   loading = false;
   error = '';
+  totalTaxPercent = 5;
 
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
+    private settingsService: SettingsService,
     private router: Router,
     private route: ActivatedRoute
   ) {
     this.tenantId = this.route.snapshot.queryParamMap.get('tenantId') || '';
     this.tableId = this.route.snapshot.queryParamMap.get('tableId') || '';
+  }
+
+  ngOnInit(): void {
+    this.settingsService.getPublicSettings(this.tenantId).subscribe({
+      next: (s) => {
+        this.totalTaxPercent = (s.cgstPercent ?? 2.5) + (s.sgstPercent ?? 2.5) + (s.serviceChargePercent ?? 0);
+      }
+    });
   }
 
   get items() {
@@ -36,7 +47,7 @@ export class CheckoutComponent {
 
   get total() {
     const sub = this.cartService.getTotal();
-    return sub + Math.round(sub * 0.05);
+    return sub + Math.round(sub * this.totalTaxPercent / 100);
   }
 
   placeOrder(): void {

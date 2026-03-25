@@ -5,7 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
-import { OrderResponse } from '../../models/api.models';
+import { BillResponse } from '../../models/api.models';
 
 @Component({
   selector: 'app-bills',
@@ -15,17 +15,43 @@ import { OrderResponse } from '../../models/api.models';
   styleUrl: './bills.component.scss'
 })
 export class BillsComponent implements OnInit {
-  orders: OrderResponse[] = [];
+  bills: BillResponse[] = [];
   loading = false;
   userName = '';
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
   // Date filters (default: today)
   fromDate = '';
   toDate = '';
 
   totalRevenue = 0;
-  totalOrders = 0;
+  totalBills = 0;
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 15;
+  totalPages = 1;
+
+  // Expanded bill
+  expandedBill: string | null = null;
+  simpleView = false;
+
+  getMergedItems(bill: BillResponse): { name: string; quantity: number; total: number }[] {
+    const map = new Map<string, { name: string; quantity: number; total: number }>();
+    for (const order of bill.orders) {
+      for (const item of order.items) {
+        const existing = map.get(item.itemName);
+        if (existing) {
+          existing.quantity += item.quantity;
+          existing.total += item.totalPrice;
+        } else {
+          map.set(item.itemName, { name: item.itemName, quantity: item.quantity, total: item.totalPrice });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }
 
   constructor(
     private orderService: OrderService,
@@ -37,22 +63,22 @@ export class BillsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Default to today
     const today = new Date();
     this.fromDate = this.formatDate(today);
     this.toDate = this.formatDate(today);
-    this.loadHistory();
+    this.loadBills();
   }
 
-  loadHistory(): void {
+  loadBills(): void {
     if (!this.fromDate || !this.toDate) return;
     this.loading = true;
 
-    this.orderService.getOrderHistory(this.fromDate, this.toDate).subscribe({
+    this.orderService.getBills(this.fromDate, this.toDate, this.currentPage, this.pageSize).subscribe({
       next: (data) => {
-        this.orders = data;
-        this.totalOrders = data.length;
-        this.totalRevenue = data.reduce((sum, o) => sum + o.totalAmount, 0);
+        this.bills = data.bills;
+        this.totalBills = data.totalCount;
+        this.totalPages = data.totalPages;
+        this.totalRevenue = data.totalRevenue;
         this.loading = false;
       },
       error: () => {
@@ -61,13 +87,37 @@ export class BillsComponent implements OnInit {
     });
   }
 
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.expandedBill = null;
+    this.loadBills();
+  }
+
+  onSearch(): void {
+    this.currentPage = 1;
+    this.expandedBill = null;
+    this.loadBills();
+  }
+
+  toggleBill(billNumber: string): void {
+    this.expandedBill = this.expandedBill === billNumber ? null : billNumber;
+  }
+
+  get pageNumbers(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.currentPage - 2);
+    const end = Math.min(this.totalPages, this.currentPage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
   downloadCSV(): void {
     if (!this.fromDate || !this.toDate) return;
 
     const url = this.orderService.getOrderHistoryDownloadUrl(this.fromDate, this.toDate);
     const token = this.authService.getToken();
 
-    // Fetch with auth header then trigger download
     fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     })

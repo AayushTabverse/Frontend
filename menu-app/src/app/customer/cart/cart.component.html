@@ -35,9 +35,17 @@
       <span>Subtotal</span>
       <span>₹{{ getSubtotal() | number:'1.0-0' }}</span>
     </div>
-    <div class="summary-row">
-      <span>GST (5%)</span>
-      <span>₹{{ getTax() | number:'1.0-0' }}</span>
+    <div class="summary-row" *ngIf="cgstPercent > 0">
+      <span>CGST ({{ cgstPercent }}%)</span>
+      <span>₹{{ getCgst() | number:'1.0-0' }}</span>
+    </div>
+    <div class="summary-row" *ngIf="sgstPercent > 0">
+      <span>SGST ({{ sgstPercent }}%)</span>
+      <span>₹{{ getSgst() | number:'1.0-0' }}</span>
+    </div>
+    <div class="summary-row" *ngIf="serviceChargePercent > 0">
+      <span>Service Charge ({{ serviceChargePercent }}%)</span>
+      <span>₹{{ getServiceCharge() | number:'1.0-0' }}</span>
     </div>
     <div class="summary-row total">
       <span>Total</span>

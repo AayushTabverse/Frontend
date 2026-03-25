@@ -339,3 +339,15 @@
 
   .empty-state p, .loading-state { color: #777; }
 }
+
+@media (max-width: 768px) {
+  .form-row { flex-direction: column; gap: 0; }
+  .add-form { padding: 20px; }
+  .staff-table { overflow-x: auto; }
+  .actions-cell { flex-wrap: wrap; }
+  .form-actions { flex-direction: column; .cancel-btn, .save-btn { width: 100%; } }
+}
+
+@media (max-width: 480px) {
+  .add-staff-btn { width: 100%; text-align: center; }
+}

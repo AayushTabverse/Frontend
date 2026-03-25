@@ -4,6 +4,17 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
+.admin-order-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card, white);
+  border-bottom: 1px solid var(--border-light, #eee);
+
+  h1 { margin: 0; font-size: 1.2rem; flex: 1; }
+}
+
 // ── Top Bar ──
 .top-bar {
   display: flex;
@@ -607,6 +618,27 @@
   }
 }
 
+.bill-customer-info {
+  margin-top: 12px;
+
+  .bill-customer-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .bill-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: var(--bg-input, white);
+    color: var(--text-primary, #333);
+    &:focus { border-color: var(--accent, #1a1a2e); outline: none; }
+    &::placeholder { color: #aaa; }
+  }
+}
+
 .bill-actions {
   display: flex; gap: 10px; margin-top: 20px;
 }
@@ -642,4 +674,22 @@
   .orders-grid { grid-template-columns: 1fr; }
   .existing-header { flex-direction: column; align-items: flex-start; }
   .existing-totals { flex-direction: column; align-items: flex-start; }
+  .top-bar { padding: 10px 14px; .brand { font-size: 1rem; } .greeting { display: none; } }
+  .tabs { padding: 0 10px; overflow-x: auto;
+    button { padding: 10px 14px; font-size: 0.85rem; white-space: nowrap; }
+  }
+  .tab-content { padding: 14px 10px; }
+  .bill-modal .bill-content { padding: 20px; max-height: 85vh; }
+  .bill-customer-info .bill-customer-row { flex-direction: column; }
+  .bill-actions { flex-direction: column; gap: 8px;
+    button { width: 100%; }
+  }
+  .category-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px;
+    button { flex-shrink: 0; }
+  }
+}
+
+@media (max-width: 480px) {
+  .table-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .table-card { padding: 14px; .table-num { font-size: 1.1rem; } }
 }

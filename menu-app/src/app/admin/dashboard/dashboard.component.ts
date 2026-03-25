@@ -20,6 +20,7 @@ export class DashboardComponent implements OnInit {
   userName = '';
   logoUrl = '';
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
   constructor(
     private analyticsService: AnalyticsService,

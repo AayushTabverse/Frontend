@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { SignalRService } from '../../services/signalr.service';
 import { OrderResponse, OrderItemResponse } from '../../models/api.models';
@@ -17,6 +17,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   order?: OrderResponse;
   loading = true;
   tenantId = '';
+  tableId = '';
   confirmCancelItemId: string | null = null;
   cancellingItemId: string | null = null;
   private sub?: Subscription;
@@ -25,6 +26,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private orderService: OrderService,
     private signalR: SignalRService
   ) {}
@@ -32,15 +34,31 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const orderId = this.route.snapshot.paramMap.get('orderId') || '';
     this.tenantId = this.route.snapshot.queryParamMap.get('tenantId') || '';
+    this.tableId = this.route.snapshot.queryParamMap.get('tableId') || '';
 
     this.orderService.getOrder(orderId).subscribe({
       next: (order) => {
         this.order = order;
+        if (!this.tableId) this.tableId = order.tableId;
         this.loading = false;
         this.setupRealTime(orderId);
       },
       error: () => this.loading = false
     });
+  }
+
+  goBackToMenu(): void {
+    if (this.tenantId && this.tableId) {
+      this.router.navigate(['/menu', this.tenantId, this.tableId]);
+    }
+  }
+
+  viewAllOrders(): void {
+    if (this.tableId) {
+      this.router.navigate(['/table-orders', this.tableId], {
+        queryParams: { tenantId: this.tenantId }
+      });
+    }
   }
 
   private async setupRealTime(orderId: string): Promise<void> {

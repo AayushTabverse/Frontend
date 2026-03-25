@@ -19,6 +19,7 @@ import {
 })
 export class AnalyticsComponent implements OnInit {
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
   userName = '';
   loading = true;
 

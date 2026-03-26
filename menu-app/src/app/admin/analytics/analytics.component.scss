@@ -28,6 +28,16 @@
     border-color: rgba(231, 76, 60, 0.3);
     background: linear-gradient(135deg, var(--bg-card, #fff), rgba(231, 76, 60, 0.04));
   }
+
+  &.due {
+    border-color: rgba(255, 193, 7, 0.4);
+    background: linear-gradient(135deg, var(--bg-card, #fff), rgba(255, 193, 7, 0.06));
+  }
+
+  &.discount {
+    border-color: rgba(255, 152, 0, 0.4);
+    background: linear-gradient(135deg, var(--bg-card, #fff), rgba(255, 152, 0, 0.06));
+  }
 }
 
 .kpi-icon {
@@ -45,6 +55,8 @@
   &.orders-icon { background: linear-gradient(135deg, #d6eaf8, #85c1e9); }
   &.avg-icon { background: linear-gradient(135deg, #fdebd0, #f5cba7); }
   &.live-icon { background: linear-gradient(135deg, #fadbd8, #f1948a); }
+  &.due-icon { background: linear-gradient(135deg, #fff9c4, #fff176); }
+  &.discount-icon { background: linear-gradient(135deg, #ffe0b2, #ffb74d); }
 }
 
 .live-pulse {
@@ -109,6 +121,7 @@
 
   &.wide { flex: 1.8; }
   &.full-width { width: 100%; }
+  &.udhaar-card { border-left: 4px solid #ffc107; }
 }
 
 .chart-header {
@@ -584,3 +597,36 @@
   .donut-body { flex-direction: column; }
   .h-bar-name { min-width: 80px; max-width: 100px; }
 }
+
+// ═══ UDHAAR SECTION ═══
+.udhaar-summary {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light, #eee);
+
+  .udhaar-stat {
+    display: flex;
+    flex-direction: column;
+
+    .udhaar-stat-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary, #1a1a2e);
+
+      &.total-due { color: #e94560; }
+    }
+
+    .udhaar-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted, #888);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+  }
+}
+
+.customer-name { font-weight: 600; }
+.paid-amount { color: #4caf50; font-weight: 600; }
+.due-amount { color: #e94560; font-weight: 700; }

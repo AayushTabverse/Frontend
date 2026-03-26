@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, OrderResponse, LiveOrdersResponse, CreateOrderRequest, TableSessionSummary, PaginatedBillsResponse } from '../models/api.models';
+import { ApiResponse, OrderResponse, LiveOrdersResponse, CreateOrderRequest, ClearTableRequest, TableSessionSummary, PaginatedBillsResponse } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -59,8 +59,8 @@ export class OrderService {
     );
   }
 
-  clearTable(tableId: string): Observable<TableSessionSummary> {
-    return this.http.post<ApiResponse<TableSessionSummary>>(`${this.apiUrl}/clear-table/${tableId}`, {}).pipe(
+  clearTable(tableId: string, request: ClearTableRequest): Observable<TableSessionSummary> {
+    return this.http.post<ApiResponse<TableSessionSummary>>(`${this.apiUrl}/clear-table/${tableId}`, request).pipe(
       map(res => res.data!)
     );
   }

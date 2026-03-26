@@ -34,7 +34,7 @@
   <div class="hero-content">
     <div class="hero-badge animate-fade-in">
       <span class="badge-dot"></span>
-      Trusted by 500+ restaurants worldwide
+      1 Month Free Trial — No Credit Card Required
     </div>
 
     <h1 class="hero-title animate-slide-up">
@@ -60,18 +60,18 @@
 
     <div class="hero-stats animate-fade-in delay-3">
       <div class="hero-stat">
-        <span class="hero-stat-value">30%</span>
-        <span class="hero-stat-label">Faster Service</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="hero-stat">
-        <span class="hero-stat-value">2x</span>
-        <span class="hero-stat-label">Table Turnover</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="hero-stat">
         <span class="hero-stat-value">Zero</span>
         <span class="hero-stat-label">Order Errors</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">2 Min</span>
+        <span class="hero-stat-label">Setup Time</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">All-in-One</span>
+        <span class="hero-stat-label">Platform</span>
       </div>
     </div>
   </div>
@@ -145,21 +145,35 @@
   </div>
 </section>
 
-<!-- ── Brands / Social Proof ── -->
+<!-- ── Why TabVerse Strip ── -->
 <section class="brands-strip">
   <div class="brands-container">
-    <p class="brands-label">POWERING THE NEXT GENERATION OF DINING</p>
-    <div class="brands-scroll">
-      <span class="brand-item">🍕 PizzaHub</span>
-      <span class="brand-item">🍣 Sushi Express</span>
-      <span class="brand-item">🥩 Steakhouse Co.</span>
-      <span class="brand-item">🌮 Taco Bell</span>
-      <span class="brand-item">🍔 Burger Lab</span>
-      <span class="brand-item">☕ Café Noir</span>
-      <span class="brand-item">🍕 PizzaHub</span>
-      <span class="brand-item">🍣 Sushi Express</span>
-      <span class="brand-item">🥩 Steakhouse Co.</span>
-      <span class="brand-item">🌮 Taco Bell</span>
+    <p class="brands-label">EVERYTHING YOU NEED TO RUN YOUR RESTAURANT DIGITALLY</p>
+    <div class="why-strip">
+      <div class="why-item">
+        <span class="why-icon">⚡</span>
+        <span>Go Live in Minutes</span>
+      </div>
+      <div class="why-item">
+        <span class="why-icon">💳</span>
+        <span>No Credit Card Needed</span>
+      </div>
+      <div class="why-item">
+        <span class="why-icon">📱</span>
+        <span>Works on Any Device</span>
+      </div>
+      <div class="why-item">
+        <span class="why-icon">🔒</span>
+        <span>Secure & Reliable</span>
+      </div>
+      <div class="why-item">
+        <span class="why-icon">🎨</span>
+        <span>Your Own Brand Website</span>
+      </div>
+      <div class="why-item">
+        <span class="why-icon">🤖</span>
+        <span>AI-Powered Marketing</span>
+      </div>
     </div>
   </div>
 </section>
@@ -186,6 +200,16 @@
 
       <div class="feature-card" [class.active]="activeFeature === 1" (mouseenter)="selectFeature(1)">
         <div class="feature-icon-wrap">
+          <span class="feature-icon">🌐</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>Your Own Website</h3>
+        <p>Get a fully branded restaurant website with your menu, contact info, and online presence — built-in and ready to go.</p>
+        <div class="feature-tag">Branded</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 2" (mouseenter)="selectFeature(2)">
+        <div class="feature-icon-wrap">
           <span class="feature-icon">👨‍🍳</span>
           <div class="feature-glow"></div>
         </div>
@@ -194,17 +218,37 @@
         <div class="feature-tag">Real-Time</div>
       </div>
 
-      <div class="feature-card" [class.active]="activeFeature === 2" (mouseenter)="selectFeature(2)">
+      <div class="feature-card" [class.active]="activeFeature === 3" (mouseenter)="selectFeature(3)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">📒</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>Due (Udhaar) Management</h3>
+        <p>Track customer dues, settle payments partially or fully, and never lose track of pending amounts again.</p>
+        <div class="feature-tag">Finance</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 4" (mouseenter)="selectFeature(4)">
+        <div class="feature-icon-wrap">
+          <span class="feature-icon">🤖</span>
+          <div class="feature-glow"></div>
+        </div>
+        <h3>AI Marketing & Posts</h3>
+        <p>Generate stunning social media posts, promotional banners, and marketing content for your restaurant using AI.</p>
+        <div class="feature-tag">AI-Powered</div>
+      </div>
+
+      <div class="feature-card" [class.active]="activeFeature === 5" (mouseenter)="selectFeature(5)">
         <div class="feature-icon-wrap">
           <span class="feature-icon">📊</span>
           <div class="feature-glow"></div>
         </div>
         <h3>Smart Analytics</h3>
-        <p>Track revenue, top-selling items, peak hours, and order patterns with a beautiful admin dashboard.</p>
+        <p>Track revenue, top-selling items, peak hours, dues, discounts, and order patterns with a beautiful dashboard.</p>
         <div class="feature-tag">Data-Driven</div>
       </div>
 
-      <div class="feature-card" [class.active]="activeFeature === 3" (mouseenter)="selectFeature(3)">
+      <div class="feature-card" [class.active]="activeFeature === 6" (mouseenter)="selectFeature(6)">
         <div class="feature-icon-wrap">
           <span class="feature-icon">🪑</span>
           <div class="feature-glow"></div>
@@ -214,7 +258,7 @@
         <div class="feature-tag">Organized</div>
       </div>
 
-      <div class="feature-card" [class.active]="activeFeature === 4" (mouseenter)="selectFeature(4)">
+      <div class="feature-card" [class.active]="activeFeature === 7" (mouseenter)="selectFeature(7)">
         <div class="feature-icon-wrap">
           <span class="feature-icon">🔔</span>
           <div class="feature-glow"></div>
@@ -224,7 +268,7 @@
         <div class="feature-tag">Instant</div>
       </div>
 
-      <div class="feature-card" [class.active]="activeFeature === 5" (mouseenter)="selectFeature(5)">
+      <div class="feature-card" [class.active]="activeFeature === 8" (mouseenter)="selectFeature(8)">
         <div class="feature-icon-wrap">
           <span class="feature-icon">📱</span>
           <div class="feature-glow"></div>
@@ -250,16 +294,24 @@
         <span>Bill History & CSV</span>
       </div>
       <div class="bonus-item">
-        <span>🏢</span>
-        <span>Multi-Tenant SaaS</span>
-      </div>
-      <div class="bonus-item">
         <span>🔐</span>
         <span>Role-Based Access</span>
       </div>
       <div class="bonus-item">
         <span>⚡</span>
-        <span>Real-Time SignalR</span>
+        <span>Real-Time Updates</span>
+      </div>
+      <div class="bonus-item">
+        <span>🖨️</span>
+        <span>PDF Bills & Receipts</span>
+      </div>
+      <div class="bonus-item">
+        <span>💰</span>
+        <span>Discount & Offers</span>
+      </div>
+      <div class="bonus-item">
+        <span>👤</span>
+        <span>Customer Profiles</span>
       </div>
     </div>
   </div>
@@ -351,9 +403,21 @@
 <section class="stats-section">
   <div class="section-container">
     <div class="stats-grid">
-      <div class="stat-block" *ngFor="let stat of stats">
-        <span class="stat-value">{{ stat.value }}{{ stat.suffix }}</span>
-        <span class="stat-label">{{ stat.label }}</span>
+      <div class="stat-block">
+        <span class="stat-value">15+</span>
+        <span class="stat-label">Powerful Features</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-value">99.9%</span>
+        <span class="stat-label">Uptime</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-value">24/7</span>
+        <span class="stat-label">Support</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-value">30 Days</span>
+        <span class="stat-label">Free Trial</span>
       </div>
     </div>
   </div>
@@ -368,45 +432,58 @@
       <p>Start free, scale as you grow. No credit card required.</p>
     </div>
 
+    <div class="pricing-toggle">
+      <span>All plans include a <strong>1 month free trial</strong> — no credit card required</span>
+    </div>
+
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-tier">Starter</div>
         <div class="price-amount">
           <span class="currency">₹</span>
-          <span class="amount">0</span>
+          <span class="amount">999</span>
           <span class="period">/month</span>
         </div>
-        <p class="price-desc">Perfect for trying out TabVerse</p>
+        <p class="price-desc">Everything you need, pay monthly</p>
         <ul class="price-features">
-          <li>✓ Up to 10 tables</li>
+          <li>✓ Unlimited tables</li>
+          <li>✓ Unlimited staff accounts</li>
           <li>✓ QR code ordering</li>
-          <li>✓ Basic kitchen display</li>
-          <li>✓ Order tracking</li>
-          <li>✓ 1 staff account</li>
+          <li>✓ Kitchen display system</li>
+          <li>✓ Your own branded website</li>
+          <li>✓ AI marketing & posts</li>
+          <li>✓ Due (Udhaar) management</li>
+          <li>✓ Smart analytics & reports</li>
+          <li>✓ AR menu preview</li>
+          <li>✓ Call waiter</li>
+          <li>✓ Bill history & PDF export</li>
+          <li>✓ Dark mode</li>
         </ul>
-        <a routerLink="/admin/register" class="price-btn">Start Free</a>
+        <a routerLink="/admin/register" class="price-btn">Start Free Trial</a>
       </div>
 
       <div class="price-card popular">
-        <div class="popular-badge">Most Popular</div>
+        <div class="popular-badge">Most Popular — Save 8%</div>
         <div class="price-tier">Professional</div>
         <div class="price-amount">
           <span class="currency">₹</span>
-          <span class="amount">1,999</span>
-          <span class="period">/month</span>
+          <span class="amount">10,999</span>
+          <span class="period">/year</span>
         </div>
-        <p class="price-desc">For growing restaurants</p>
+        <p class="price-desc">Best value — all features, billed yearly</p>
         <ul class="price-features">
-          <li>✓ Unlimited tables</li>
           <li>✓ Everything in Starter</li>
-          <li>✓ AR menu previews</li>
-          <li>✓ Analytics dashboard</li>
-          <li>✓ Staff management</li>
-          <li>✓ Bill history & CSV export</li>
-          <li>✓ Call waiter feature</li>
-          <li>✓ Dark mode</li>
+          <li>✓ Unlimited tables</li>
+          <li>✓ Unlimited staff accounts</li>
+          <li>✓ QR code ordering</li>
+          <li>✓ Kitchen display system</li>
+          <li>✓ Your own branded website</li>
+          <li>✓ AI marketing & posts</li>
+          <li>✓ Due (Udhaar) management</li>
+          <li>✓ Smart analytics & reports</li>
+          <li>✓ Priority support</li>
         </ul>
-        <a routerLink="/admin/register" class="price-btn primary">Get Started</a>
+        <a routerLink="/admin/register" class="price-btn primary">Start Free Trial</a>
       </div>
 
       <div class="price-card">
@@ -418,14 +495,14 @@
         </div>
         <p class="price-desc">For restaurant chains</p>
         <ul class="price-features">
-          <li>✓ Everything in Pro</li>
+          <li>✓ Everything in Professional</li>
           <li>✓ Multi-location support</li>
           <li>✓ Custom branding</li>
           <li>✓ Priority support</li>
           <li>✓ API access</li>
           <li>✓ Dedicated account manager</li>
         </ul>
-        <a class="price-btn">Contact Sales</a>
+        <a href="mailto:contact@tabverse.in" class="price-btn">Contact Sales</a>
       </div>
     </div>
   </div>
@@ -487,7 +564,7 @@
   </div>
   <div class="cta-content">
     <h2>Ready to transform your restaurant?</h2>
-    <p>Join 500+ restaurants already using TabVerse. Set up in minutes, not days.</p>
+    <p>Start your 1 month free trial today. Set up in minutes, not days.</p>
     <div class="cta-actions">
       <a routerLink="/admin/register" class="btn-cta-primary">
         Start Your Free Trial
@@ -523,17 +600,15 @@
           <a>Changelog</a>
         </div>
         <div class="footer-col">
-          <h4>Company</h4>
-          <a>About</a>
-          <a>Blog</a>
-          <a>Careers</a>
-          <a>Contact</a>
+          <h4>Contact</h4>
+          <a href="tel:+918140769281">📞 8140769281</a>
+          <a href="mailto:contact@tabverse.in">✉️ contact&#64;tabverse.in</a>
         </div>
         <div class="footer-col">
           <h4>Legal</h4>
-          <a>Privacy Policy</a>
-          <a>Terms of Service</a>
-          <a>Cookie Policy</a>
+          <a (click)="openPolicy('privacy')">Privacy Policy</a>
+          <a (click)="openPolicy('terms')">Terms of Service</a>
+          <a (click)="openPolicy('cookies')">Cookie Policy</a>
         </div>
       </div>
     </div>
@@ -544,3 +619,152 @@
     </div>
   </div>
 </footer>
+
+<!-- ── Policy Dialog ── -->
+<div class="policy-overlay" *ngIf="activePolicy" (click)="closePolicy()">
+  <div class="policy-dialog" (click)="$event.stopPropagation()">
+    <div class="policy-header">
+      <h2>{{ getPolicyTitle() }}</h2>
+      <button class="policy-close" (click)="closePolicy()">✕</button>
+    </div>
+    <div class="policy-body">
+      <!-- Privacy Policy -->
+      <div *ngIf="activePolicy === 'privacy'">
+        <p><strong>Last updated:</strong> March 26, 2026</p>
+
+        <h3>1. Information We Collect</h3>
+        <p>When you register for TabVerse, we collect your name, email address, phone number, and restaurant details. When customers use your restaurant's QR ordering system, we collect order data, table information, and optionally customer name and mobile number if provided during checkout.</p>
+
+        <h3>2. How We Use Your Information</h3>
+        <p>We use collected information to:</p>
+        <ul>
+          <li>Provide and maintain the TabVerse platform and services</li>
+          <li>Process orders and manage restaurant operations</li>
+          <li>Generate analytics and reports for restaurant owners</li>
+          <li>Send service-related communications and updates</li>
+          <li>Improve our services and develop new features</li>
+          <li>Provide AI-generated marketing materials when requested</li>
+        </ul>
+
+        <h3>3. Data Storage & Security</h3>
+        <p>Your data is stored securely on Microsoft Azure cloud infrastructure with encryption at rest and in transit. We implement industry-standard security measures including JWT authentication, role-based access control, and secure API endpoints to protect your information.</p>
+
+        <h3>4. Data Sharing</h3>
+        <p>We do not sell, trade, or rent your personal information to third parties. We may share data only in the following circumstances:</p>
+        <ul>
+          <li>With your explicit consent</li>
+          <li>To comply with legal obligations or court orders</li>
+          <li>To protect the rights and safety of TabVerse and its users</li>
+        </ul>
+
+        <h3>5. Multi-Tenant Data Isolation</h3>
+        <p>TabVerse is a multi-tenant platform. Each restaurant's data is logically isolated using tenant-specific identifiers. No restaurant can access another restaurant's data, orders, staff information, or customer records.</p>
+
+        <h3>6. Your Rights</h3>
+        <p>You have the right to access, correct, or delete your personal data at any time. You can export your data (bills, orders, analytics) in CSV/PDF format. To request data deletion, contact us at contact&#64;tabverse.in.</p>
+
+        <h3>7. Data Retention</h3>
+        <p>We retain your data for as long as your account is active. Upon account deletion, all associated data including orders, bills, staff records, and customer information will be permanently removed within 30 days.</p>
+
+        <h3>8. Contact Us</h3>
+        <p>For privacy-related inquiries, contact us at:<br/>Email: contact&#64;tabverse.in<br/>Phone: +91 8140769281</p>
+      </div>
+
+      <!-- Terms of Service -->
+      <div *ngIf="activePolicy === 'terms'">
+        <p><strong>Last updated:</strong> March 26, 2026</p>
+
+        <h3>1. Acceptance of Terms</h3>
+        <p>By accessing or using TabVerse ("the Service"), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use the Service.</p>
+
+        <h3>2. Description of Service</h3>
+        <p>TabVerse is a cloud-based restaurant management platform that provides QR code-based ordering, kitchen display systems, table management, bill generation, due tracking, analytics, AI-powered marketing tools, and branded restaurant websites.</p>
+
+        <h3>3. Account Registration</h3>
+        <p>To use TabVerse, you must register and provide accurate, complete information. You are responsible for maintaining the confidentiality of your account credentials. You are responsible for all activities that occur under your account.</p>
+
+        <h3>4. Free Trial</h3>
+        <p>TabVerse offers a 1-month free trial to all new users. During the trial, you have access to all features. After the trial period, you must subscribe to a paid plan to continue using the Service. No credit card is required to start the trial.</p>
+
+        <h3>5. Subscription & Payments</h3>
+        <p>Paid plans are available on monthly (₹999/month) and yearly (₹10,999/year) billing cycles. All prices are in Indian Rupees (INR) and are inclusive of applicable taxes unless stated otherwise. Subscriptions auto-renew unless cancelled before the renewal date.</p>
+
+        <h3>6. Acceptable Use</h3>
+        <p>You agree not to:</p>
+        <ul>
+          <li>Use the Service for any unlawful purpose</li>
+          <li>Attempt to reverse engineer, hack, or compromise the platform</li>
+          <li>Share your account credentials with unauthorized parties</li>
+          <li>Upload malicious content or interfere with other users' data</li>
+          <li>Resell or redistribute the Service without written permission</li>
+        </ul>
+
+        <h3>7. Intellectual Property</h3>
+        <p>The TabVerse platform, including its design, code, logos, and features, is the intellectual property of TabVerse. Your restaurant data, menu content, and uploaded images remain your property.</p>
+
+        <h3>8. Service Availability</h3>
+        <p>We strive for 99.9% uptime but do not guarantee uninterrupted access. We may perform scheduled maintenance with prior notice. We are not liable for downtime caused by factors beyond our control.</p>
+
+        <h3>9. Termination</h3>
+        <p>You may cancel your account at any time. We reserve the right to suspend or terminate accounts that violate these terms. Upon termination, your data will be retained for 30 days before permanent deletion.</p>
+
+        <h3>10. Limitation of Liability</h3>
+        <p>TabVerse shall not be liable for any indirect, incidental, or consequential damages arising from the use of the Service. Our total liability shall not exceed the amount paid by you in the 12 months preceding the claim.</p>
+
+        <h3>11. Changes to Terms</h3>
+        <p>We may update these terms from time to time. We will notify registered users of significant changes via email. Continued use of the Service after changes constitutes acceptance of the updated terms.</p>
+
+        <h3>12. Contact</h3>
+        <p>For questions about these terms, contact us at:<br/>Email: contact&#64;tabverse.in<br/>Phone: +91 8140769281</p>
+      </div>
+
+      <!-- Cookie Policy -->
+      <div *ngIf="activePolicy === 'cookies'">
+        <p><strong>Last updated:</strong> March 26, 2026</p>
+
+        <h3>1. What Are Cookies</h3>
+        <p>Cookies are small text files stored on your device when you visit a website. They help the website remember your preferences and improve your browsing experience.</p>
+
+        <h3>2. How We Use Cookies</h3>
+        <p>TabVerse uses cookies and similar technologies for the following purposes:</p>
+
+        <h4>Essential Cookies</h4>
+        <p>These are required for the platform to function properly. They include:</p>
+        <ul>
+          <li>Authentication tokens (JWT) to keep you logged in</li>
+          <li>Session identifiers for maintaining your active session</li>
+          <li>Tenant identification for multi-restaurant data isolation</li>
+          <li>Theme preferences (light/dark mode)</li>
+        </ul>
+
+        <h4>Functional Cookies</h4>
+        <p>These enhance your experience by remembering your preferences:</p>
+        <ul>
+          <li>Language and display preferences</li>
+          <li>Cart items for customer ordering sessions</li>
+          <li>Last visited pages and navigation state</li>
+        </ul>
+
+        <h4>Analytics Cookies</h4>
+        <p>We may use analytics tools to understand how users interact with the platform. This helps us improve features and user experience. No personally identifiable information is shared with third-party analytics services.</p>
+
+        <h3>3. Third-Party Cookies</h3>
+        <p>TabVerse does not use third-party advertising cookies. We do not serve ads on the platform. Any third-party services integrated (such as payment gateways) may set their own cookies subject to their respective privacy policies.</p>
+
+        <h3>4. Managing Cookies</h3>
+        <p>You can control cookies through your browser settings. Note that disabling essential cookies may prevent you from using certain features of TabVerse, such as staying logged in or placing orders.</p>
+
+        <h3>5. Local Storage</h3>
+        <p>In addition to cookies, we use browser local storage to store:</p>
+        <ul>
+          <li>Authentication tokens for secure API access</li>
+          <li>Cart data for a seamless ordering experience</li>
+          <li>User preferences and theme settings</li>
+        </ul>
+
+        <h3>6. Contact</h3>
+        <p>For questions about our cookie practices, contact us at:<br/>Email: contact&#64;tabverse.in<br/>Phone: +91 8140769281</p>
+      </div>
+    </div>
+  </div>
+</div>

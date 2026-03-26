@@ -7,8 +7,9 @@ import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import {
-  DashboardSummary, TopItem, SalesData, PeakHour, OrderResponse
+  DashboardSummary, TopItem, SalesData, PeakHour, OrderResponse, CustomerDue
 } from '../../models/api.models';
+import { DueService } from '../../services/due.service';
 
 @Component({
   selector: 'app-analytics',
@@ -29,6 +30,7 @@ export class AnalyticsComponent implements OnInit {
   topItems: TopItem[] = [];
   peakHours: PeakHour[] = [];
   recentOrders: OrderResponse[] = [];
+  unsettledDues: CustomerDue[] = [];
 
   // Filters
   salesRange = '7'; // days
@@ -53,7 +55,8 @@ export class AnalyticsComponent implements OnInit {
     private orderService: OrderService,
     private authService: AuthService,
     private router: Router,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private dueService: DueService
   ) {
     this.authService.currentUser$.subscribe(u => this.userName = u?.fullName || '');
   }
@@ -69,6 +72,7 @@ export class AnalyticsComponent implements OnInit {
     this.loadTopItems();
     this.loadPeakHours();
     this.loadRecentOrders();
+    this.loadUnsettledDues();
   }
 
   loadDashboard(): void {
@@ -127,6 +131,12 @@ export class AnalyticsComponent implements OnInit {
         this.recentOrders = orders.slice(0, 20);
         this.computeStatusDistribution(orders);
       }
+    });
+  }
+
+  loadUnsettledDues(): void {
+    this.dueService.getDues().subscribe({
+      next: (dues) => this.unsettledDues = dues
     });
   }
 
@@ -231,5 +241,9 @@ export class AnalyticsComponent implements OnInit {
   getItemsPreview(items: any[]): string {
     const names = items.slice(0, 2).map(i => i.itemName);
     return names.join(', ') + (items.length > 2 ? '...' : '');
+  }
+
+  getTotalUnsettledDue(): number {
+    return this.unsettledDues.reduce((sum, d) => sum + d.dueAmount, 0);
   }
 }

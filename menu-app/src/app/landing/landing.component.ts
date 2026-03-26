@@ -13,58 +13,23 @@ export class LandingComponent implements OnInit, OnDestroy {
   scrolled = false;
   activeFeature = 0;
   currentYear = new Date().getFullYear();
-
-  stats = [
-    { value: 0, target: 500, suffix: '+', label: 'Restaurants' },
-    { value: 0, target: 1, suffix: 'M+', label: 'Orders Served' },
-    { value: 0, target: 99.9, suffix: '%', label: 'Uptime' },
-    { value: 0, target: 4.9, suffix: '★', label: 'Rating' }
-  ];
+  activePolicy: string | null = null;
 
   private featureInterval: any;
-  private statsAnimated = false;
 
   @HostListener('window:scroll')
   onScroll(): void {
     this.scrolled = window.scrollY > 50;
-
-    if (!this.statsAnimated) {
-      const statsSection = document.querySelector('.stats-section');
-      if (statsSection) {
-        const rect = statsSection.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.8) {
-          this.animateStats();
-          this.statsAnimated = true;
-        }
-      }
-    }
   }
 
   ngOnInit(): void {
     this.featureInterval = setInterval(() => {
-      this.activeFeature = (this.activeFeature + 1) % 6;
+      this.activeFeature = (this.activeFeature + 1) % 9;
     }, 3000);
   }
 
   ngOnDestroy(): void {
     if (this.featureInterval) clearInterval(this.featureInterval);
-  }
-
-  animateStats(): void {
-    this.stats.forEach((stat, i) => {
-      const duration = 2000;
-      const steps = 60;
-      const increment = stat.target / steps;
-      let current = 0;
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= stat.target) {
-          current = stat.target;
-          clearInterval(timer);
-        }
-        this.stats[i] = { ...stat, value: Math.round(current * 10) / 10 };
-      }, duration / steps);
-    });
   }
 
   selectFeature(index: number): void {
@@ -73,5 +38,24 @@ export class LandingComponent implements OnInit, OnDestroy {
 
   scrollTo(id: string): void {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  openPolicy(type: string): void {
+    this.activePolicy = type;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closePolicy(): void {
+    this.activePolicy = null;
+    document.body.style.overflow = '';
+  }
+
+  getPolicyTitle(): string {
+    switch (this.activePolicy) {
+      case 'privacy': return 'Privacy Policy';
+      case 'terms': return 'Terms of Service';
+      case 'cookies': return 'Cookie Policy';
+      default: return '';
+    }
   }
 }

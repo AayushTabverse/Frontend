@@ -5,7 +5,8 @@ import { AnalyticsService } from '../../services/analytics.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
-import { DashboardSummary } from '../../models/api.models';
+import { DueService } from '../../services/due.service';
+import { DashboardSummary, CustomerDue } from '../../models/api.models';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -21,13 +22,15 @@ export class DashboardComponent implements OnInit {
   logoUrl = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  unsettledDues: CustomerDue[] = [];
 
   constructor(
     private analyticsService: AnalyticsService,
     private authService: AuthService,
     private router: Router,
     public themeService: ThemeService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private dueService: DueService
   ) {
     this.userName = this.authService.currentUser$
       ? '' : '';
@@ -45,6 +48,10 @@ export class DashboardComponent implements OnInit {
 
     this.settingsService.getSettings().subscribe({
       next: (s) => this.logoUrl = s.logoUrl || ''
+    });
+
+    this.dueService.getDues().subscribe({
+      next: (dues) => this.unsettledDues = dues.slice(0, 10)
     });
   }
 

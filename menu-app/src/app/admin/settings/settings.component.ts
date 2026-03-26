@@ -49,6 +49,7 @@ export class SettingsComponent implements OnInit {
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
   uploading: { [key: string]: boolean } = {};
+  settingsSubmitted = false;
 
   constructor(
     private settingsService: SettingsService,
@@ -74,6 +75,16 @@ export class SettingsComponent implements OnInit {
   }
 
   save(): void {
+    this.settingsSubmitted = true;
+    if (!this.settings.name?.trim()) {
+      this.errorMessage = 'Restaurant name is required.';
+      return;
+    }
+    if (this.settings.phone && this.settings.phone.length !== 10) {
+      this.errorMessage = 'Phone number must be exactly 10 digits.';
+      return;
+    }
+
     this.saving = true;
     this.successMessage = '';
     this.errorMessage = '';
@@ -116,5 +127,11 @@ export class SettingsComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/admin/login']);
+  }
+
+  onlyNumbers(event: KeyboardEvent): void {
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
   }
 }

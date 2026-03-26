@@ -84,11 +84,22 @@
       outline: none;
       border-color: #e74c3c;
     }
+
+    &.invalid {
+      border-color: #e94560;
+    }
   }
 
   select {
     cursor: pointer;
     background: white;
+  }
+
+  .field-error {
+    font-size: 0.75rem;
+    color: #e94560;
+    margin-top: 2px;
+    display: block;
   }
 }
 

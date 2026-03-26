@@ -13,6 +13,7 @@
     <a routerLink="/admin/website" routerLinkActive="active" data-tooltip="Website" (click)="mobileSidebarOpen = false">🌐 <span class="nav-text">Website</span></a>
     <a routerLink="/admin/settings" routerLinkActive="active" data-tooltip="Settings" (click)="mobileSidebarOpen = false">⚙️ <span class="nav-text">Settings</span></a>
     <a routerLink="/admin/bills" routerLinkActive="active" data-tooltip="Bills" (click)="mobileSidebarOpen = false">🧾 <span class="nav-text">Bills</span></a>
+    <a routerLink="/admin/dues" routerLinkActive="active" data-tooltip="Udhaar" (click)="mobileSidebarOpen = false">📒 <span class="nav-text">Udhaar</span></a>
     <a routerLink="/waiter" routerLinkActive="active" data-tooltip="Take Order" (click)="mobileSidebarOpen = false">🛎️ <span class="nav-text">Take Order</span></a>
     <button class="logout-btn" data-tooltip="Logout" (click)="logout()">🚪 <span class="nav-text">Logout</span></button>
   </nav>
@@ -73,7 +74,9 @@
             <th>Table</th>
             <th>Orders</th>
             <th>Items</th>
+            <th>Discount</th>
             <th>Total</th>
+            <th>Due</th>
             <th>Date</th>
             <th>Time</th>
           </tr>
@@ -86,18 +89,24 @@
               <td>{{ bill.tableNumber }}{{ bill.tableLabel ? ' — ' + bill.tableLabel : '' }}</td>
               <td class="center">{{ bill.orderCount }}</td>
               <td class="center">{{ bill.totalItems }}</td>
+              <td class="amount discount-col">{{ bill.discountAmount > 0 ? '₹' + (bill.discountAmount | number:'1.0-0') : '—' }}</td>
               <td class="amount">₹{{ bill.totalAmount | number:'1.0-0' }}</td>
+              <td class="amount due-col" [class.has-due]="bill.dueAmount > 0">{{ bill.dueAmount > 0 ? '₹' + (bill.dueAmount | number:'1.0-0') : '—' }}</td>
               <td>{{ bill.completedAt | date:'mediumDate' }}</td>
               <td>{{ bill.completedAt | date:'shortTime' }}</td>
             </tr>
             <!-- Expanded order details -->
             <tr *ngIf="expandedBill === bill.billNumber" class="detail-row">
-              <td colspan="8">
+              <td colspan="10">
                 <div class="bill-detail">
                   <div class="detail-summary">
                     <span>Subtotal: <strong>₹{{ bill.subTotal | number:'1.0-0' }}</strong></span>
                     <span>Tax: <strong>₹{{ bill.tax | number:'1.0-0' }}</strong></span>
+                    <span *ngIf="bill.discountAmount > 0">Discount: <strong class="discount-highlight">₹{{ bill.discountAmount | number:'1.0-0' }}</strong></span>
                     <span>Total: <strong class="total-highlight">₹{{ bill.totalAmount | number:'1.0-0' }}</strong></span>
+                    <span *ngIf="bill.dueAmount > 0">Due (Udhaar): <strong class="due-highlight">₹{{ bill.dueAmount | number:'1.0-0' }}</strong></span>
+                    <span *ngIf="bill.customerName">Customer: <strong>{{ bill.customerName }}</strong></span>
+                    <span *ngIf="bill.customerMobile">Mobile: <strong>{{ bill.customerMobile }}</strong></span>
                   </div>
 
                   <!-- Simple view: merged items -->

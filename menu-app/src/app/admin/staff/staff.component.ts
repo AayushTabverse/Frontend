@@ -26,6 +26,7 @@ export class StaffComponent implements OnInit {
   adding = false;
   formError = '';
   successMessage = '';
+  staffSubmitted = false;
 
   constructor(
     private authService: AuthService,
@@ -54,6 +55,7 @@ export class StaffComponent implements OnInit {
     this.showAddForm = true;
     this.newUser = { fullName: '', email: '', password: '', phone: '', role: 'Waiter' };
     this.formError = '';
+    this.staffSubmitted = false;
   }
 
   cancelAdd(): void {
@@ -62,12 +64,21 @@ export class StaffComponent implements OnInit {
   }
 
   addUser(): void {
+    this.staffSubmitted = true;
     if (!this.newUser.fullName || !this.newUser.email || !this.newUser.password) {
       this.formError = 'Name, email and password are required.';
       return;
     }
+    if (!this.isValidEmail(this.newUser.email)) {
+      this.formError = 'Please enter a valid email address.';
+      return;
+    }
     if (this.newUser.password.length < 6) {
       this.formError = 'Password must be at least 6 characters.';
+      return;
+    }
+    if (this.newUser.phone && this.newUser.phone.length !== 10) {
+      this.formError = 'Phone number must be exactly 10 digits.';
       return;
     }
 
@@ -131,5 +142,15 @@ export class StaffComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/admin/login']);
+  }
+
+  isValidEmail(email: string): boolean {
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+  }
+
+  onlyNumbers(event: KeyboardEvent): void {
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
   }
 }

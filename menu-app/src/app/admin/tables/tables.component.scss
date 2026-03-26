@@ -8,8 +8,15 @@
 }
 .form-group {
   margin-bottom: 12px;
-  label { display: block; margin-bottom: 4px; font-size: 0.85rem; font-weight: 600; }
-  input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+  label {
+    display: block; margin-bottom: 4px; font-size: 0.85rem; font-weight: 600;
+    .req { color: #e94560; }
+  }
+  input {
+    width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;
+    &.invalid { border-color: #e94560; }
+  }
+  .field-error { font-size: 0.75rem; color: #e94560; margin-top: 2px; display: block; }
 }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
@@ -325,5 +332,54 @@
   .qr-actions {
     flex-direction: column;
     button { width: 100%; }
+  }
+}
+
+// ═══ DARK MODE OVERRIDES ═══
+:host-context(body.dark-mode) {
+  .btn-secondary { background: var(--bg-hover); color: var(--text-primary); }
+
+  .modal {
+    background: var(--bg-card);
+    h2 { color: var(--text-primary); }
+  }
+
+  .form-group {
+    label { color: var(--text-secondary); }
+    input { border-color: var(--border-color); background: var(--bg-input); color: var(--text-primary); }
+  }
+
+  .table-card {
+    background: var(--bg-card); box-shadow: 0 2px 8px var(--shadow);
+    .table-info {
+      h3 { color: var(--text-primary); }
+      p { color: var(--text-secondary); }
+      .status { background: #3d1515; color: #fca5a5;
+        &.active { background: #14532d; color: #a7f3d0; }
+      }
+    }
+    .table-actions {
+      .qr-btn { background: var(--accent); }
+      .delete-btn { background: #3d1515; color: #fca5a5; }
+    }
+    .qr-data small { color: var(--text-muted); }
+  }
+
+  .qr-dialog {
+    background: var(--bg-card);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .qr-close { color: var(--text-muted); &:hover { background: var(--bg-hover); color: var(--text-primary); } }
+
+  .print-template {
+    border-color: var(--border-color);
+    .restaurant-name { color: var(--text-primary); }
+    .table-num { color: var(--accent); }
+    .table-label { color: var(--text-muted); }
+    .qr-frame { background: var(--bg-hover); border-color: var(--accent); }
+    .scan-title { color: var(--text-primary); }
+    .scan-sub { color: var(--text-muted); }
+    .steps span { color: var(--accent); background: rgba(233, 69, 96, 0.1); }
+    .brand-footer { border-top-color: var(--border-color); .powered { color: var(--text-muted); } }
   }
 }

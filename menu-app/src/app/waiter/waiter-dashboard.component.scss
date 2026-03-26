@@ -626,8 +626,228 @@
     gap: 10px;
   }
 
-  .bill-input {
+  .customer-autocomplete-wrapper {
     flex: 1;
+    position: relative;
+
+    .field-error {
+      font-size: 0.75rem;
+      color: #e94560;
+      margin-top: 2px;
+      display: block;
+    }
+  }
+
+  .bill-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: var(--bg-input, white);
+    color: var(--text-primary, #333);
+    &:focus { border-color: var(--accent, #1a1a2e); outline: none; }
+    &::placeholder { color: #aaa; }
+  }
+
+  .customer-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card, white);
+    border: 1px solid var(--border-color, #ddd);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+
+    .suggestion-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      border-bottom: 1px solid var(--border-color, #f0f0f0);
+      transition: background 0.15s;
+
+      &:hover { background: var(--bg-hover, #f5f5ff); }
+      &:last-child { border-bottom: none; }
+
+      .suggestion-name {
+        font-weight: 600;
+        color: var(--text-primary, #333);
+      }
+
+      .suggestion-mobile {
+        color: var(--text-secondary, #888);
+        font-size: 0.78rem;
+      }
+    }
+  }
+}
+
+// ── Previous Dues Alert ──
+.previous-dues-alert {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  color: #856404;
+
+  .dues-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .dues-list {
+    .due-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      padding: 2px 0;
+      .due-amount { font-weight: 700; }
+    }
+  }
+}
+
+.dues-loading {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+// ── Discount Section ──
+.bill-discount-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  .discount-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    color: var(--text-primary, #333);
+  }
+
+  .discount-input {
+    width: 120px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--bg-input, white);
+    color: var(--text-primary, #333);
+    &:focus { border-color: var(--accent, #1a1a2e); outline: none; }
+  }
+}
+
+// ── Grand Total Extras ──
+.grand-row.discount {
+  color: #27ae60;
+}
+
+.grand-row.previous-due {
+  color: #e67e22;
+}
+
+// ── Payment Section ──
+.bill-payment-section {
+  margin-top: 14px;
+
+  .payment-mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid var(--border-color, #ddd);
+      border-radius: 8px;
+      background: var(--bg-input, white);
+      color: var(--text-primary, #333);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &.active {
+        border-color: #e94560;
+        background: rgba(233, 69, 96, 0.08);
+        color: #e94560;
+      }
+
+      &:hover:not(.active) {
+        border-color: #aaa;
+      }
+    }
+  }
+
+  .partial-payment {
+    padding: 10px 14px;
+    background: var(--bg-card, #f9f9f9);
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #ddd);
+
+    .partial-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        color: var(--text-primary, #333);
+      }
+
+      .bill-input {
+        width: 140px;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color, #ddd);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: var(--bg-input, white);
+        color: var(--text-primary, #333);
+        &:focus { border-color: var(--accent, #1a1a2e); outline: none; }
+      }
+    }
+
+    .partial-due-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--text-primary, #333);
+
+      .due-highlight {
+        font-size: 1.1rem;
+        color: #e94560;
+      }
+    }
+
+    .partial-warning {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #e67e22;
+    }
+  }
+}
+
+// ── Notes Section ──
+.bill-notes-section {
+  margin-top: 10px;
+
+  .bill-input {
+    width: 100%;
     padding: 9px 12px;
     border: 1px solid var(--border-color, #ddd);
     border-radius: 8px;
@@ -692,4 +912,119 @@
 @media (max-width: 480px) {
   .table-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
   .table-card { padding: 14px; .table-num { font-size: 1.1rem; } }
+}
+
+// ═══════════════════════════
+//    DARK MODE OVERRIDES
+// ═══════════════════════════
+:host-context(body.dark-mode) {
+  .waiter-dashboard { background: var(--bg-primary); }
+  .top-bar { background: var(--bg-header); }
+
+  .toast {
+    &.success { background: #1b4332; color: #a7f3d0; }
+    &.error { background: #7f1d1d; color: #fca5a5; }
+  }
+
+  .tabs {
+    background: var(--bg-card);
+    border-bottom-color: var(--border-color);
+    button {
+      color: var(--text-muted);
+      &.active { color: var(--accent); }
+      &:hover { color: var(--text-primary); }
+    }
+  }
+
+  .section h2 { color: var(--text-primary); }
+
+  .table-card {
+    background: var(--bg-card);
+    box-shadow: 0 2px 8px var(--shadow);
+    .table-number { color: var(--text-primary); }
+    .table-label { color: var(--text-muted); }
+    .table-capacity { color: var(--text-secondary); }
+    .table-status {
+      background: #3d1515; color: #fca5a5;
+      &.active { background: #14532d; color: #a7f3d0; }
+      &.occupied { background: #78350f; color: #fde68a; }
+    }
+    &.occupied { background: #1e1a0f; border-color: #f39c12; }
+    &.calling { background: #1e0f12; border-color: #e94560; }
+  }
+
+  .builder-header .table-meta { color: var(--text-muted); }
+  .back-btn { border-color: var(--border-color); color: var(--text-primary); &:hover { background: var(--bg-hover); } }
+
+  .menu-panel { background: var(--bg-card); box-shadow: 0 2px 8px var(--shadow); }
+  .category-tabs { border-bottom-color: var(--border-color);
+    button { color: var(--text-muted); &.active { color: var(--accent); } &:hover { color: var(--text-primary); } }
+  }
+
+  .menu-item-card { border-bottom-color: var(--border-light); }
+  .item-details {
+    .item-name { color: var(--text-primary); }
+    .item-desc { color: var(--text-muted); }
+  }
+
+  .qty-control {
+    border-color: var(--border-color);
+    button { background: var(--bg-hover); &:hover { background: var(--border-color); } }
+    span { color: var(--text-primary); }
+  }
+
+  .cart-panel {
+    background: var(--bg-card); box-shadow: 0 2px 8px var(--shadow);
+    h3 { color: var(--text-primary); .item-count { color: var(--text-muted); } }
+  }
+  .empty-cart { color: var(--text-muted); }
+  .cart-row { border-bottom-color: var(--border-light); }
+  .cart-item-info .item-note { border-color: var(--border-light); color: var(--text-secondary); background: var(--bg-input); }
+  .cart-item-controls .cart-item-price { color: var(--text-primary); }
+  .remove-btn { &:hover { background: #3d1515; } }
+  .special-instructions { border-color: var(--border-light); background: var(--bg-input); color: var(--text-primary); }
+  .cart-total { color: var(--text-primary); }
+  .place-order-btn:disabled { background: var(--border-color); }
+
+  .count {
+    &.pending { background: #78350f; color: #fde68a; }
+    &.preparing { background: #7c2d12; color: #fed7aa; }
+    &.ready { background: #14532d; color: #a7f3d0; }
+  }
+
+  .order-card { background: var(--bg-card); box-shadow: 0 2px 8px var(--shadow); }
+  .order-header .table-badge { background: #1e1b4b; color: #a5b4fc; }
+  .order-item-row .order-item-info .notes { color: var(--text-muted); }
+  .order-item-row .order-item-actions .item-price { color: var(--text-secondary); }
+  .order-item-row .order-item-actions .cancel-confirm-inline .cancel-no { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); }
+  .order-footer { border-top-color: var(--border-color); .total { color: var(--text-primary); } .time { color: var(--text-muted); } }
+  .empty-state, .loading-state { color: var(--text-muted); }
+
+  .occupied-tag { background: #78350f; color: #fde68a; }
+  .existing-orders { background: var(--bg-card); box-shadow: 0 2px 8px var(--shadow); }
+  .existing-totals .running-total { color: var(--text-primary); }
+  .existing-order-card { background: var(--bg-hover); }
+  .eo-header .eo-time { color: var(--text-muted); }
+  .eo-items .eo-item-row .eo-item { color: var(--text-secondary); background: var(--border-color); }
+  .eo-items .eo-item-row .eo-item-price { color: var(--text-muted); }
+  .eo-items .eo-item-row .cancel-confirm-inline .cancel-no { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); }
+  .eo-total { color: var(--text-primary); }
+
+  .bill-modal { background: var(--bg-card); box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    h2 { color: var(--text-primary); }
+  }
+  .bill-header-section .bill-restaurant { color: var(--text-primary); }
+  .bill-divider { background: var(--border-color); &.dashed { border-top-color: var(--border-color); } }
+  .bill-table-header { border-bottom-color: var(--border-color); color: var(--text-muted); }
+  .bill-table-row { border-bottom-color: var(--border-light);
+    .col-item { color: var(--text-primary); }
+    .col-qty { color: var(--text-secondary); }
+    .col-price { color: var(--text-muted); }
+    .col-total { color: var(--text-primary); }
+  }
+  .grand-row { color: var(--text-primary);
+    &.total { border-top-color: var(--border-color); }
+  }
+
+  .cancel-bill-btn { background: var(--bg-hover); color: var(--text-secondary); &:hover { background: var(--border-color); } }
 }

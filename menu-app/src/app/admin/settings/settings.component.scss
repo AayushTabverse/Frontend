@@ -50,6 +50,8 @@
     font-size: 0.85rem;
     color: #333;
     font-weight: 600;
+
+    .req { color: #e94560; }
   }
 
   input {
@@ -62,6 +64,14 @@
     background: var(--bg-input, white);
     color: var(--text-primary, #333);
     &:focus { border-color: var(--accent, #1a1a2e); outline: none; }
+    &.invalid { border-color: #e94560; }
+  }
+
+  .field-error {
+    font-size: 0.75rem;
+    color: #e94560;
+    margin-top: 2px;
+    display: block;
   }
 }
 

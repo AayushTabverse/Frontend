@@ -107,6 +107,7 @@ export interface OrderResponse {
   type: string;
   subTotal: number;
   tax: number;
+  discountAmount: number;
   totalAmount: number;
   specialInstructions?: string;
   estimatedMinutes: number;
@@ -150,7 +151,10 @@ export interface TableSessionSummary {
   activeOrderCount: number;
   grandSubTotal: number;
   grandTax: number;
+  grandDiscount: number;
   grandTotal: number;
+  paidAmount: number;
+  dueAmount: number;
   orders: OrderResponse[];
 }
 
@@ -163,7 +167,12 @@ export interface BillResponse {
   totalItems: number;
   subTotal: number;
   tax: number;
+  discountAmount: number;
   totalAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+  customerName?: string;
+  customerMobile?: string;
   completedAt: string;
   orders: OrderResponse[];
 }
@@ -198,6 +207,9 @@ export interface DashboardSummary {
   todayOrderCount: number;
   liveOrderCount: number;
   avgOrderValue: number;
+  totalUnsettledDues: number;
+  unsettledDueCount: number;
+  todayDiscountGiven: number;
   topItems: TopItem[];
 }
 
@@ -411,4 +423,32 @@ export interface SubdomainResponse {
 
 export interface ClaimSubdomainRequest {
   subdomain: string;
+}
+
+// ── Clear Table / Discount / Dues ──
+export interface ClearTableRequest {
+  discountAmount: number;
+  paidAmount: number;
+  customerName?: string;
+  customerMobile?: string;
+  notes?: string;
+}
+
+export interface CustomerDue {
+  id: string;
+  customerName: string;
+  customerMobile?: string;
+  billNumber?: string;
+  billAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+  isSettled: boolean;
+  settledAt?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CustomerDueSearchResult {
+  dues: CustomerDue[];
+  totalDue: number;
 }

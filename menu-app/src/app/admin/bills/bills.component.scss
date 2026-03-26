@@ -114,6 +114,8 @@
 
   .bill-num { font-weight: 700; color: #1a1a2e; }
   .amount { font-weight: 700; color: #e94560; }
+  .discount-col { color: #ff9800 !important; }
+  .due-col.has-due { color: #f44336 !important; }
   .center { text-align: center; }
 }
 
@@ -135,6 +137,14 @@
     .total-highlight {
       color: #e94560;
       font-size: 1rem;
+    }
+
+    .discount-highlight {
+      color: #ff9800;
+    }
+
+    .due-highlight {
+      color: #f44336;
     }
   }
 
@@ -292,4 +302,64 @@
 @media (max-width: 480px) {
   .bill-detail { padding: 12px; }
   .summary-item { padding: 10px 12px; }
+}
+
+// ═══ DARK MODE OVERRIDES ═══
+:host-context(body.dark-mode) {
+  .filter-group {
+    label { color: var(--text-secondary); }
+    input { border-color: var(--border-color); background: var(--bg-input); color: var(--text-primary); &:focus { border-color: var(--accent); } }
+  }
+
+  .filter-btn { background: var(--accent); &:hover { background: var(--accent-hover); } &:disabled { background: var(--border-color); } }
+
+  .summary-item {
+    background: var(--bg-card);
+    box-shadow: 0 2px 8px var(--shadow);
+    .label { color: var(--text-muted); }
+    .value { color: var(--text-primary); }
+  }
+
+  .bills-table {
+    th { background: var(--bg-hover); border-bottom-color: var(--border-color); color: var(--text-secondary); }
+    td { border-bottom-color: var(--border-light); color: var(--text-primary); }
+    .bill-row {
+      &:hover td { background: var(--bg-hover); }
+      &.expanded td { background: #1a1a3e; border-bottom-color: #2a2a4e; }
+    }
+    .expand-icon { color: var(--text-muted); }
+    .bill-num { color: var(--text-primary); }
+  }
+
+  .detail-row td { background: var(--bg-hover) !important; }
+
+  .bill-detail {
+    .detail-summary { color: var(--text-secondary); }
+    .order-card {
+      background: var(--bg-card); border-color: var(--border-color);
+      .order-card-header .order-num { color: var(--text-primary); }
+      .order-card-header .order-time { color: var(--text-muted); }
+      .order-items { color: var(--text-secondary); }
+    }
+  }
+
+  .pagination button {
+    border-color: var(--border-color); background: var(--bg-card); color: var(--text-primary);
+    &:hover:not(:disabled):not(.active) { background: var(--bg-hover); }
+    &:disabled { color: var(--text-muted); border-color: var(--border-light); }
+    &.active { background: var(--accent); color: white; border-color: var(--accent); }
+  }
+  .pagination .page-info { color: var(--text-muted); }
+
+  .view-toggle {
+    input[type="checkbox"] { accent-color: var(--accent); }
+  }
+
+  .merged-items .items-table {
+    background: var(--bg-card); border-color: var(--border-color);
+    th { background: var(--bg-hover); border-bottom-color: var(--border-color); color: var(--text-muted); }
+    td { border-bottom-color: var(--border-light); color: var(--text-primary); }
+  }
+
+  .empty-state, .loading-state { color: var(--text-muted); }
 }

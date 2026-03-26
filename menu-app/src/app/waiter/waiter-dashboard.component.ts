@@ -12,9 +12,13 @@ import { SettingsService } from '../services/settings.service';
 import {
   TableResponse, MenuCategory, MenuItem,
   CreateOrderRequest, CreateOrderItemRequest,
-  OrderResponse, OrderItemResponse, LiveOrdersResponse, TableSessionSummary
+  OrderResponse, OrderItemResponse, LiveOrdersResponse, TableSessionSummary,
+  ClearTableRequest, CustomerDue, CustomerDueSearchResult
 } from '../models/api.models';
-import { Subscription } from 'rxjs';
+import { DueService } from '../services/due.service';
+import { CustomerService, CustomerSearchResult } from '../services/customer.service';
+import { Subscription, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 interface WaiterCartItem {
   menuItem: MenuItem;
@@ -75,6 +79,16 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   serviceChargePercent = 0;
   billCustomerName = '';
   billCustomerMobile = '';
+  billDiscountAmount = 0;
+  billPaidAmount = 0;
+  billPaymentMode: 'full' | 'partial' = 'full';
+  billNotes = '';
+  previousDues: CustomerDue[] = [];
+  previousDueTotal = 0;
+  loadingDues = false;
+  customerSuggestions: CustomerSearchResult[] = [];
+  showCustomerSuggestions = false;
+  private customerSearch$ = new Subject<string>();
 
   // General
   loading = false;
@@ -98,6 +112,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private signalR: SignalRService,
     private settingsService: SettingsService,
+    private dueService: DueService,
+    private customerService: CustomerService,
     public themeService: ThemeService,
     private router: Router
   ) {}
@@ -111,6 +127,24 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.loadOrders();
     this.loadRestaurantName();
     this.setupRealTime();
+
+    // Customer autocomplete
+    this.subs.push(
+      this.customerSearch$.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => this.customerService.search(q))
+      ).subscribe({
+        next: (results) => {
+          this.customerSuggestions = results;
+          this.showCustomerSuggestions = results.length > 0;
+        },
+        error: () => {
+          this.customerSuggestions = [];
+          this.showCustomerSuggestions = false;
+        }
+      })
+    );
   }
 
   // ── Tables ──
@@ -280,6 +314,12 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.mergedBillItems = this.computeMergedItems(this.tableSession);
     this.billCustomerName = '';
     this.billCustomerMobile = '';
+    this.billDiscountAmount = 0;
+    this.billPaidAmount = 0;
+    this.billPaymentMode = 'full';
+    this.billNotes = '';
+    this.previousDues = [];
+    this.previousDueTotal = 0;
     this.showBillSummary = true;
   }
 
@@ -310,7 +350,16 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     if (!this.selectedTable) return;
     this.clearing = true;
 
-    this.orderService.clearTable(this.selectedTable.id).subscribe({
+    const finalTotal = this.getBillFinalTotal();
+    const request: ClearTableRequest = {
+      discountAmount: this.billDiscountAmount || 0,
+      paidAmount: this.billPaymentMode === 'full' ? finalTotal : (this.billPaidAmount || 0),
+      customerName: this.billCustomerName || undefined,
+      customerMobile: this.billCustomerMobile || undefined,
+      notes: this.billNotes || undefined
+    };
+
+    this.orderService.clearTable(this.selectedTable.id, request).subscribe({
       next: (summary) => {
         this.clearing = false;
         this.billSummary = summary;
@@ -338,6 +387,12 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.mergedBillItems = [];
     this.billCustomerName = '';
     this.billCustomerMobile = '';
+    this.billDiscountAmount = 0;
+    this.billPaidAmount = 0;
+    this.billPaymentMode = 'full';
+    this.billNotes = '';
+    this.previousDues = [];
+    this.previousDueTotal = 0;
   }
 
   closeBillSummary(): void {
@@ -346,7 +401,79 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.mergedBillItems = [];
     this.billCustomerName = '';
     this.billCustomerMobile = '';
+    this.billDiscountAmount = 0;
+    this.billPaidAmount = 0;
+    this.billPaymentMode = 'full';
+    this.billNotes = '';
+    this.previousDues = [];
+    this.previousDueTotal = 0;
+    this.customerSuggestions = [];
+    this.showCustomerSuggestions = false;
     this.deselectTable();
+  }
+
+  /** Calculate final total after discount + previous dues */
+  getBillFinalTotal(): number {
+    if (!this.billSummary) return 0;
+    const afterDiscount = this.billSummary.grandTotal - (this.billDiscountAmount || 0);
+    return Math.max(0, afterDiscount) + this.previousDueTotal;
+  }
+
+  /** Lookup previous dues when mobile is entered */
+  lookupPreviousDues(): void {
+    const mobile = this.billCustomerMobile?.trim();
+    if (!mobile || mobile.length < 10) {
+      this.previousDues = [];
+      this.previousDueTotal = 0;
+      return;
+    }
+    this.loadingDues = true;
+    this.dueService.getDuesByMobile(mobile).subscribe({
+      next: (result) => {
+        this.previousDues = result.dues;
+        this.previousDueTotal = result.totalDue;
+        this.loadingDues = false;
+      },
+      error: () => {
+        this.previousDues = [];
+        this.previousDueTotal = 0;
+        this.loadingDues = false;
+      }
+    });
+  }
+
+  /** Trigger customer autocomplete search */
+  onCustomerInput(value: string): void {
+    if (value && value.trim().length >= 2) {
+      this.customerSearch$.next(value.trim());
+    } else {
+      this.customerSuggestions = [];
+      this.showCustomerSuggestions = false;
+    }
+  }
+
+  /** Select a customer suggestion */
+  selectCustomer(customer: CustomerSearchResult): void {
+    this.billCustomerName = customer.customerName;
+    this.billCustomerMobile = customer.customerMobile;
+    this.showCustomerSuggestions = false;
+    this.customerSuggestions = [];
+    this.lookupPreviousDues();
+  }
+
+  /** Hide customer suggestions */
+  hideCustomerSuggestions(): void {
+    // Delay to allow click on suggestion
+    setTimeout(() => {
+      this.showCustomerSuggestions = false;
+    }, 200);
+  }
+
+  /** Get due amount for this bill */
+  getBillDueAmount(): number {
+    const finalTotal = this.getBillFinalTotal();
+    if (this.billPaymentMode === 'full') return 0;
+    return Math.max(0, finalTotal - (this.billPaidAmount || 0));
   }
 
   /** Generate a print-friendly bill and trigger print/download */
@@ -421,7 +548,11 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
           ${this.cgstPercent > 0 ? `<div class="total-row"><span>CGST (${this.cgstPercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.cgstPercent / 100)}</span></div>` : ''}
           ${this.sgstPercent > 0 ? `<div class="total-row"><span>SGST (${this.sgstPercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.sgstPercent / 100)}</span></div>` : ''}
           ${this.serviceChargePercent > 0 ? `<div class="total-row"><span>Service Charge (${this.serviceChargePercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.serviceChargePercent / 100)}</span></div>` : ''}
-          <div class="total-row grand"><span>Total</span><span>₹${s.grandTotal.toFixed(0)}</span></div>
+          ${this.billDiscountAmount > 0 ? `<div class="total-row" style="color:#e94560"><span>Discount</span><span>- ₹${this.billDiscountAmount.toFixed(0)}</span></div>` : ''}
+          ${this.previousDueTotal > 0 ? `<div class="total-row" style="color:#ff9800"><span>Previous Udhaar</span><span>+ ₹${this.previousDueTotal.toFixed(0)}</span></div>` : ''}
+          <div class="total-row grand"><span>Grand Total</span><span>₹${this.getBillFinalTotal().toFixed(0)}</span></div>
+          ${this.billPaymentMode === 'partial' && this.getBillDueAmount() > 0 ? `<div class="total-row" style="color:#e94560;font-weight:700;margin-top:4px"><span>Due (Udhaar)</span><span>₹${this.getBillDueAmount().toFixed(0)}</span></div>` : ''}
+          ${this.billPaymentMode === 'partial' && this.billPaidAmount > 0 ? `<div class="total-row" style="color:#4caf50;font-weight:700"><span>Paid</span><span>₹${this.billPaidAmount.toFixed(0)}</span></div>` : ''}
         </div>
         ${upiSection}
         <div class="footer">
@@ -592,6 +723,13 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   }
 
   // ── Nav ──
+
+  onlyNumbers(event: KeyboardEvent): void {
+    const char = event.key;
+    if (!/[0-9]/.test(char) && char !== 'Backspace' && char !== 'Tab' && char !== 'ArrowLeft' && char !== 'ArrowRight' && char !== 'Delete') {
+      event.preventDefault();
+    }
+  }
 
   logout(): void {
     this.authService.logout();

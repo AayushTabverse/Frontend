@@ -29,6 +29,20 @@
     background: #e94560;
     .stat-value, .stat-label { color: white; }
   }
+
+  &.due {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    .stat-value { color: #d32f2f; }
+    .stat-label { color: #856404; }
+  }
+
+  &.discount {
+    background: #fff3e0;
+    border: 1px solid #ff9800;
+    .stat-value { color: #e65100; }
+    .stat-label { color: #bf360c; }
+  }
 }
 
 .top-items {
@@ -60,10 +74,63 @@
   }
 }
 
+.udhaar-section {
+  background: var(--bg-card, white);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--shadow, rgba(0,0,0,0.06));
+  margin-top: 20px;
+  border-left: 4px solid #ffc107;
+
+  .udhaar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    h2 { margin: 0; font-size: 1.1rem; color: var(--text-primary, #1a1a2e); }
+
+    .view-all-link {
+      font-size: 0.82rem;
+      color: #e94560;
+      text-decoration: none;
+      font-weight: 600;
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 2px solid var(--border-light, #eee);
+      font-size: 0.8rem;
+      color: var(--text-secondary, #666);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light, #f0f0f0);
+      font-size: 0.88rem;
+      color: var(--text-primary, #333);
+    }
+
+    .customer-name { font-weight: 600; }
+    .paid { color: #4caf50; font-weight: 600; }
+    .due-amount { color: #e94560; font-weight: 700; }
+  }
+}
+
 @media (max-width: 768px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .stat-card { padding: 14px; .stat-value { font-size: 1.4rem; } }
   .top-items { padding: 14px; overflow-x: auto; }
+  .udhaar-section { padding: 14px; overflow-x: auto; }
 }
 
 @media (max-width: 480px) {

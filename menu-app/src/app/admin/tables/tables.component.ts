@@ -22,6 +22,7 @@ export class TablesComponent implements OnInit {
   formData = { tableNumber: '', label: '', capacity: 4 };
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  tableSubmitted = false;
 
   // QR Dialog
   showQrDialog = false;
@@ -61,9 +62,14 @@ export class TablesComponent implements OnInit {
   }
 
   addTable(): void {
+    this.tableSubmitted = true;
+    if (!this.formData.tableNumber?.trim()) return;
+    if (!this.formData.capacity || this.formData.capacity < 1) return;
+
     this.tableService.createTable(this.formData).subscribe({
       next: () => {
         this.showForm = false;
+        this.tableSubmitted = false;
         this.formData = { tableNumber: '', label: '', capacity: 4 };
         this.loadTables();
       }
@@ -284,5 +290,11 @@ export class TablesComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/admin/login']);
+  }
+
+  onlyNumbers(event: KeyboardEvent): void {
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
   }
 }

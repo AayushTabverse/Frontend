@@ -34,6 +34,8 @@ export class MenuManagementComponent implements OnInit {
     isVeg: false, sortOrder: 0, arModelUrl: '', preparationTimeMinutes: 15, categoryId: ''
   };
   uploading: { [key: string]: boolean } = {};
+  catSubmitted = false;
+  itemSubmitted = false;
 
   constructor(
     private menuService: MenuService,
@@ -61,6 +63,7 @@ export class MenuManagementComponent implements OnInit {
     this.editingCategory = null;
     this.categoryForm = { name: '', description: '', imageUrl: '', sortOrder: 0 };
     this.showCategoryForm = true;
+    this.catSubmitted = false;
   }
 
   openEditCategory(cat: MenuCategory): void {
@@ -70,6 +73,9 @@ export class MenuManagementComponent implements OnInit {
   }
 
   saveCategory(): void {
+    this.catSubmitted = true;
+    if (!this.categoryForm.name?.trim()) return;
+
     if (this.editingCategory) {
       this.menuService.updateCategory(this.editingCategory.id, { ...this.categoryForm, isActive: true }).subscribe(() => {
         this.showCategoryForm = false;
@@ -98,6 +104,7 @@ export class MenuManagementComponent implements OnInit {
       isVeg: false, sortOrder: 0, arModelUrl: '', preparationTimeMinutes: 15, categoryId
     };
     this.showItemForm = true;
+    this.itemSubmitted = false;
   }
 
   openEditItem(item: MenuItem): void {
@@ -107,6 +114,10 @@ export class MenuManagementComponent implements OnInit {
   }
 
   saveItem(): void {
+    this.itemSubmitted = true;
+    if (!this.itemForm.name?.trim()) return;
+    if (!this.itemForm.price || this.itemForm.price <= 0) return;
+
     if (this.editingItem) {
       this.menuService.updateItem(this.editingItem.id, this.itemForm).subscribe(() => {
         this.showItemForm = false;
@@ -153,5 +164,11 @@ export class MenuManagementComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/admin/login']);
+  }
+
+  onlyNumbers(event: KeyboardEvent): void {
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
   }
 }

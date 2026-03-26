@@ -5,6 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
+import { UploadService } from '../../services/upload.service';
 import { MenuCategory, MenuItem } from '../../models/api.models';
 
 @Component({
@@ -32,12 +33,14 @@ export class MenuManagementComponent implements OnInit {
     name: '', description: '', price: 0, imageUrl: '', isAvailable: true,
     isVeg: false, sortOrder: 0, arModelUrl: '', preparationTimeMinutes: 15, categoryId: ''
   };
+  uploading: { [key: string]: boolean } = {};
 
   constructor(
     private menuService: MenuService,
     private authService: AuthService,
     private router: Router,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private uploadService: UploadService
   ) {}
 
   ngOnInit(): void {
@@ -126,6 +129,25 @@ export class MenuManagementComponent implements OnInit {
   cancelForm(): void {
     this.showCategoryForm = false;
     this.showItemForm = false;
+  }
+
+  onFileSelected(event: Event, target: 'category' | 'item'): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploading[target] = true;
+    const folder = target === 'category' ? 'categories' : 'menu-items';
+    this.uploadService.uploadImage(file, folder).subscribe({
+      next: (url) => {
+        if (target === 'category') this.categoryForm.imageUrl = url;
+        else this.itemForm.imageUrl = url;
+        this.uploading[target] = false;
+      },
+      error: () => {
+        this.uploading[target] = false;
+      }
+    });
   }
 
   logout(): void {

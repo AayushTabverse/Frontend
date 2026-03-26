@@ -5,6 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { SettingsService } from '../../services/settings.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
+import { UploadService } from '../../services/upload.service';
 import { BusinessSettings } from '../../models/api.models';
 
 @Component({
@@ -47,12 +48,14 @@ export class SettingsComponent implements OnInit {
   userName = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  uploading: { [key: string]: boolean } = {};
 
   constructor(
     private settingsService: SettingsService,
     private authService: AuthService,
     private router: Router,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private uploadService: UploadService
   ) {
     this.authService.currentUser$.subscribe(u => this.userName = u?.fullName || '');
   }
@@ -85,6 +88,27 @@ export class SettingsComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.errorMessage = err.error?.message || 'Failed to save settings.';
+      }
+    });
+  }
+
+  onFileSelected(event: Event, target: 'logo' | 'qr'): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploading[target] = true;
+    const folder = target === 'logo' ? 'logos' : 'qr-codes';
+    this.uploadService.uploadImage(file, folder).subscribe({
+      next: (url) => {
+        if (target === 'logo') this.settings.logoUrl = url;
+        else this.settings.upiQrCodeUrl = url;
+        this.uploading[target] = false;
+      },
+      error: () => {
+        this.errorMessage = 'Failed to upload image. Please try again.';
+        this.uploading[target] = false;
+        setTimeout(() => this.errorMessage = '', 5000);
       }
     });
   }

@@ -53,8 +53,9 @@
           <input type="text" [(ngModel)]="settings.address" placeholder="123 Main St, City" />
         </div>
         <div class="form-group">
-          <label>Logo URL</label>
-          <input type="url" [(ngModel)]="settings.logoUrl" placeholder="https://example.com/logo.png" />
+          <label>Logo</label>
+          <input type="file" accept="image/*" (change)="onFileSelected($event, 'logo')" />
+          <span *ngIf="uploading['logo']">Uploading...</span>
         </div>
         <div class="logo-preview" *ngIf="settings.logoUrl">
           <img [src]="settings.logoUrl" alt="Logo Preview" />
@@ -91,9 +92,10 @@
       <div class="form-section">
         <h2>💳 UPI Payment QR Code</h2>
         <div class="form-group">
-          <label>UPI QR Code Image URL</label>
-          <input type="url" [(ngModel)]="settings.upiQrCodeUrl" placeholder="https://example.com/upi-qr.png" />
-          <p class="field-hint">Upload your UPI QR code image and paste the URL here. This will appear on printed bills.</p>
+          <label>UPI QR Code Image</label>
+          <input type="file" accept="image/*" (change)="onFileSelected($event, 'qr')" />
+          <span *ngIf="uploading['qr']">Uploading...</span>
+          <p class="field-hint">Upload your UPI QR code image. This will appear on printed bills.</p>
         </div>
         <div class="qr-preview" *ngIf="settings.upiQrCodeUrl">
           <img [src]="settings.upiQrCodeUrl" alt="UPI QR Code" />

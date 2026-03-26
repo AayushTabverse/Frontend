@@ -185,8 +185,9 @@
               <textarea [(ngModel)]="heroSubtitle" rows="3" placeholder="A brief tagline that captures your restaurant's essence..."></textarea>
             </div>
             <div class="form-group">
-              <label>Background Image URL</label>
-              <input type="url" [(ngModel)]="heroImageUrl" placeholder="https://images.unsplash.com/..." />
+              <label>Background Image</label>
+              <input type="file" accept="image/*" (change)="onFileSelected($event, 'hero')" />
+              <span class="upload-status" *ngIf="uploading['hero']">Uploading...</span>
               <div class="image-preview" *ngIf="heroImageUrl">
                 <img [src]="heroImageUrl" alt="Hero preview" />
               </div>
@@ -238,8 +239,9 @@
               <textarea [(ngModel)]="aboutDescription" rows="5" placeholder="Tell visitors about your restaurant's story, mission, and what makes you special..."></textarea>
             </div>
             <div class="form-group">
-              <label>About Section Image URL</label>
-              <input type="url" [(ngModel)]="aboutImageUrl" placeholder="https://images.unsplash.com/..." />
+              <label>About Section Image</label>
+              <input type="file" accept="image/*" (change)="onFileSelected($event, 'about')" />
+              <span class="upload-status" *ngIf="uploading['about']">Uploading...</span>
               <div class="image-preview" *ngIf="aboutImageUrl">
                 <img [src]="aboutImageUrl" alt="About preview" />
               </div>
@@ -255,8 +257,12 @@
                 <input type="text" [(ngModel)]="chefName" placeholder="Chef John Doe" />
               </div>
               <div class="form-group">
-                <label>Chef Photo URL</label>
-                <input type="url" [(ngModel)]="chefImageUrl" placeholder="https://..." />
+                <label>Chef Photo</label>
+                <input type="file" accept="image/*" (change)="onFileSelected($event, 'chef')" />
+                <span class="upload-status" *ngIf="uploading['chef']">Uploading...</span>
+                <div class="image-preview" *ngIf="chefImageUrl">
+                  <img [src]="chefImageUrl" alt="Chef preview" />
+                </div>
               </div>
             </div>
             <div class="form-group">
@@ -304,8 +310,9 @@
                 <button class="remove-btn" (click)="removeGalleryImage(i)">🗑️ Remove</button>
               </div>
               <div class="form-group">
-                <label>Image URL</label>
-                <input type="url" [(ngModel)]="img.url" placeholder="https://..." />
+                <label>Image</label>
+                <input type="file" accept="image/*" (change)="onFileSelected($event, 'gallery', i)" />
+                <span class="upload-status" *ngIf="uploading['gallery']">Uploading...</span>
               </div>
               <div class="form-group">
                 <label>Caption (optional)</label>
@@ -354,8 +361,12 @@
                 <textarea [(ngModel)]="t.text" rows="2" placeholder="Amazing food and atmosphere!"></textarea>
               </div>
               <div class="form-group">
-                <label>Avatar URL (optional)</label>
-                <input type="url" [(ngModel)]="t.avatarUrl" placeholder="https://..." />
+                <label>Avatar (optional)</label>
+                <input type="file" accept="image/*" (change)="onFileSelected($event, 'testimonial', i)" />
+                <span class="upload-status" *ngIf="uploading['testimonial']">Uploading...</span>
+                <div class="image-preview small" *ngIf="t.avatarUrl">
+                  <img [src]="t.avatarUrl" alt="Avatar preview" />
+                </div>
               </div>
             </div>
           </div>

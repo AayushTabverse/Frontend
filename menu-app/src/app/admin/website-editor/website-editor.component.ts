@@ -5,6 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { WebsiteService } from '../../services/website.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
+import { UploadService } from '../../services/upload.service';
 import {
   WebsiteContent,
   UpdateWebsiteContent,
@@ -100,12 +101,14 @@ export class WebsiteEditorComponent implements OnInit {
   subdomainMessage = '';
   subdomainError = '';
   private subdomainCheck$ = new Subject<string>();
+  uploading: { [key: string]: boolean } = {};
 
   constructor(
     private websiteService: WebsiteService,
     private authService: AuthService,
     private router: Router,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private uploadService: UploadService
   ) {
     this.authService.currentUser$.subscribe(u => this.userName = u?.fullName || '');
   }
@@ -368,5 +371,28 @@ export class WebsiteEditorComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/admin/login']);
+  }
+
+  onFileSelected(event: Event, target: string, index?: number): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploading[target] = true;
+    this.uploadService.uploadImage(file, 'website').subscribe({
+      next: (url) => {
+        if (target === 'hero') this.heroImageUrl = url;
+        else if (target === 'about') this.aboutImageUrl = url;
+        else if (target === 'chef') this.chefImageUrl = url;
+        else if (target === 'gallery' && index !== undefined) this.galleryImages[index].url = url;
+        else if (target === 'testimonial' && index !== undefined) this.testimonials[index].avatarUrl = url;
+        this.uploading[target] = false;
+      },
+      error: () => {
+        this.errorMessage = 'Failed to upload image. Please try again.';
+        this.uploading[target] = false;
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
   }
 }

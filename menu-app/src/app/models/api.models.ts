@@ -452,3 +452,108 @@ export interface CustomerDueSearchResult {
   dues: CustomerDue[];
   totalDue: number;
 }
+
+// ── AI Marketing ──
+export interface GeneratePostRequest {
+  contentType: string; // social, festival, menu-highlight, testimonial, weekly-special
+  platform: string; // instagram, facebook, both
+  customPrompt?: string;
+}
+
+export interface GeneratedPost {
+  id: string;
+  contentText: string;
+  hashtags: string[];
+  imageUrl?: string;
+  suggestedCaption: string;
+  platform: string;
+  contentType: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface MarketingPost {
+  id: string;
+  platform: string;
+  contentType: string;
+  contentText: string;
+  hashtags: string[];
+  imageUrl?: string;
+  suggestedCaption?: string;
+  status: string;
+  scheduledAt?: string;
+  postedAt?: string;
+  createdAt: string;
+  failureReason?: string;
+}
+
+export interface PaginatedPostsResponse {
+  posts: MarketingPost[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface ContentCalendarItem {
+  date: string;
+  posts: MarketingPost[];
+}
+
+export interface SocialConnection {
+  platform: string;
+  isConnected: boolean;
+  pageName?: string;
+  pageId?: string;
+  expiresAt?: string;
+}
+
+export interface ApprovePostRequest {
+  editedText?: string;
+  editedCaption?: string;
+  scheduledAt?: string;
+}
+
+// ── Google Reviews ──
+export interface GoogleReview {
+  id: string;
+  googleReviewId: string;
+  authorName: string;
+  rating: number;
+  reviewText?: string;
+  reviewCreateTime: string;
+  replyText?: string;
+  repliedAt?: string;
+  sentiment?: string;
+  sentimentThemes: string[];
+  authorProfileUrl?: string;
+}
+
+export interface PaginatedReviewsResponse {
+  reviews: GoogleReview[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface ReviewAnalytics {
+  avgRating: number;
+  totalReviews: number;
+  sentiment: SentimentBreakdown;
+  ratingDistribution: { [key: number]: number };
+  commonThemes: string[];
+  trend: ReviewTrend[];
+}
+
+export interface SentimentBreakdown {
+  positive: number;
+  neutral: number;
+  negative: number;
+}
+
+export interface ReviewTrend {
+  period: string;
+  avgRating: number;
+  reviewCount: number;
+}

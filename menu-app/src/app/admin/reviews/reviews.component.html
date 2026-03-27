@@ -1,0 +1,255 @@
+<div class="admin-layout">
+  <div class="sidebar-backdrop" *ngIf="mobileSidebarOpen" (click)="mobileSidebarOpen = false"></div>
+  <nav class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
+    <button class="sidebar-toggle" (click)="sidebarCollapsed = !sidebarCollapsed">
+      {{ sidebarCollapsed ? '☰' : '✕' }}
+    </button>
+    <div class="brand">
+      <img *ngIf="logoUrl" [src]="logoUrl" alt="Logo" class="sidebar-logo" />
+      🍽️ <span class="brand-text">Admin</span>
+    </div>
+    <a routerLink="/admin/dashboard" routerLinkActive="active" data-tooltip="Dashboard" (click)="mobileSidebarOpen = false">📊 <span class="nav-text">Dashboard</span></a>
+    <a routerLink="/admin/analytics" routerLinkActive="active" data-tooltip="Analytics" (click)="mobileSidebarOpen = false">📈 <span class="nav-text">Analytics</span></a>
+    <a routerLink="/admin/ai-marketing" routerLinkActive="active" data-tooltip="AI Marketing" (click)="mobileSidebarOpen = false">🤖 <span class="nav-text">AI Marketing</span></a>
+    <a routerLink="/admin/reviews" routerLinkActive="active" data-tooltip="Reviews" (click)="mobileSidebarOpen = false">⭐ <span class="nav-text">Reviews</span></a>
+    <a routerLink="/admin/menu" routerLinkActive="active" data-tooltip="Menu" (click)="mobileSidebarOpen = false">📋 <span class="nav-text">Menu</span></a>
+    <a routerLink="/admin/tables" routerLinkActive="active" data-tooltip="Tables" (click)="mobileSidebarOpen = false">🪑 <span class="nav-text">Tables</span></a>
+    <a routerLink="/admin/staff" routerLinkActive="active" data-tooltip="Staff" (click)="mobileSidebarOpen = false">👥 <span class="nav-text">Staff</span></a>
+    <a routerLink="/admin/website" routerLinkActive="active" data-tooltip="Website" (click)="mobileSidebarOpen = false">🌐 <span class="nav-text">Website</span></a>
+    <a routerLink="/admin/settings" routerLinkActive="active" data-tooltip="Settings" (click)="mobileSidebarOpen = false">⚙️ <span class="nav-text">Settings</span></a>
+    <a routerLink="/admin/bills" routerLinkActive="active" data-tooltip="Bills" (click)="mobileSidebarOpen = false">🧾 <span class="nav-text">Bills</span></a>
+    <a routerLink="/admin/dues" routerLinkActive="active" data-tooltip="Udhaar" (click)="mobileSidebarOpen = false">📒 <span class="nav-text">Udhaar</span></a>
+    <a routerLink="/waiter" routerLinkActive="active" data-tooltip="Take Order" (click)="mobileSidebarOpen = false">🛎️ <span class="nav-text">Take Order</span></a>
+    <button class="logout-btn" data-tooltip="Logout" (click)="logout()">🚪 <span class="nav-text">Logout</span></button>
+  </nav>
+
+  <main class="content" [class.sidebar-collapsed]="sidebarCollapsed">
+    <div class="page-header">
+      <button class="mobile-menu-btn" (click)="mobileSidebarOpen = !mobileSidebarOpen">☰</button>
+      <h1>⭐ Google Reviews</h1>
+      <div class="header-actions">
+        <button class="dark-mode-toggle" (click)="themeService.toggle()">
+          {{ themeService.isDark() ? '☀️ Light' : '🌙 Dark' }}
+        </button>
+        <span class="welcome">{{ userName }}</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button [class.active]="activeTab === 'reviews'" (click)="switchTab('reviews')">💬 Reviews</button>
+      <button [class.active]="activeTab === 'analytics'" (click)="switchTab('analytics')">📊 Analytics</button>
+    </div>
+
+    <!-- REVIEWS TAB -->
+    <div *ngIf="activeTab === 'reviews'" class="tab-content">
+      <!-- Quick Stats -->
+      <div class="stats-row" *ngIf="analytics">
+        <div class="stat-mini">
+          <span class="stat-mini-value">{{ analytics.avgRating | number:'1.1-1' }} ⭐</span>
+          <span class="stat-mini-label">Avg Rating</span>
+        </div>
+        <div class="stat-mini">
+          <span class="stat-mini-value">{{ analytics.totalReviews }}</span>
+          <span class="stat-mini-label">Total Reviews</span>
+        </div>
+        <div class="stat-mini positive">
+          <span class="stat-mini-value">{{ analytics.sentiment.positive }}</span>
+          <span class="stat-mini-label">😊 Positive</span>
+        </div>
+        <div class="stat-mini neutral">
+          <span class="stat-mini-value">{{ analytics.sentiment.neutral }}</span>
+          <span class="stat-mini-label">😐 Neutral</span>
+        </div>
+        <div class="stat-mini negative">
+          <span class="stat-mini-value">{{ analytics.sentiment.negative }}</span>
+          <span class="stat-mini-label">😞 Negative</span>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <span class="filter-label">Filter:</span>
+        <button [class.active]="sentimentFilter === ''" (click)="filterBySentiment('')">All</button>
+        <button [class.active]="sentimentFilter === 'Positive'" (click)="filterBySentiment('Positive')">😊 Positive</button>
+        <button [class.active]="sentimentFilter === 'Neutral'" (click)="filterBySentiment('Neutral')">😐 Neutral</button>
+        <button [class.active]="sentimentFilter === 'Negative'" (click)="filterBySentiment('Negative')">😞 Negative</button>
+      </div>
+
+      <div class="loading" *ngIf="reviewsLoading">Loading reviews...</div>
+
+      <!-- Reviews List -->
+      <div class="reviews-list" *ngIf="reviewsData && !reviewsLoading">
+        <div class="review-card" *ngFor="let review of reviewsData.reviews" [class.has-reply]="review.replyText">
+          <div class="review-header">
+            <div class="review-author">
+              <div class="author-avatar">{{ review.authorName.charAt(0).toUpperCase() }}</div>
+              <div>
+                <strong>{{ review.authorName }}</strong>
+                <span class="review-date">{{ review.reviewCreateTime | date:'dd MMM yyyy' }}</span>
+              </div>
+            </div>
+            <div class="review-meta">
+              <span class="review-rating">{{ getStars(review.rating) }}</span>
+              <span class="sentiment-badge" [ngClass]="getSentimentClass(review.sentiment)">
+                {{ getSentimentIcon(review.sentiment) }} {{ review.sentiment || 'Unknown' }}
+              </span>
+            </div>
+          </div>
+
+          <p class="review-text">{{ review.reviewText || 'No text provided.' }}</p>
+
+          <!-- Themes -->
+          <div class="review-themes" *ngIf="review.sentimentThemes?.length">
+            <span *ngFor="let theme of review.sentimentThemes" class="theme-tag">{{ theme }}</span>
+          </div>
+
+          <!-- Existing Reply -->
+          <div class="existing-reply" *ngIf="review.replyText && activeReplyId !== review.id">
+            <div class="reply-label">↩️ Your reply <span class="reply-date">{{ review.repliedAt | date:'dd MMM' }}</span></div>
+            <p>{{ review.replyText }}</p>
+          </div>
+
+          <!-- Reply Actions -->
+          <div class="review-actions" *ngIf="activeReplyId !== review.id">
+            <button class="btn-reply" (click)="openReply(review)">
+              {{ review.replyText ? '✏️ Edit Reply' : '💬 Reply' }}
+            </button>
+          </div>
+
+          <!-- Reply Editor -->
+          <div class="reply-editor" *ngIf="activeReplyId === review.id">
+            <div class="reply-editor-header">
+              <h4>{{ review.replyText ? 'Edit Reply' : 'Reply to ' + review.authorName }}</h4>
+              <button class="btn-ai-generate" (click)="generateReply(review.id)" [disabled]="generatingReply">
+                {{ generatingReply ? '⏳ Generating...' : '🤖 AI Generate Reply' }}
+              </button>
+            </div>
+            <textarea [(ngModel)]="editedReply" rows="4" placeholder="Type your reply..."></textarea>
+            <div class="reply-editor-actions">
+              <button class="btn-post-reply" (click)="postReply(review.id)" [disabled]="postingReply || !editedReply.trim()">
+                {{ postingReply ? 'Saving...' : '✅ Save Reply' }}
+              </button>
+              <button class="btn-cancel" (click)="cancelReply()">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="reviewsData.reviews.length === 0" class="empty-state">
+          <p>No reviews yet. Reviews will appear here once synced from Google Business Profile.</p>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="reviewsData && reviewsData.totalPages > 1">
+        <button (click)="pageChange(reviewPage - 1)" [disabled]="reviewPage <= 1">← Prev</button>
+        <span>Page {{ reviewPage }} of {{ reviewsData.totalPages }}</span>
+        <button (click)="pageChange(reviewPage + 1)" [disabled]="reviewPage >= reviewsData.totalPages">Next →</button>
+      </div>
+    </div>
+
+    <!-- ANALYTICS TAB -->
+    <div *ngIf="activeTab === 'analytics'" class="tab-content">
+      <div class="loading" *ngIf="analyticsLoading">Loading analytics...</div>
+
+      <div *ngIf="analytics && !analyticsLoading">
+        <!-- Summary Cards -->
+        <div class="analytics-grid">
+          <div class="analytics-card highlight">
+            <div class="analytics-value">{{ analytics.avgRating | number:'1.1-1' }}</div>
+            <div class="analytics-label">⭐ Average Rating</div>
+          </div>
+          <div class="analytics-card">
+            <div class="analytics-value">{{ analytics.totalReviews }}</div>
+            <div class="analytics-label">Total Reviews</div>
+          </div>
+          <div class="analytics-card positive-card">
+            <div class="analytics-value">{{ analytics.sentiment.positive }}</div>
+            <div class="analytics-label">😊 Positive</div>
+          </div>
+          <div class="analytics-card negative-card">
+            <div class="analytics-value">{{ analytics.sentiment.negative }}</div>
+            <div class="analytics-label">😞 Negative</div>
+          </div>
+        </div>
+
+        <!-- Rating Distribution -->
+        <div class="card">
+          <h3>Rating Distribution</h3>
+          <div class="rating-bars">
+            <div class="rating-bar-row" *ngFor="let star of [5,4,3,2,1]">
+              <span class="rating-label">{{ star }} ⭐</span>
+              <div class="rating-bar-track">
+                <div class="rating-bar-fill" [style.width.%]="getRatingBarWidth(star)"
+                     [class.fill-5]="star === 5" [class.fill-4]="star === 4"
+                     [class.fill-3]="star === 3" [class.fill-2]="star === 2"
+                     [class.fill-1]="star === 1">
+                </div>
+              </div>
+              <span class="rating-count">{{ analytics.ratingDistribution[star] || 0 }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sentiment Breakdown -->
+        <div class="sentiment-cards">
+          <div class="card sentiment-card">
+            <h3>Sentiment Breakdown</h3>
+            <div class="sentiment-visual">
+              <div class="sentiment-bar">
+                <div class="sentiment-segment positive" [style.width.%]="analytics.totalReviews ? (analytics.sentiment.positive / analytics.totalReviews) * 100 : 0"></div>
+                <div class="sentiment-segment neutral" [style.width.%]="analytics.totalReviews ? (analytics.sentiment.neutral / analytics.totalReviews) * 100 : 0"></div>
+                <div class="sentiment-segment negative" [style.width.%]="analytics.totalReviews ? (analytics.sentiment.negative / analytics.totalReviews) * 100 : 0"></div>
+              </div>
+              <div class="sentiment-legend">
+                <span class="legend-item"><span class="dot positive-dot"></span> Positive ({{ analytics.sentiment.positive }})</span>
+                <span class="legend-item"><span class="dot neutral-dot"></span> Neutral ({{ analytics.sentiment.neutral }})</span>
+                <span class="legend-item"><span class="dot negative-dot"></span> Negative ({{ analytics.sentiment.negative }})</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card sentiment-card">
+            <h3>Common Themes</h3>
+            <div class="themes-cloud" *ngIf="analytics.commonThemes.length">
+              <span *ngFor="let theme of analytics.commonThemes; let i = index" class="theme-pill"
+                    [style.font-size.rem]="1.1 - (i * 0.03)">
+                {{ theme }}
+              </span>
+            </div>
+            <p *ngIf="!analytics.commonThemes.length" class="no-data">No themes detected yet.</p>
+          </div>
+        </div>
+
+        <!-- Monthly Trend -->
+        <div class="card" *ngIf="analytics.trend.length">
+          <h3>Monthly Trend</h3>
+          <div class="trend-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Avg Rating</th>
+                  <th>Reviews</th>
+                  <th>Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let t of analytics.trend; let i = index">
+                  <td>{{ t.period }}</td>
+                  <td>{{ t.avgRating | number:'1.1-1' }} ⭐</td>
+                  <td>{{ t.reviewCount }}</td>
+                  <td>
+                    <span *ngIf="i > 0 && t.avgRating > analytics.trend[i-1].avgRating" class="trend-up">📈</span>
+                    <span *ngIf="i > 0 && t.avgRating < analytics.trend[i-1].avgRating" class="trend-down">📉</span>
+                    <span *ngIf="i === 0 || t.avgRating === analytics.trend[i-1].avgRating">➡️</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

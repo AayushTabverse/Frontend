@@ -100,6 +100,16 @@ export const routes: Routes = [
     loadComponent: () => import('./admin/analytics/analytics.component').then(m => m.AnalyticsComponent),
     canActivate: [adminGuard]
   },
+  {
+    path: 'admin/ai-marketing',
+    loadComponent: () => import('./admin/ai-marketing/ai-marketing.component').then(m => m.AiMarketingComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'admin/reviews',
+    loadComponent: () => import('./admin/reviews/reviews.component').then(m => m.ReviewsComponent),
+    canActivate: [adminGuard]
+  },
 
   // ── Waiter Dashboard ──
   {

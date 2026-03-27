@@ -1,0 +1,265 @@
+<div class="admin-layout">
+  <div class="sidebar-backdrop" *ngIf="mobileSidebarOpen" (click)="mobileSidebarOpen = false"></div>
+  <nav class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
+    <button class="sidebar-toggle" (click)="sidebarCollapsed = !sidebarCollapsed">
+      {{ sidebarCollapsed ? '☰' : '✕' }}
+    </button>
+    <div class="brand">
+      <img *ngIf="logoUrl" [src]="logoUrl" alt="Logo" class="sidebar-logo" />
+      🍽️ <span class="brand-text">Admin</span>
+    </div>
+    <a routerLink="/admin/dashboard" routerLinkActive="active" data-tooltip="Dashboard" (click)="mobileSidebarOpen = false">📊 <span class="nav-text">Dashboard</span></a>
+    <a routerLink="/admin/analytics" routerLinkActive="active" data-tooltip="Analytics" (click)="mobileSidebarOpen = false">📈 <span class="nav-text">Analytics</span></a>
+    <a routerLink="/admin/ai-marketing" routerLinkActive="active" data-tooltip="AI Marketing" (click)="mobileSidebarOpen = false">🤖 <span class="nav-text">AI Marketing</span></a>
+    <a routerLink="/admin/reviews" routerLinkActive="active" data-tooltip="Reviews" (click)="mobileSidebarOpen = false">⭐ <span class="nav-text">Reviews</span></a>
+    <a routerLink="/admin/menu" routerLinkActive="active" data-tooltip="Menu" (click)="mobileSidebarOpen = false">📋 <span class="nav-text">Menu</span></a>
+    <a routerLink="/admin/tables" routerLinkActive="active" data-tooltip="Tables" (click)="mobileSidebarOpen = false">🪑 <span class="nav-text">Tables</span></a>
+    <a routerLink="/admin/staff" routerLinkActive="active" data-tooltip="Staff" (click)="mobileSidebarOpen = false">👥 <span class="nav-text">Staff</span></a>
+    <a routerLink="/admin/website" routerLinkActive="active" data-tooltip="Website" (click)="mobileSidebarOpen = false">🌐 <span class="nav-text">Website</span></a>
+    <a routerLink="/admin/settings" routerLinkActive="active" data-tooltip="Settings" (click)="mobileSidebarOpen = false">⚙️ <span class="nav-text">Settings</span></a>
+    <a routerLink="/admin/bills" routerLinkActive="active" data-tooltip="Bills" (click)="mobileSidebarOpen = false">🧾 <span class="nav-text">Bills</span></a>
+    <a routerLink="/admin/dues" routerLinkActive="active" data-tooltip="Udhaar" (click)="mobileSidebarOpen = false">📒 <span class="nav-text">Udhaar</span></a>
+    <a routerLink="/waiter" routerLinkActive="active" data-tooltip="Take Order" (click)="mobileSidebarOpen = false">🛎️ <span class="nav-text">Take Order</span></a>
+    <button class="logout-btn" data-tooltip="Logout" (click)="logout()">🚪 <span class="nav-text">Logout</span></button>
+  </nav>
+
+  <main class="content" [class.sidebar-collapsed]="sidebarCollapsed">
+    <div class="page-header">
+      <button class="mobile-menu-btn" (click)="mobileSidebarOpen = !mobileSidebarOpen">☰</button>
+      <h1>🤖 AI Marketing Hub</h1>
+      <div class="header-actions">
+        <button class="dark-mode-toggle" (click)="themeService.toggle()">
+          {{ themeService.isDark() ? '☀️ Light' : '🌙 Dark' }}
+        </button>
+        <span class="welcome">{{ userName }}</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button [class.active]="activeTab === 'generate'" (click)="switchTab('generate')">✨ Generate</button>
+      <button [class.active]="activeTab === 'history'" (click)="switchTab('history')">📜 History</button>
+      <button [class.active]="activeTab === 'calendar'" (click)="switchTab('calendar')">📅 Calendar</button>
+      <button [class.active]="activeTab === 'connections'" (click)="switchTab('connections')">🔗 Connections</button>
+    </div>
+
+    <!-- GENERATE TAB -->
+    <div *ngIf="activeTab === 'generate'" class="tab-content">
+      <div class="generator-section">
+        <div class="generator-form card">
+          <h2>Create Marketing Content</h2>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Content Type</label>
+              <select [(ngModel)]="contentType">
+                <option value="social">📱 Social Post</option>
+                <option value="festival">🎉 Festival Promo</option>
+                <option value="menu-highlight">🍕 Menu Highlight</option>
+                <option value="testimonial">💬 Customer Testimonial</option>
+                <option value="weekly-special">🔥 Weekly Special</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Platform</label>
+              <select [(ngModel)]="platform">
+                <option value="both">📱 Both (Instagram + Facebook)</option>
+                <option value="instagram">📸 Instagram</option>
+                <option value="facebook">📘 Facebook</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Custom Instructions <span class="optional">(optional)</span></label>
+            <textarea [(ngModel)]="customPrompt" placeholder="E.g., Mention our new dessert menu, use a playful tone..." rows="3"></textarea>
+          </div>
+
+          <button class="btn-generate" (click)="generate()" [disabled]="generating">
+            {{ generating ? '⏳ Generating...' : '✨ Generate Post' }}
+          </button>
+        </div>
+
+        <!-- Preview Card -->
+        <div class="preview-section" *ngIf="generatedPost || generating">
+          <div class="card preview-card" *ngIf="generating">
+            <div class="generating-animation">
+              <div class="pulse-dot"></div>
+              <p>AI is crafting your post...</p>
+            </div>
+          </div>
+
+          <div class="card preview-card" *ngIf="generatedPost && !generating">
+            <div class="preview-header">
+              <span class="badge" [ngClass]="getStatusClass(generatedPost.status)">{{ generatedPost.status }}</span>
+              <span class="content-type-label">{{ getContentTypeLabel(generatedPost.contentType) }}</span>
+            </div>
+
+            <div *ngIf="generatedPost.imageUrl" class="preview-image">
+              <img [src]="generatedPost.imageUrl" alt="Generated image" />
+            </div>
+
+            <div class="preview-body">
+              <div *ngIf="!editMode">
+                <p class="preview-text">{{ generatedPost.contentText }}</p>
+                <div class="preview-hashtags">
+                  <span *ngFor="let tag of generatedPost.hashtags" class="hashtag">{{ tag }}</span>
+                </div>
+                <p class="preview-caption" *ngIf="generatedPost.suggestedCaption">
+                  <strong>Caption:</strong> {{ generatedPost.suggestedCaption }}
+                </p>
+              </div>
+
+              <div *ngIf="editMode">
+                <div class="form-group">
+                  <label>Post Text</label>
+                  <textarea [(ngModel)]="editedText" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Caption</label>
+                  <input type="text" [(ngModel)]="editedCaption" />
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-actions">
+              <button class="btn-copy" (click)="copyToClipboard(generatedPost.contentText + '\n\n' + generatedPost.hashtags.join(' '))">📋 Copy</button>
+              <button class="btn-edit" (click)="editMode = !editMode">{{ editMode ? '👁️ Preview' : '✏️ Edit' }}</button>
+              <button class="btn-approve" (click)="approve()" [disabled]="approving">
+                {{ approving ? '...' : '✅ Approve' }}
+              </button>
+              <button class="btn-reject" (click)="reject()">❌ Reject</button>
+              <button class="btn-regenerate" (click)="regenerate()">🔄 Regenerate</button>
+            </div>
+
+            <div class="schedule-row" *ngIf="generatedPost">
+              <label>Schedule for:</label>
+              <input type="datetime-local" [(ngModel)]="scheduleDate" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div *ngIf="activeTab === 'history'" class="tab-content">
+      <div class="card">
+        <div class="history-header">
+          <h2>Post History</h2>
+          <div class="filter-pills">
+            <button [class.active]="historyFilter === ''" (click)="filterHistory('')">All</button>
+            <button [class.active]="historyFilter === 'Draft'" (click)="filterHistory('Draft')">Draft</button>
+            <button [class.active]="historyFilter === 'Approved'" (click)="filterHistory('Approved')">Approved</button>
+            <button [class.active]="historyFilter === 'Scheduled'" (click)="filterHistory('Scheduled')">Scheduled</button>
+            <button [class.active]="historyFilter === 'Posted'" (click)="filterHistory('Posted')">Posted</button>
+            <button [class.active]="historyFilter === 'Rejected'" (click)="filterHistory('Rejected')">Rejected</button>
+          </div>
+        </div>
+
+        <div class="loading" *ngIf="historyLoading">Loading...</div>
+
+        <div class="post-grid" *ngIf="postHistory && !historyLoading">
+          <div class="post-card" *ngFor="let post of postHistory.posts">
+            <div class="post-card-header">
+              <span class="badge" [ngClass]="getStatusClass(post.status)">{{ post.status }}</span>
+              <span class="post-platform">{{ getPlatformIcon(post.platform) }} {{ post.platform }}</span>
+            </div>
+            <div class="post-card-image" *ngIf="post.imageUrl">
+              <img [src]="post.imageUrl" alt="Post image" />
+            </div>
+            <p class="post-card-text">{{ post.contentText | slice:0:150 }}{{ post.contentText.length > 150 ? '...' : '' }}</p>
+            <div class="post-card-meta">
+              <span>{{ getContentTypeLabel(post.contentType) }}</span>
+              <span>{{ post.createdAt | date:'dd MMM yy, HH:mm' }}</span>
+            </div>
+            <div class="post-card-hashtags">
+              <span *ngFor="let tag of post.hashtags.slice(0, 5)" class="hashtag-sm">{{ tag }}</span>
+            </div>
+            <div class="post-card-actions" *ngIf="post.status === 'Approved' || post.status === 'Scheduled'">
+              <button class="btn-publish" (click)="publishPost(post.id)" [disabled]="publishingPostId === post.id">
+                {{ publishingPostId === post.id ? '⏳ Publishing...' : '🚀 Publish Now' }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="postHistory.posts.length === 0" class="empty-state">
+            <p>No posts found. Start by generating your first post!</p>
+          </div>
+        </div>
+
+        <div class="pagination" *ngIf="postHistory && postHistory.totalPages > 1">
+          <button (click)="historyPageChange(historyPage - 1)" [disabled]="historyPage <= 1">← Prev</button>
+          <span>Page {{ historyPage }} of {{ postHistory.totalPages }}</span>
+          <button (click)="historyPageChange(historyPage + 1)" [disabled]="historyPage >= postHistory.totalPages">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR TAB -->
+    <div *ngIf="activeTab === 'calendar'" class="tab-content">
+      <div class="card">
+        <div class="calendar-header">
+          <button class="btn-nav" (click)="prevMonth()">←</button>
+          <h2>{{ getMonthName() }}</h2>
+          <button class="btn-nav" (click)="nextMonth()">→</button>
+        </div>
+
+        <div class="loading" *ngIf="calendarLoading">Loading...</div>
+
+        <div class="calendar-grid" *ngIf="!calendarLoading">
+          <div class="calendar-day-header" *ngFor="let day of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">{{ day }}</div>
+          <div class="calendar-day" *ngFor="let day of calendarDays"
+               [class.empty]="!day.isCurrentMonth"
+               [class.has-posts]="day.posts.length > 0">
+            <span class="day-number" *ngIf="day.isCurrentMonth">{{ day.date }}</span>
+            <div class="day-posts">
+              <div *ngFor="let post of day.posts.slice(0, 2)" class="day-post-dot" [ngClass]="getStatusClass(post.status)" [title]="post.contentType + ': ' + post.status">
+                {{ getPlatformIcon(post.platform) }}
+              </div>
+              <span *ngIf="day.posts.length > 2" class="more-posts">+{{ day.posts.length - 2 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONNECTIONS TAB -->
+    <div *ngIf="activeTab === 'connections'" class="tab-content">
+      <div class="card">
+        <h2>Social Media Connections</h2>
+        <p class="section-desc">Connect your social media accounts to enable auto-posting.</p>
+
+        <div class="loading" *ngIf="connectionsLoading">Loading...</div>
+
+        <div class="connections-grid" *ngIf="!connectionsLoading">
+          <div class="connection-card" *ngFor="let conn of connections">
+            <div class="connection-icon">{{ getPlatformIcon(conn.platform) }}</div>
+            <div class="connection-info">
+              <h3>{{ conn.platform | titlecase }}</h3>
+              <p *ngIf="conn.isConnected" class="connected">
+                ✅ Connected as {{ conn.pageName || conn.pageId }}
+              </p>
+              <p *ngIf="!conn.isConnected" class="not-connected">Not connected</p>
+              <p *ngIf="conn.expiresAt" class="expires">Expires: {{ conn.expiresAt | date:'dd MMM yyyy' }}</p>
+            </div>
+            <div class="connection-actions">
+              <button *ngIf="!conn.isConnected" class="btn-connect"
+                      (click)="connectPlatform(conn.platform)"
+                      [disabled]="connectingPlatform === conn.platform">
+                {{ connectingPlatform === conn.platform ? '⏳ Connecting...' : 'Connect' }}
+              </button>
+              <button *ngIf="conn.isConnected" class="btn-disconnect" (click)="disconnectPlatform(conn.platform)">
+                Disconnect
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <p>💡 <strong>Tip:</strong> Click <strong>Connect</strong> to link your Facebook Page, Instagram Business Account, or Google Business Profile. Once connected, you can auto-publish approved posts directly from the History tab.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

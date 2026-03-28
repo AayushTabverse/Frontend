@@ -63,4 +63,11 @@ export class WebsiteService {
   getCurrentSubdomain(): Observable<SubdomainResponse> {
     return this.http.get<SubdomainResponse>(`${this.subdomainUrl}/current`);
   }
+
+  /** Resolve a subdomain to a tenantId (public). */
+  resolveSubdomain(subdomain: string): Observable<{ tenantId: string; subdomain: string; fullDomain: string }> {
+    return this.http.get<{ tenantId: string; subdomain: string; fullDomain: string }>(
+      `${this.subdomainUrl}/resolve/${subdomain}`
+    );
+  }
 }

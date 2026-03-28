@@ -1,11 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MenuService } from '../../services/menu.service';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
 import { TableService } from '../../services/table.service';
 import { ThemeService } from '../../services/theme.service';
+import { TableSessionService } from '../../services/table-session.service';
+import { SignalRService } from '../../services/signalr.service';
 import { FullMenuResponse, MenuCategory, MenuItem, CartItem, OrderResponse } from '../../models/api.models';
 
 @Component({
@@ -15,7 +18,7 @@ import { FullMenuResponse, MenuCategory, MenuItem, CartItem, OrderResponse } fro
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss'
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent implements OnInit, OnDestroy {
   menu?: FullMenuResponse;
   selectedCategory?: MenuCategory;
   cartCount = 0;
@@ -27,6 +30,8 @@ export class MenuComponent implements OnInit {
   callingWaiter = false;
   waiterCalled = false;
   activeOrders: OrderResponse[] = [];
+  sessionExpired = false;
+  private subs: Subscription[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -35,21 +40,42 @@ export class MenuComponent implements OnInit {
     private cartService: CartService,
     private orderService: OrderService,
     private tableService: TableService,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private sessionService: TableSessionService,
+    private signalR: SignalRService
   ) {}
 
   ngOnInit(): void {
     this.tenantId = this.route.snapshot.paramMap.get('tenantId') || '';
     this.tableId = this.route.snapshot.paramMap.get('tableId') || '';
 
-    this.cartService.cart$.subscribe(items => {
-      this.cartItems = items;
-      this.cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
-      this.cartTotal = this.cartService.getTotal();
-    });
+    // Initialize customer session for this table
+    if (this.tableId) {
+      this.sessionService.initSession(this.tableId);
+    }
+
+    this.subs.push(
+      this.cartService.cart$.subscribe(items => {
+        this.cartItems = items;
+        this.cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
+        this.cartTotal = this.cartService.getTotal();
+      })
+    );
+
+    // Listen for session cleared (table cleared by admin)
+    this.subs.push(
+      this.sessionService.sessionCleared$.subscribe(cleared => {
+        if (cleared) {
+          this.sessionExpired = true;
+          this.activeOrders = [];
+          this.cartService.clearCart();
+        }
+      })
+    );
 
     if (this.tableId) {
       this.loadTableOrders();
+      this.listenForTableCleared();
       this.menuService.getMenuByTable(this.tableId).subscribe({
         next: (menu) => {
           this.menu = menu;
@@ -77,14 +103,38 @@ export class MenuComponent implements OnInit {
 
   loadTableOrders(): void {
     if (!this.tableId) return;
+    const sessionOrderIds = this.sessionService.getOrderIds();
+    if (sessionOrderIds.length === 0) {
+      this.activeOrders = [];
+      return;
+    }
     this.orderService.getOrdersByTable(this.tableId).subscribe({
       next: (orders) => {
+        // Only show orders that belong to the current customer session
         this.activeOrders = orders.filter(o =>
+          sessionOrderIds.includes(o.id) &&
           !['Completed', 'Cancelled'].includes(o.status)
         );
       },
       error: () => {}
     });
+  }
+
+  private async listenForTableCleared(): Promise<void> {
+    if (!this.tenantId) return;
+    await this.signalR.startConnection(this.tenantId);
+    this.subs.push(
+      this.signalR.tableCleared$.subscribe(data => {
+        if (data.tableId === this.tableId) {
+          this.sessionService.clearSession();
+        }
+      })
+    );
+  }
+
+  startNewSession(): void {
+    this.sessionExpired = false;
+    this.sessionService.initSession(this.tableId);
   }
 
   selectCategory(category: MenuCategory): void {
@@ -140,5 +190,10 @@ export class MenuComponent implements OnInit {
       },
       error: () => this.callingWaiter = false
     });
+  }
+
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
+    this.signalR.stopConnection();
   }
 }

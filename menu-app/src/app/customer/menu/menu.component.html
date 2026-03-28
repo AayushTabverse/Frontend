@@ -1,4 +1,10 @@
 <div class="menu-page" *ngIf="!loading; else loadingTpl">
+  <!-- Session Expired Banner -->
+  <div class="session-expired-banner" *ngIf="sessionExpired">
+    <p>🔒 Your session has ended as the table was cleared.</p>
+    <button (click)="startNewSession()">Start New Session</button>
+  </div>
+
   <!-- Header -->
   <header class="menu-header">
     <div class="header-left">

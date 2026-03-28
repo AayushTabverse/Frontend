@@ -1,3 +1,21 @@
+.unauthorized-page {
+  max-width: 480px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+
+  .unauthorized-content {
+    text-align: center;
+    padding: 40px 20px;
+
+    h2 { margin-bottom: 12px; }
+    p { color: #666; }
+  }
+}
+
 .tracking-page {
   max-width: 480px;
   margin: 0 auto;

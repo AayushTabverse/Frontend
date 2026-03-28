@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { SignalRService } from '../../services/signalr.service';
+import { TableSessionService } from '../../services/table-session.service';
 import { OrderResponse, OrderItemResponse } from '../../models/api.models';
 import { Subscription } from 'rxjs';
 
@@ -16,6 +17,7 @@ import { Subscription } from 'rxjs';
 export class OrderTrackingComponent implements OnInit, OnDestroy {
   order?: OrderResponse;
   loading = true;
+  unauthorized = false;
   tenantId = '';
   tableId = '';
   confirmCancelItemId: string | null = null;
@@ -28,13 +30,21 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private orderService: OrderService,
-    private signalR: SignalRService
+    private signalR: SignalRService,
+    private sessionService: TableSessionService
   ) {}
 
   ngOnInit(): void {
     const orderId = this.route.snapshot.paramMap.get('orderId') || '';
     this.tenantId = this.route.snapshot.queryParamMap.get('tenantId') || '';
     this.tableId = this.route.snapshot.queryParamMap.get('tableId') || '';
+
+    // Only allow tracking orders from the current session
+    if (!this.sessionService.isSessionOrder(orderId)) {
+      this.loading = false;
+      this.unauthorized = true;
+      return;
+    }
 
     this.orderService.getOrder(orderId).subscribe({
       next: (order) => {

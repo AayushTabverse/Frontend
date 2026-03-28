@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
 import { SettingsService } from '../../services/settings.service';
+import { TableSessionService } from '../../services/table-session.service';
 import { CreateOrderRequest } from '../../models/api.models';
 
 @Component({
@@ -26,6 +27,7 @@ export class CheckoutComponent implements OnInit {
     private cartService: CartService,
     private orderService: OrderService,
     private settingsService: SettingsService,
+    private sessionService: TableSessionService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -69,6 +71,8 @@ export class CheckoutComponent implements OnInit {
 
     this.orderService.createOrder(request, this.tenantId).subscribe({
       next: (order) => {
+        // Track this order in the current customer session
+        this.sessionService.addOrderId(order.id);
         this.cartService.clearCart();
         this.router.navigate(['/order-tracking', order.id], {
           queryParams: { tenantId: this.tenantId, tableId: this.tableId }

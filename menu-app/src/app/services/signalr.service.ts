@@ -14,12 +14,14 @@ export class SignalRService implements OnDestroy {
   private kitchenAlertSubject = new Subject<{ orderId: string; status: string }>();
   private waiterCalledSubject = new Subject<{ tableId: string; tableNumber: string }>();
   private waiterCallDismissedSubject = new Subject<{ tableId: string; tableNumber: string }>();
+  private tableClearedSubject = new Subject<{ tableId: string; tableNumber: string }>();
 
   newOrder$ = this.newOrderSubject.asObservable();
   statusUpdate$ = this.statusUpdateSubject.asObservable();
   kitchenAlert$ = this.kitchenAlertSubject.asObservable();
   waiterCalled$ = this.waiterCalledSubject.asObservable();
   waiterCallDismissed$ = this.waiterCallDismissedSubject.asObservable();
+  tableCleared$ = this.tableClearedSubject.asObservable();
 
   constructor(private authService: AuthService) {}
 
@@ -57,6 +59,10 @@ export class SignalRService implements OnDestroy {
 
     this.hubConnection.on('WaiterCallDismissed', (data: { tableId: string; tableNumber: string }) => {
       this.waiterCallDismissedSubject.next(data);
+    });
+
+    this.hubConnection.on('TableCleared', (tableId: string, tableNumber: string) => {
+      this.tableClearedSubject.next({ tableId, tableNumber });
     });
 
     try {

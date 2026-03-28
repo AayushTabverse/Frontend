@@ -1,4 +1,12 @@
-<div class="tracking-page" *ngIf="!loading; else loadingTpl">
+<!-- Session expired / unauthorized -->
+<div class="unauthorized-page" *ngIf="unauthorized">
+  <div class="unauthorized-content">
+    <h2>🔒 Order Not Found</h2>
+    <p>This order doesn't belong to your current session. Please scan the QR code to start a new session.</p>
+  </div>
+</div>
+
+<div class="tracking-page" *ngIf="!loading && !unauthorized; else loadingTpl">
   <header class="tracking-header">
     <div class="header-nav">
       <button class="back-btn" (click)="goBackToMenu()" *ngIf="tenantId && tableId">← Menu</button>

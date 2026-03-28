@@ -1,12 +1,20 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from './guards/auth.guard';
+import { authGuard, adminGuard, subdomainMatch, mainDomainMatch } from './guards/auth.guard';
 
 export const routes: Routes = [
-  // ── Landing Page ──
+  // ── Subdomain: show tenant website at root URL ──
+  {
+    path: '',
+    loadComponent: () => import('./customer/tenant-website/tenant-website.component').then(m => m.TenantWebsiteComponent),
+    pathMatch: 'full',
+    canMatch: [subdomainMatch]
+  },
+  // ── Main domain: show landing page ──
   {
     path: '',
     loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent),
-    pathMatch: 'full'
+    pathMatch: 'full',
+    canMatch: [mainDomainMatch]
   },
 
   // ── Customer Routes (public, no auth) ──

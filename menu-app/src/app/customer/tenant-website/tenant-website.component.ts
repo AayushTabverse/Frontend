@@ -25,21 +25,43 @@ export class TenantWebsiteComponent implements OnInit {
     private websiteService: WebsiteService
   ) {}
 
+  private isSubdomainAccess = false;
+
   ngOnInit(): void {
     // Try subdomain first, fallback to route param
     const hostname = window.location.hostname;
     const parts = hostname.split('.');
 
-    // Check for subdomain (e.g., "restaurant-name.tabverse.in")
-    if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'app') {
-      this.tenantId = parts[0];
+    // Check for subdomain:
+    // Production: restaurant-name.tabverse.in (3+ parts)
+    // Local dev:  restaurant-name.localhost (2 parts)
+    const isLocalDev = parts.length === 2 && parts[1] === 'localhost';
+    const isSubdomain = parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'app';
+
+    if ((isLocalDev || isSubdomain) && parts[0] !== 'localhost') {
+      this.isSubdomainAccess = true;
+      this.tenantId = parts[0]; // This is the subdomain name, not the tenantId yet
     } else {
       // Fallback to route param
       this.tenantId = this.route.snapshot.paramMap.get('tenantId') || '';
     }
 
     if (this.tenantId) {
-      this.loadContent();
+      if (this.isSubdomainAccess) {
+        // Resolve subdomain → tenantId, then load content
+        this.websiteService.resolveSubdomain(this.tenantId).subscribe({
+          next: (result) => {
+            this.tenantId = result.tenantId;
+            this.loadContent();
+          },
+          error: () => {
+            this.error = 'This restaurant website is not available.';
+            this.loading = false;
+          }
+        });
+      } else {
+        this.loadContent();
+      }
     } else {
       this.error = 'Restaurant not found.';
       this.loading = false;

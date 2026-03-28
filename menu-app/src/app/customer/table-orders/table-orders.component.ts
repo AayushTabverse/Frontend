@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
+import { TableSessionService } from '../../services/table-session.service';
 import { OrderResponse } from '../../models/api.models';
 
 @Component({
@@ -20,7 +21,8 @@ export class TableOrdersComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private sessionService: TableSessionService
   ) {}
 
   ngOnInit(): void {
@@ -28,11 +30,20 @@ export class TableOrdersComponent implements OnInit {
     this.tenantId = this.route.snapshot.queryParamMap.get('tenantId') || '';
 
     if (this.tableId) {
+      const sessionOrderIds = this.sessionService.getOrderIds();
+      if (sessionOrderIds.length === 0) {
+        this.orders = [];
+        this.loading = false;
+        return;
+      }
       this.orderService.getOrdersByTable(this.tableId).subscribe({
         next: (orders) => {
-          this.orders = orders.sort((a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
+          // Only show orders belonging to the current customer session
+          this.orders = orders
+            .filter(o => sessionOrderIds.includes(o.id))
+            .sort((a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
           this.loading = false;
         },
         error: () => this.loading = false

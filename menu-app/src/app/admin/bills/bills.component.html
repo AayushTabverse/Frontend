@@ -81,6 +81,7 @@
             <th>Due</th>
             <th>Date</th>
             <th>Time</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -96,10 +97,11 @@
               <td class="amount due-col" [class.has-due]="bill.dueAmount > 0">{{ bill.dueAmount > 0 ? '₹' + (bill.dueAmount | number:'1.0-0') : '—' }}</td>
               <td>{{ bill.completedAt | date:'mediumDate' }}</td>
               <td>{{ bill.completedAt | date:'shortTime' }}</td>
+              <td class="action-col"><button class="invoice-btn" (click)="downloadInvoice(bill); $event.stopPropagation()" title="Download Invoice">🧾</button></td>
             </tr>
             <!-- Expanded order details -->
             <tr *ngIf="expandedBill === bill.billNumber" class="detail-row">
-              <td colspan="10">
+              <td colspan="11">
                 <div class="bill-detail">
                   <div class="detail-summary">
                     <span>Subtotal: <strong>₹{{ bill.subTotal | number:'1.0-0' }}</strong></span>

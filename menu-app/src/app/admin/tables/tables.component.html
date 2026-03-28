@@ -63,7 +63,8 @@
   <!-- Tables Grid -->
   <div class="tables-grid" *ngIf="!loading">
     <div class="table-card" *ngFor="let table of tables">
-      <div class="table-info">
+      <!-- View mode -->
+      <div class="table-info" *ngIf="editingTableId !== table.id">
         <h3>{{ table.tableNumber }}</h3>
         <p *ngIf="table.label">{{ table.label }}</p>
         <p class="capacity">👥 {{ table.capacity }} seats</p>
@@ -71,11 +72,33 @@
           {{ table.isActive ? 'Active' : 'Inactive' }}
         </span>
       </div>
-      <div class="table-actions">
+      <div class="table-actions" *ngIf="editingTableId !== table.id">
+        <button class="edit-btn" (click)="startEdit(table)">✏️ Rename</button>
         <button class="qr-btn" (click)="openQrDialog(table)">📱 QR Code</button>
         <button class="delete-btn" (click)="deleteTable(table.id)">🗑️ Delete</button>
       </div>
-      <div class="qr-data" *ngIf="table.qrData">
+
+      <!-- Edit mode -->
+      <div class="table-edit" *ngIf="editingTableId === table.id">
+        <div class="edit-field">
+          <label>Table Number</label>
+          <input [(ngModel)]="editTableNumber" placeholder="e.g., T1" />
+        </div>
+        <div class="edit-field">
+          <label>Label</label>
+          <input [(ngModel)]="editLabel" placeholder="e.g., Window Seat" />
+        </div>
+        <div class="edit-field">
+          <label>Capacity</label>
+          <input type="number" [(ngModel)]="editCapacity" min="1" (keypress)="onlyNumbers($event)" />
+        </div>
+        <div class="edit-actions">
+          <button class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+          <button class="btn-primary" (click)="saveEdit(table)" [disabled]="saving || !editTableNumber.trim()">{{ saving ? 'Saving...' : 'Save' }}</button>
+        </div>
+      </div>
+
+      <div class="qr-data" *ngIf="table.qrData && editingTableId !== table.id">
         <small>{{ table.qrData }}</small>
       </div>
     </div>

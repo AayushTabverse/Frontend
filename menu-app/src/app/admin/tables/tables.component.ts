@@ -24,6 +24,13 @@ export class TablesComponent implements OnInit {
   mobileSidebarOpen = false;
   tableSubmitted = false;
 
+  // Rename
+  editingTableId: string | null = null;
+  editTableNumber = '';
+  editLabel = '';
+  editCapacity = 1;
+  saving = false;
+
   // QR Dialog
   showQrDialog = false;
   selectedTable: TableResponse | null = null;
@@ -73,6 +80,35 @@ export class TablesComponent implements OnInit {
         this.formData = { tableNumber: '', label: '', capacity: 4 };
         this.loadTables();
       }
+    });
+  }
+
+  startEdit(table: TableResponse): void {
+    this.editingTableId = table.id;
+    this.editTableNumber = table.tableNumber;
+    this.editLabel = table.label || '';
+    this.editCapacity = table.capacity;
+  }
+
+  cancelEdit(): void {
+    this.editingTableId = null;
+  }
+
+  saveEdit(table: TableResponse): void {
+    if (!this.editTableNumber.trim()) return;
+    if (this.editCapacity < 1) return;
+    this.saving = true;
+    this.tableService.updateTable(table.id, {
+      tableNumber: this.editTableNumber.trim(),
+      label: this.editLabel.trim(),
+      capacity: this.editCapacity
+    }).subscribe({
+      next: () => {
+        this.editingTableId = null;
+        this.saving = false;
+        this.loadTables();
+      },
+      error: () => this.saving = false
     });
   }
 

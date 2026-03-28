@@ -30,9 +30,26 @@
     }
   }
   .table-actions { display: flex; gap: 8px; margin-top: 12px;
-    .qr-btn, .delete-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; text-decoration: none; }
+    .qr-btn, .delete-btn, .edit-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; text-decoration: none; }
     .qr-btn { background: #1a1a2e; color: white; }
     .delete-btn { background: #f8d7da; color: #721c24; }
+    .edit-btn { background: #fff3cd; color: #856404; }
+  }
+  .table-edit {
+    .edit-field {
+      margin-bottom: 10px;
+      label { display: block; font-size: 0.75rem; font-weight: 600; color: #666; margin-bottom: 4px; }
+      input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem;
+        &:focus { border-color: #1a1a2e; outline: none; }
+      }
+    }
+    .edit-actions { display: flex; gap: 8px; margin-top: 10px;
+      button { flex: 1; padding: 7px 0; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; }
+      .btn-secondary { background: #eee; color: #555; }
+      .btn-primary { background: #1a1a2e; color: white;
+        &:disabled { background: #ccc; cursor: not-allowed; }
+      }
+    }
   }
   .qr-data { margin-top: 8px; small { color: #999; font-size: 0.7rem; word-break: break-all; } }
 }
@@ -308,7 +325,7 @@
   .table-card .table-actions {
     flex-direction: column;
 
-    .qr-btn, .delete-btn { width: 100%; text-align: center; }
+    .qr-btn, .delete-btn, .edit-btn { width: 100%; text-align: center; }
   }
 }
 
@@ -361,6 +378,17 @@
     .table-actions {
       .qr-btn { background: var(--accent); }
       .delete-btn { background: #3d1515; color: #fca5a5; }
+      .edit-btn { background: #78350f; color: #fde68a; }
+    }
+    .table-edit {
+      .edit-field {
+        label { color: var(--text-muted); }
+        input { background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary); }
+      }
+      .edit-actions {
+        .btn-secondary { background: var(--bg-hover); color: var(--text-primary); }
+        .btn-primary { background: var(--accent); }
+      }
     }
     .qr-data small { color: var(--text-muted); }
   }

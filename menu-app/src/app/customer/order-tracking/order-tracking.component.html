@@ -27,6 +27,14 @@
     <p>⏱ Estimated time: <strong>{{ order.estimatedMinutes }} minutes</strong></p>
   </div>
 
+  <!-- Served message -->
+  <div class="served-banner" *ngIf="showServedMessage">
+    <div class="served-icon">🍽️</div>
+    <h2>Your order has been served!</h2>
+    <p>Enjoy your meal. Redirecting to menu...</p>
+    <button class="back-to-menu-btn" (click)="goBackToMenu()">Back to Menu</button>
+  </div>
+
   <div class="order-details" *ngIf="order">
     <h2>Order Items</h2>
     <div class="detail-item" *ngFor="let item of order.items">

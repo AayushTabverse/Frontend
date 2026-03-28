@@ -42,6 +42,7 @@ export class AiMarketingComponent implements OnInit {
   editedCaption = '';
   scheduleDate = '';
   approving = false;
+  generateError = '';
 
   // History
   postHistory?: PaginatedPostsResponse;
@@ -96,6 +97,7 @@ export class AiMarketingComponent implements OnInit {
   generate(): void {
     this.generating = true;
     this.generatedPost = undefined;
+    this.generateError = '';
     this.aiService.generatePost({
       contentType: this.contentType,
       platform: this.platform,
@@ -107,7 +109,10 @@ export class AiMarketingComponent implements OnInit {
         this.editedCaption = post.suggestedCaption;
         this.generating = false;
       },
-      error: () => this.generating = false
+      error: (err) => {
+        this.generating = false;
+        this.generateError = err.error?.message || 'Failed to generate post. Please try again.';
+      }
     });
   }
 

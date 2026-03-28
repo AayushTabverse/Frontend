@@ -255,6 +255,99 @@
   }
 }
 
+.served-banner {
+  text-align: center;
+  padding: 32px 20px;
+  margin: 16px;
+  background: #d4edda;
+  border-radius: 12px;
+  animation: fadeIn 0.4s ease;
+
+  .served-icon { font-size: 3rem; margin-bottom: 8px; }
+  h2 { margin: 0 0 6px; font-size: 1.2rem; color: #155724; }
+  p { margin: 0 0 16px; font-size: 0.9rem; color: #155724; opacity: 0.8; }
+
+  .back-to-menu-btn {
+    padding: 10px 24px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    &:hover { background: #219a52; }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+// ═══ DARK MODE ═══
+:host-context(body.dark-mode) {
+  .tracking-page { background: var(--bg-primary); }
+  .unauthorized-page {
+    .unauthorized-content {
+      h2 { color: var(--text-primary); }
+      p { color: var(--text-muted); }
+    }
+  }
+
+  .status-timeline {
+    .step {
+      &::before { background: var(--border-color); }
+      .step-dot { background: var(--border-color); }
+      .step-label { color: var(--text-muted); }
+      &.completed {
+        .step-dot { background: #27ae60; }
+        .step-label { color: var(--text-primary); }
+        &::before { background: #27ae60; }
+      }
+      &.active {
+        .step-dot { background: #e94560; }
+        .step-label { color: var(--text-primary); }
+      }
+    }
+  }
+
+  .eta-section {
+    background: #78350f;
+    color: #fde68a;
+  }
+
+  .order-details {
+    h2 { color: var(--text-primary); }
+
+    .detail-item {
+      color: var(--text-primary);
+      border-bottom-color: var(--border-light);
+
+      .item-right {
+        .cancel-confirm .cancel-no {
+          background: var(--bg-card);
+          border-color: var(--border-color);
+          color: var(--text-primary);
+        }
+      }
+    }
+
+    .order-total { color: var(--text-primary); }
+  }
+
+  .loading {
+    .spinner { border-color: var(--border-color); border-top-color: var(--accent, #e94560); }
+    color: var(--text-muted);
+  }
+
+  .served-banner {
+    background: #14532d;
+    h2 { color: #a7f3d0; }
+    p { color: #a7f3d0; }
+  }
 }

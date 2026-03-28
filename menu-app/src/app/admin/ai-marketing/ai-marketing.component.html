@@ -79,6 +79,10 @@
           <button class="btn-generate" (click)="generate()" [disabled]="generating">
             {{ generating ? '⏳ Generating...' : '✨ Generate Post' }}
           </button>
+
+          <div class="limit-error" *ngIf="generateError">
+            <span class="limit-icon">⚠️</span> {{ generateError }}
+          </div>
         </div>
 
         <!-- Preview Card -->

@@ -328,6 +328,34 @@
                     (click)="setCategory(cat.id)">
               {{ cat.name }}
             </button>
+            <button class="quick-add-tab" (click)="openQuickAdd()" title="Add item not on menu">
+              ＋ New Item
+            </button>
+          </div>
+
+          <!-- Quick Add Item Form -->
+          <div class="quick-add-form" *ngIf="showQuickAdd">
+            <div class="quick-add-header">
+              <span>➕ Add New Menu Item</span>
+              <button class="quick-add-close" (click)="cancelQuickAdd()">✕</button>
+            </div>
+            <div class="quick-add-fields">
+              <input type="text" [(ngModel)]="quickAddName" placeholder="Item name (e.g. Paneer Special)" class="qa-input" />
+              <input type="number" [(ngModel)]="quickAddPrice" placeholder="Price (₹)" min="1" class="qa-input qa-price" (keypress)="onlyNumbers($event)" />
+              <div class="qa-row">
+                <div class="qa-veg-toggle">
+                  <button [class.active]="quickAddIsVeg" (click)="quickAddIsVeg = true" class="veg-btn">● Veg</button>
+                  <button [class.active]="!quickAddIsVeg" (click)="quickAddIsVeg = false" class="non-veg-btn">● Non-Veg</button>
+                </div>
+                <select [(ngModel)]="quickAddCategoryId" class="qa-select">
+                  <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+                </select>
+              </div>
+              <button class="qa-save-btn" (click)="saveQuickAddItem()"
+                      [disabled]="quickAddSaving || !quickAddName.trim() || !quickAddPrice || quickAddPrice <= 0">
+                {{ quickAddSaving ? 'Adding...' : 'Add to Menu & Cart' }}
+              </button>
+            </div>
           </div>
 
           <div class="menu-items">

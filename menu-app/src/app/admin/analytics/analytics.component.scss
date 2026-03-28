@@ -122,6 +122,35 @@
   &.wide { flex: 1.8; }
   &.full-width { width: 100%; }
   &.udhaar-card { border-left: 4px solid #ffc107; }
+  &.udhaar-spacing { margin-top: 16px; }
+}
+
+// ═══ TABLE PAGINATION ═══
+.table-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-light, #eee);
+
+  button {
+    min-width: 32px; height: 32px;
+    border: 1px solid var(--border-light, #ddd);
+    background: var(--bg-card, white);
+    color: var(--text-primary, #333);
+    border-radius: 6px; cursor: pointer;
+    font-size: 0.8rem; font-weight: 600;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled):not(.active) { background: var(--bg-hover, #f5f6fa); }
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+    &.active { background: #e94560; color: white; border-color: #e94560; }
+  }
+
+  .page-info {
+    margin-left: 8px; font-size: 0.78rem;
+    color: var(--text-muted, #888);
+  }
 }
 
 .chart-header {

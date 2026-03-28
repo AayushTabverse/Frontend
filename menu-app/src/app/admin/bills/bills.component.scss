@@ -117,6 +117,14 @@
   .discount-col { color: #ff9800 !important; }
   .due-col.has-due { color: #f44336 !important; }
   .center { text-align: center; }
+  .action-col { text-align: center; }
+}
+
+.invoice-btn {
+  background: none; border: 1px solid #ddd; border-radius: 6px;
+  padding: 4px 10px; cursor: pointer; font-size: 1rem;
+  transition: all 0.2s;
+  &:hover { background: #1a1a2e; border-color: #1a1a2e; filter: brightness(1.2); }
 }
 
 .detail-row td {
@@ -362,4 +370,8 @@
   }
 
   .empty-state, .loading-state { color: var(--text-muted); }
+
+  .invoice-btn { border-color: var(--border-color);
+    &:hover { background: var(--accent); border-color: var(--accent); }
+  }
 }

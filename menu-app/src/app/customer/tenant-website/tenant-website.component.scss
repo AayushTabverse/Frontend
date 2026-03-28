@@ -578,15 +578,39 @@
   color: var(--tw-text-light);
 }
 
+.tw-about-image {
+  position: relative;
+  padding: 20px;
+}
+
 .tw-about-image-wrapper {
   position: relative;
   border-radius: var(--tw-radius);
   overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  padding: 12px;
+  background: var(--tw-bg, #fff);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--tw-radius);
+    padding: 3px;
+    background: linear-gradient(135deg, var(--tw-primary), transparent 40%, transparent 60%, var(--tw-accent, var(--tw-primary)));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: 2;
+    pointer-events: none;
+  }
 
   img {
     width: 100%;
-    height: 450px;
-    object-fit: cover;
+    height: auto;
+    max-height: 500px;
+    object-fit: contain;
     display: block;
     border-radius: var(--tw-radius);
   }
@@ -594,14 +618,41 @@
 
 .tw-about-image-accent {
   position: absolute;
-  top: 20px;
-  right: -15px;
-  bottom: -15px;
-  left: 20px;
+  top: 0;
+  right: -8px;
+  bottom: -8px;
+  left: 28px;
   border: 2px solid var(--tw-primary);
   border-radius: var(--tw-radius);
   z-index: -1;
-  opacity: 0.3;
+  opacity: 0.25;
+}
+
+// Corner dots decoration
+.tw-about-image::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 80px;
+  height: 80px;
+  background-image: radial-gradient(var(--tw-primary) 1.5px, transparent 1.5px);
+  background-size: 12px 12px;
+  opacity: 0.35;
+  z-index: -1;
+}
+
+.tw-about-image::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: -5px;
+  width: 80px;
+  height: 80px;
+  background-image: radial-gradient(var(--tw-primary) 1.5px, transparent 1.5px);
+  background-size: 12px 12px;
+  opacity: 0.35;
+  z-index: -1;
 }
 
 // ═══════════════════════════════════════
@@ -1211,7 +1262,7 @@
   }
 
   .tw-about-image-wrapper img {
-    height: 350px;
+    max-height: 400px;
   }
 }
 

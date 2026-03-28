@@ -188,6 +188,66 @@
     &.active { color: #e94560; border-bottom-color: #e94560; }
     &:hover { color: #333; }
   }
+
+  .quick-add-tab {
+    color: #27ae60; margin-left: auto; font-weight: 700;
+    &:hover { color: #1e8449; background: #f0fbf4; }
+  }
+}
+
+// ── Quick Add Item ──
+.quick-add-form {
+  background: #fefefe; border-bottom: 2px solid #e94560;
+  padding: 16px; animation: slideDown 0.2s ease;
+
+  .quick-add-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; font-weight: 700; font-size: 0.95rem; color: #333;
+  }
+  .quick-add-close {
+    background: none; border: none; font-size: 1.1rem;
+    cursor: pointer; color: #888; padding: 4px 8px;
+    &:hover { color: #e94560; }
+  }
+  .quick-add-fields {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .qa-input {
+    padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 0.9rem; width: 100%;
+    &:focus { border-color: #e94560; outline: none; }
+  }
+  .qa-price { max-width: 160px; }
+  .qa-row {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .qa-veg-toggle {
+    display: flex; gap: 0; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;
+    button {
+      padding: 8px 14px; border: none; background: #f5f6fa;
+      font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      &.active { color: white; }
+    }
+    .veg-btn.active { background: #27ae60; }
+    .non-veg-btn.active { background: #c0392b; }
+  }
+  .qa-select {
+    padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 0.85rem; flex: 1; min-width: 120px;
+    &:focus { border-color: #e94560; outline: none; }
+  }
+  .qa-save-btn {
+    padding: 10px 20px; background: #27ae60; color: white;
+    border: none; border-radius: 8px; font-weight: 700;
+    font-size: 0.9rem; cursor: pointer; align-self: flex-start;
+    &:hover { background: #219a52; }
+    &:disabled { background: #ccc; cursor: not-allowed; }
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .menu-items { padding: 12px; max-height: 60vh; overflow-y: auto; }
@@ -959,6 +1019,14 @@
   .menu-panel { background: var(--bg-card); box-shadow: 0 2px 8px var(--shadow); }
   .category-tabs { border-bottom-color: var(--border-color);
     button { color: var(--text-muted); &.active { color: var(--accent); } &:hover { color: var(--text-primary); } }
+    .quick-add-tab { color: #27ae60; &:hover { background: var(--bg-hover); } }
+  }
+
+  .quick-add-form {
+    background: var(--bg-card); border-bottom-color: var(--accent);
+    .quick-add-header { color: var(--text-primary); }
+    .qa-input, .qa-select { background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary); }
+    .qa-veg-toggle button { background: var(--bg-hover); color: var(--text-secondary); }
   }
 
   .menu-item-card { border-bottom-color: var(--border-light); }

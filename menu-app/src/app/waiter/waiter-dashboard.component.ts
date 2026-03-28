@@ -105,6 +105,14 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   cancellingItemId: string | null = null;
   private subs: Subscription[] = [];
 
+  // Quick-add item
+  showQuickAdd = false;
+  quickAddName = '';
+  quickAddPrice: number | null = null;
+  quickAddIsVeg = true;
+  quickAddCategoryId = '';
+  quickAddSaving = false;
+
   constructor(
     private tableService: TableService,
     private menuService: MenuService,
@@ -251,6 +259,55 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
 
   getCartEntry(itemId: string): WaiterCartItem | undefined {
     return this.cart.find(c => c.menuItem.id === itemId);
+  }
+
+  // ── Quick Add Item ──
+
+  openQuickAdd(): void {
+    this.showQuickAdd = true;
+    this.quickAddName = '';
+    this.quickAddPrice = null;
+    this.quickAddIsVeg = true;
+    this.quickAddCategoryId = this.activeCategory || (this.categories.length > 0 ? this.categories[0].id : '');
+  }
+
+  cancelQuickAdd(): void {
+    this.showQuickAdd = false;
+  }
+
+  saveQuickAddItem(): void {
+    if (!this.quickAddName.trim() || !this.quickAddPrice || this.quickAddPrice <= 0 || !this.quickAddCategoryId) return;
+    this.quickAddSaving = true;
+
+    const body = {
+      name: this.quickAddName.trim(),
+      price: this.quickAddPrice,
+      isVeg: this.quickAddIsVeg,
+      categoryId: this.quickAddCategoryId,
+      isAvailable: true,
+      sortOrder: 999,
+      preparationTimeMinutes: 15
+    };
+
+    this.menuService.createItem(body).subscribe({
+      next: (newItem) => {
+        this.quickAddSaving = false;
+        this.showQuickAdd = false;
+        // Add to local categories list & auto-add to cart
+        const cat = this.categories.find(c => c.id === this.quickAddCategoryId);
+        if (cat) {
+          cat.items.push(newItem);
+        }
+        this.addToCart(newItem);
+        this.successMessage = `"${newItem.name}" added to menu & cart!`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: () => {
+        this.quickAddSaving = false;
+        this.errorMessage = 'Failed to add item. Try again.';
+        setTimeout(() => this.errorMessage = '', 3000);
+      }
+    });
   }
 
   // ── Place Order (adds new order to table) ──
@@ -527,7 +584,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
         .upi-qr { width: ${isThermal ? '120px' : '160px'}; height: ${isThermal ? '120px' : '160px'}; object-fit: contain; }
         .footer { text-align: center; margin-top: ${isThermal ? '8px' : '20px'}; padding-top: ${isThermal ? '6px' : '12px'}; border-top: 1px dashed #ccc; font-size: ${isThermal ? '8px' : '12px'}; color: #999; }
         .footer .brand-name { font-weight: 700; background: linear-gradient(90deg, #e94560, #0f3460); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        @media print { body { padding: ${isThermal ? '2px' : '8px'}; } }
+        @page { margin: 0; size: auto; }
+        @media print { html, body { height: auto !important; min-height: 0 !important; padding: ${isThermal ? '2px' : '8px'}; margin: 0; } }
       </style></head><body>
         <div class="header">
           <div class="restaurant">${this.restaurantName}</div>
@@ -628,7 +686,11 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
       this.subs.push(
         this.signalR.newOrder$.subscribe(() => {
           this.loadOrders();
+          this.loadTables();
           if (this.selectedTable) this.loadTableSession(this.selectedTable.id);
+          this.playNotificationSound();
+          this.successMessage = '🔔 New order received!';
+          setTimeout(() => this.successMessage = '', 5000);
         }),
         this.signalR.statusUpdate$.subscribe(() => {
           this.loadOrders();

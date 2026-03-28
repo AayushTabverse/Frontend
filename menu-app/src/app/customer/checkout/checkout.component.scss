@@ -98,3 +98,38 @@
     cursor: not-allowed;
   }
 }
+
+// ═══ DARK MODE ═══
+:host-context(body.dark-mode) {
+  .checkout-page { background: var(--bg-primary); }
+
+  .section {
+    h2 { color: var(--text-primary); }
+    .table-info { color: var(--text-muted); }
+
+    .order-item {
+      color: var(--text-primary);
+      border-bottom-color: var(--border-light);
+    }
+
+    textarea {
+      background: var(--bg-input);
+      border-color: var(--border-color);
+      color: var(--text-primary);
+      &::placeholder { color: var(--text-muted); }
+    }
+  }
+
+  .error-msg {
+    background: #3d1515;
+    color: #fca5a5;
+  }
+
+  .total-section {
+    background: var(--bg-card);
+
+    .total-row { color: var(--text-primary); }
+  }
+
+  .place-order-btn:disabled { background: var(--border-color); }
+}

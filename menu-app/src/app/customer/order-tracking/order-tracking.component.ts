@@ -24,7 +24,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   cancellingItemId: string | null = null;
   private sub?: Subscription;
 
-  statusSteps = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed'];
+  statusSteps = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Served'];
 
   constructor(
     private route: ActivatedRoute,
@@ -51,10 +51,21 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
         this.order = order;
         if (!this.tableId) this.tableId = order.tableId;
         this.loading = false;
+        this.checkServedRedirect();
         this.setupRealTime(orderId);
       },
       error: () => this.loading = false
     });
+  }
+
+  showServedMessage = false;
+  private servedTimer?: any;
+
+  private checkServedRedirect(): void {
+    if (this.order?.status === 'Served' || this.order?.status === 'Completed') {
+      this.showServedMessage = true;
+      this.servedTimer = setTimeout(() => this.goBackToMenu(), 5000);
+    }
   }
 
   goBackToMenu(): void {
@@ -79,6 +90,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
       this.sub = this.signalR.statusUpdate$.subscribe(updated => {
         if (updated.id === this.order?.id) {
           this.order = updated;
+          this.checkServedRedirect();
         }
       });
     }
@@ -126,5 +138,6 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
     this.signalR.stopConnection();
+    if (this.servedTimer) clearTimeout(this.servedTimer);
   }
 }

@@ -290,11 +290,23 @@
           </table>
         </div>
         <div class="empty-chart" *ngIf="recentOrders.length === 0">No recent orders</div>
+
+        <!-- Pagination -->
+        <div class="table-pagination" *ngIf="ordersTotalPages > 1">
+          <button (click)="goToOrdersPage(1)" [disabled]="ordersPage === 1">«</button>
+          <button (click)="goToOrdersPage(ordersPage - 1)" [disabled]="ordersPage === 1">‹</button>
+          <button *ngFor="let p of ordersPageNumbers"
+                  (click)="goToOrdersPage(p)"
+                  [class.active]="p === ordersPage">{{ p }}</button>
+          <button (click)="goToOrdersPage(ordersPage + 1)" [disabled]="ordersPage === ordersTotalPages">›</button>
+          <button (click)="goToOrdersPage(ordersTotalPages)" [disabled]="ordersPage === ordersTotalPages">»</button>
+          <span class="page-info">Page {{ ordersPage }} of {{ ordersTotalPages }}</span>
+        </div>
       </div>
     </div>
 
     <!-- ═══ UNSETTLED UDHAAR TABLE ═══ -->
-    <div class="chart-card full-width udhaar-card" *ngIf="unsettledDues.length > 0">
+    <div class="chart-card full-width udhaar-card udhaar-spacing" *ngIf="unsettledDues.length > 0">
       <div class="chart-header">
         <h3>📋 Unsettled Udhaar</h3>
         <a routerLink="/admin/dues" class="view-all-link">Manage Dues →</a>

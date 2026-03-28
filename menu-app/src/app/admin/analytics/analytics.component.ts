@@ -38,6 +38,11 @@ export class AnalyticsComponent implements OnInit {
   topItemsCount = 10;
   peakHoursDays = '7';
 
+  // Orders pagination
+  allRecentOrders: OrderResponse[] = [];
+  ordersPage = 1;
+  ordersPageSize = 10;
+
   // Computed chart data
   maxSales = 0;
   maxSalesCount = 0;
@@ -128,10 +133,31 @@ export class AnalyticsComponent implements OnInit {
       to.toISOString().split('T')[0]
     ).subscribe({
       next: (orders) => {
-        this.recentOrders = orders.slice(0, 20);
+        this.allRecentOrders = orders;
+        this.ordersPage = 1;
+        this.recentOrders = this.allRecentOrders.slice(0, this.ordersPageSize);
         this.computeStatusDistribution(orders);
       }
     });
+  }
+
+  get ordersTotalPages(): number {
+    return Math.ceil(this.allRecentOrders.length / this.ordersPageSize);
+  }
+
+  get ordersPageNumbers(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.ordersPage - 2);
+    const end = Math.min(this.ordersTotalPages, this.ordersPage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToOrdersPage(page: number): void {
+    if (page < 1 || page > this.ordersTotalPages) return;
+    this.ordersPage = page;
+    const start = (page - 1) * this.ordersPageSize;
+    this.recentOrders = this.allRecentOrders.slice(start, start + this.ordersPageSize);
   }
 
   loadUnsettledDues(): void {

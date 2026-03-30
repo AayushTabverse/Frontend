@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, OrderResponse, LiveOrdersResponse, CreateOrderRequest, ClearTableRequest, TableSessionSummary, PaginatedBillsResponse } from '../models/api.models';
+import { ApiResponse, OrderResponse, LiveOrdersResponse, CreateOrderRequest, ClearTableRequest, TableSessionSummary, PaginatedBillsResponse, BillResponse, CreatePastBillRequest } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -79,6 +79,12 @@ export class OrderService {
 
   cancelOrderItem(orderId: string, itemId: string): Observable<OrderResponse> {
     return this.http.delete<ApiResponse<OrderResponse>>(`${this.apiUrl}/${orderId}/items/${itemId}`).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  createPastBill(request: CreatePastBillRequest): Observable<BillResponse> {
+    return this.http.post<ApiResponse<BillResponse>>(`${this.apiUrl}/bills/past`, request).pipe(
       map(res => res.data!)
     );
   }

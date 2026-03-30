@@ -49,6 +49,10 @@ export class AuthService {
     return this.currentUserSubject.value?.tenantId ?? null;
   }
 
+  getUserId(): string | null {
+    return this.currentUserSubject.value?.userId ?? null;
+  }
+
   getRole(): string | null {
     return this.currentUserSubject.value?.role ?? null;
   }

@@ -12,6 +12,7 @@
     <a routerLink="/admin/menu" routerLinkActive="active" data-tooltip="Menu" (click)="mobileSidebarOpen = false">📋 <span class="nav-text">Menu</span></a>
     <a routerLink="/admin/tables" routerLinkActive="active" data-tooltip="Tables" (click)="mobileSidebarOpen = false">🪑 <span class="nav-text">Tables</span></a>
     <a routerLink="/admin/staff" routerLinkActive="active" data-tooltip="Staff" (click)="mobileSidebarOpen = false">👥 <span class="nav-text">Staff</span></a>
+    <a routerLink="/admin/inventory" routerLinkActive="active" data-tooltip="Inventory" (click)="mobileSidebarOpen = false">📦 <span class="nav-text">Inventory</span></a>
     <a routerLink="/admin/website" routerLinkActive="active" data-tooltip="Website" (click)="mobileSidebarOpen = false">🌐 <span class="nav-text">Website</span></a>
     <a routerLink="/admin/settings" routerLinkActive="active" data-tooltip="Settings" (click)="mobileSidebarOpen = false">⚙️ <span class="nav-text">Settings</span></a>
     <a routerLink="/admin/bills" routerLinkActive="active" data-tooltip="Bills" (click)="mobileSidebarOpen = false">🧾 <span class="nav-text">Bills</span></a>
@@ -47,6 +48,9 @@
       </button>
       <button class="download-btn" (click)="downloadCSV()" [disabled]="bills.length === 0">
         📥 Download CSV
+      </button>
+      <button class="past-bill-btn" (click)="openPastBillDialog()">
+        ➕ Add Past Bill
       </button>
       <label class="view-toggle">
         <input type="checkbox" [(ngModel)]="simpleView" />
@@ -170,6 +174,90 @@
 
     <div class="loading-state" *ngIf="loading">
       Loading bills...
+    </div>
+
+    <!-- Past Bill Dialog -->
+    <div class="modal-overlay" *ngIf="showPastBillDialog" (click)="closePastBillDialog()">
+      <div class="past-bill-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>➕ Add Past Bill</h2>
+          <button class="close-btn" (click)="closePastBillDialog()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bill Date</label>
+              <input type="date" [(ngModel)]="pastBill.billDate" [max]="toDate" />
+            </div>
+            <div class="form-group">
+              <label>Table</label>
+              <select [(ngModel)]="pastBill.tableId">
+                <option value="">Select Table</option>
+                <option *ngFor="let t of tables" [value]="t.id">{{ t.tableNumber }}{{ t.label ? ' — ' + t.label : '' }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="items-section">
+            <div class="items-header">
+              <label class="section-label">Items</label>
+              <div class="veg-filter">
+                <button [class.active]="vegFilter === 'all'" (click)="vegFilter = 'all'">All</button>
+                <button [class.active]="vegFilter === 'veg'" (click)="vegFilter = 'veg'">🟢 Veg</button>
+                <button [class.active]="vegFilter === 'nonveg'" (click)="vegFilter = 'nonveg'">🔴 Non-Veg</button>
+              </div>
+            </div>
+            <div class="item-row" *ngFor="let item of pastBill.items; let i = index">
+              <select [(ngModel)]="item.menuItemId" class="item-select">
+                <option value="">Select Item</option>
+                <option *ngFor="let m of filteredMenuItems" [value]="m.id">{{ m.isVeg ? '🟢' : '🔴' }} {{ m.name }} — ₹{{ m.price }}</option>
+              </select>
+              <input type="number" placeholder="Qty" [(ngModel)]="item.quantity" min="1" class="item-qty" />
+              <span class="item-total">₹{{ getItemLineTotal(item) | number:'1.0-0' }}</span>
+              <button class="remove-item-btn" (click)="removePastBillItem(i)" *ngIf="pastBill.items.length > 1">✕</button>
+            </div>
+            <button class="add-item-btn" (click)="addPastBillItem()">+ Add Item</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Discount (₹)</label>
+              <input type="number" [(ngModel)]="pastBill.discountAmount" min="0" />
+            </div>
+            <div class="form-group">
+              <label>Paid Amount (₹)</label>
+              <input type="number" [(ngModel)]="pastBill.paidAmount" min="0" [placeholder]="pastBillTotal | number:'1.0-0'" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Customer Name</label>
+              <input type="text" [(ngModel)]="pastBill.customerName" placeholder="Optional" />
+            </div>
+            <div class="form-group">
+              <label>Customer Mobile</label>
+              <input type="text" [(ngModel)]="pastBill.customerMobile" placeholder="Optional" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" [(ngModel)]="pastBill.notes" placeholder="Optional" />
+          </div>
+
+          <div class="bill-summary">
+            <span>Subtotal: <strong>₹{{ pastBillSubTotal | number:'1.0-0' }}</strong></span>
+            <span>Total (with tax): <strong class="total-val">₹{{ pastBillTotal | number:'1.0-0' }}</strong></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" (click)="closePastBillDialog()">Cancel</button>
+          <button class="save-btn" (click)="savePastBill()" [disabled]="pastBillSaving">
+            {{ pastBillSaving ? 'Saving...' : 'Save Bill' }}
+          </button>
+        </div>
+      </div>
     </div>
   </main>
 </div>

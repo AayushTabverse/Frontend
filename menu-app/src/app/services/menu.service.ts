@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, FullMenuResponse, MenuCategory, MenuItem } from '../models/api.models';
+import { ApiResponse, FullMenuResponse, MenuCategory, MenuItem, MenuItemIngredient } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -65,6 +65,20 @@ export class MenuService {
   deleteItem(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/item/${id}`).pipe(
       map(() => void 0)
+    );
+  }
+
+  // ── Ingredient Mapping ──
+
+  getIngredients(menuItemId: string): Observable<MenuItemIngredient[]> {
+    return this.http.get<ApiResponse<MenuItemIngredient[]>>(`${this.apiUrl}/item/${menuItemId}/ingredients`).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  setIngredients(menuItemId: string, ingredients: { inventoryItemId: string; quantityUsed: number }[]): Observable<MenuItemIngredient[]> {
+    return this.http.put<ApiResponse<MenuItemIngredient[]>>(`${this.apiUrl}/item/${menuItemId}/ingredients`, { ingredients }).pipe(
+      map(res => res.data!)
     );
   }
 }

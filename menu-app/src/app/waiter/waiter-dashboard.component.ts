@@ -100,6 +100,11 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
 
+  // Table assignment
+  showAllTables = false;
+  assignedTableIds: string[] = [];
+  userId = '';
+
   statusOptions = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed'];
   confirmCancelItemId: string | null = null;
   cancellingItemId: string | null = null;
@@ -112,6 +117,15 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   quickAddIsVeg = true;
   quickAddCategoryId = '';
   quickAddSaving = false;
+
+  // Menu search
+  menuSearchQuery = '';
+  menuSearchResults: MenuItem[] = [];
+  menuVegFilter: 'all' | 'veg' | 'nonveg' = 'all';
+
+  // Admin waiter filter
+  allWaiters: { id: string; fullName: string }[] = [];
+  adminFilterWaiterId = '';
 
   constructor(
     private tableService: TableService,
@@ -129,12 +143,19 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.userName = user?.fullName || 'Staff';
+      this.userId = user?.userId || '';
     });
     this.isAdmin = this.authService.isAdmin();
     this.loadTables();
     this.loadOrders();
     this.loadRestaurantName();
     this.setupRealTime();
+    if (!this.isAdmin && this.authService.getUserId()) {
+      this.loadAssignedTables();
+    }
+    if (this.isAdmin) {
+      this.loadWaitersForFilter();
+    }
 
     // Customer autocomplete
     this.subs.push(
@@ -156,6 +177,53 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   }
 
   // ── Tables ──
+
+  loadAssignedTables(): void {
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+    this.tableService.getWaiterAssignment(userId).subscribe({
+      next: (assignment) => {
+        this.assignedTableIds = assignment.assignedTableIds || [];
+      },
+      error: () => {
+        this.assignedTableIds = [];
+      }
+    });
+  }
+
+  getVisibleTables(): TableResponse[] {
+    // Admin with waiter filter active
+    if (this.isAdmin && this.adminFilterWaiterId) {
+      const assignment = this.adminFilterAssignments.find(a => a.waiterId === this.adminFilterWaiterId);
+      if (!assignment) return [];
+      return this.tables.filter(t => assignment.assignedTableIds.includes(t.id));
+    }
+    if (this.isAdmin || this.showAllTables || this.assignedTableIds.length === 0) {
+      return this.tables;
+    }
+    return this.tables.filter(t => this.assignedTableIds.includes(t.id));
+  }
+
+  toggleShowAllTables(): void {
+    this.showAllTables = !this.showAllTables;
+  }
+
+  // Admin waiter filter
+  adminFilterAssignments: { waiterId: string; assignedTableIds: string[] }[] = [];
+
+  loadWaitersForFilter(): void {
+    this.authService.getStaff().subscribe({
+      next: (staff) => {
+        this.allWaiters = staff
+          .filter(s => s.role === 'Waiter' && s.isActive)
+          .map(s => ({ id: s.id, fullName: s.fullName }));
+      }
+    });
+    this.tableService.getAllAssignments().subscribe({
+      next: (a) => this.adminFilterAssignments = a.map(x => ({ waiterId: x.waiterId, assignedTableIds: x.assignedTableIds })),
+      error: () => this.adminFilterAssignments = []
+    });
+  }
 
   loadTables(): void {
     this.loading = true;
@@ -219,8 +287,41 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   }
 
   getActiveItems(): MenuItem[] {
+    // If searching, return search results
+    if (this.menuSearchQuery.trim()) {
+      return this.applyMenuVegFilter(this.menuSearchResults);
+    }
     const cat = this.categories.find(c => c.id === this.activeCategory);
-    return cat?.items?.filter(i => i.isAvailable) ?? [];
+    const items = cat?.items?.filter(i => i.isAvailable) ?? [];
+    return this.applyMenuVegFilter(items);
+  }
+
+  private applyMenuVegFilter(items: MenuItem[]): MenuItem[] {
+    if (this.menuVegFilter === 'veg') return items.filter(i => i.isVeg);
+    if (this.menuVegFilter === 'nonveg') return items.filter(i => !i.isVeg);
+    return items;
+  }
+
+  onMenuSearch(query: string): void {
+    this.menuSearchQuery = query;
+    if (!query.trim()) {
+      this.menuSearchResults = [];
+      return;
+    }
+    const q = query.toLowerCase().trim();
+    this.menuSearchResults = [];
+    for (const cat of this.categories) {
+      for (const item of cat.items) {
+        if (item.isAvailable && (item.name.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q))) {
+          this.menuSearchResults.push(item);
+        }
+      }
+    }
+  }
+
+  clearMenuSearch(): void {
+    this.menuSearchQuery = '';
+    this.menuSearchResults = [];
   }
 
   // ── Cart ──
@@ -704,6 +805,19 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
         }),
         this.signalR.waiterCallDismissed$.subscribe(() => {
           this.loadTables();
+        }),
+        this.signalR.tableCleared$.subscribe((data) => {
+          this.loadTables();
+          this.loadOrders();
+          // If this waiter is viewing the cleared table, reset the view
+          if (this.selectedTable && this.selectedTable.id === data.tableId) {
+            this.tableSession = null;
+            this.showBillSummary = false;
+            this.billSummary = null;
+            this.cart = [];
+            this.successMessage = `Table ${data.tableNumber} has been cleared`;
+            setTimeout(() => this.successMessage = '', 4000);
+          }
         })
       );
     }

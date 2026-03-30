@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, TableResponse } from '../models/api.models';
+import { ApiResponse, TableResponse, WaiterAssignmentResponse } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +51,24 @@ export class TableService {
   dismissCall(tableId: string): Observable<void> {
     return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${tableId}/dismiss-call`, {}).pipe(
       map(() => void 0)
+    );
+  }
+
+  assignTables(waiterId: string, tableIds: string[]): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/assign`, { waiterId, tableIds }).pipe(
+      map(() => void 0)
+    );
+  }
+
+  getWaiterAssignment(waiterId: string): Observable<WaiterAssignmentResponse> {
+    return this.http.get<ApiResponse<WaiterAssignmentResponse>>(`${this.apiUrl}/assignments/${waiterId}`).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  getAllAssignments(): Observable<WaiterAssignmentResponse[]> {
+    return this.http.get<ApiResponse<WaiterAssignmentResponse[]>>(`${this.apiUrl}/assignments`).pipe(
+      map(res => res.data!)
     );
   }
 }

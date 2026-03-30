@@ -188,4 +188,83 @@
     background: #3d1515; color: #fca5a5;
     &.available { background: #14532d; color: #a7f3d0; }
   }
+
+  .ingredients-modal { background: var(--bg-card); }
+  .ingredients-subtitle { color: var(--text-muted); }
+  .ing-row {
+    select, input { border-color: var(--border-color); background: var(--bg-input); color: var(--text-primary); }
+  }
+  .ing-unit { color: var(--text-muted); }
+}
+
+/* ── Ingredient Mapping ── */
+.btn-ingredients {
+  background: #e3f2fd;
+  color: #1565c0;
+  &:hover { background: #bbdefb; }
+}
+
+.ingredients-modal {
+  max-width: 560px;
+}
+
+.ingredients-subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin: -10px 0 16px;
+}
+
+.ingredients-loading {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+.ingredients-rows {
+  margin-bottom: 12px;
+}
+
+.ing-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 60px 32px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+
+  &.ing-header {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  select, input {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    &:focus { border-color: #e94560; outline: none; }
+  }
+}
+
+.ing-unit {
+  font-size: 0.82rem;
+  color: #888;
+  font-weight: 600;
+}
+
+.btn-add-ing {
+  background: #f0f7ff;
+  color: #1565c0;
+  border: 1px dashed #90caf9;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 4px;
+  &:hover { background: #e3f2fd; }
 }

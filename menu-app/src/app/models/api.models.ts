@@ -23,6 +23,7 @@ export interface RegisterTenantRequest {
 
 export interface AuthResponse {
   token: string;
+  userId: string;
   tenantId: string;
   email: string;
   fullName: string;
@@ -199,6 +200,14 @@ export interface TableResponse {
   waiterCalledAt?: string;
   qrCodeUrl?: string;
   qrData?: string;
+  assignedWaiterIds?: string[];
+  assignedWaiterNames?: string[];
+}
+
+export interface WaiterAssignmentResponse {
+  waiterId: string;
+  waiterName: string;
+  assignedTableIds: string[];
 }
 
 // ── Analytics ──
@@ -434,6 +443,22 @@ export interface ClearTableRequest {
   notes?: string;
 }
 
+export interface CreatePastBillRequest {
+  billDate: string;
+  tableId: string;
+  items: PastBillItem[];
+  discountAmount: number;
+  paidAmount: number;
+  customerName?: string;
+  customerMobile?: string;
+  notes?: string;
+}
+
+export interface PastBillItem {
+  menuItemId: string;
+  quantity: number;
+}
+
 export interface CustomerDue {
   id: string;
   customerName: string;
@@ -556,4 +581,59 @@ export interface ReviewTrend {
   period: string;
   avgRating: number;
   reviewCount: number;
+}
+
+// ── Inventory ──
+export interface InventoryItem {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  currentQuantity: number;
+  unit: string;
+  minimumQuantity: number;
+  costPerUnit: number;
+  supplier?: string;
+  supplierContact?: string;
+  lastRestockedAt?: string;
+  isActive: boolean;
+  isLowStock: boolean;
+  totalValue: number;
+  createdAt: string;
+}
+
+export interface InventoryLog {
+  id: string;
+  inventoryItemId: string;
+  itemName: string;
+  quantityChange: number;
+  quantityAfter: number;
+  changeType: string;
+  notes?: string;
+  changedBy?: string;
+  createdAt: string;
+}
+
+export interface MenuItemIngredient {
+  id: string;
+  inventoryItemId: string;
+  inventoryItemName: string;
+  unit: string;
+  quantityUsed: number;
+  currentStock: number;
+}
+
+export interface InventorySummary {
+  totalItems: number;
+  lowStockItems: number;
+  outOfStockItems: number;
+  totalInventoryValue: number;
+  lowStockAlerts: InventoryItem[];
+  categoryBreakdown: CategorySummary[];
+}
+
+export interface CategorySummary {
+  category: string;
+  itemCount: number;
+  totalValue: number;
 }

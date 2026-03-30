@@ -6,7 +6,8 @@ import { MenuService } from '../../services/menu.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { UploadService } from '../../services/upload.service';
-import { MenuCategory, MenuItem } from '../../models/api.models';
+import { InventoryService } from '../../services/inventory.service';
+import { MenuCategory, MenuItem, InventoryItem, MenuItemIngredient } from '../../models/api.models';
 
 @Component({
   selector: 'app-menu-management',
@@ -37,12 +38,23 @@ export class MenuManagementComponent implements OnInit {
   catSubmitted = false;
   itemSubmitted = false;
 
+  // Ingredient mapping
+  showIngredientsDialog = false;
+  ingredientMenuItem: MenuItem | null = null;
+  ingredientsList: MenuItemIngredient[] = [];
+  allInventoryItems: InventoryItem[] = [];
+  ingredientMappings: { inventoryItemId: string; quantityUsed: number }[] = [];
+  ingredientsLoading = false;
+  ingredientsSaving = false;
+  ingredientSuccessMsg = '';
+
   constructor(
     private menuService: MenuService,
     private authService: AuthService,
     private router: Router,
     public themeService: ThemeService,
-    private uploadService: UploadService
+    private uploadService: UploadService,
+    private inventoryService: InventoryService
   ) {}
 
   ngOnInit(): void {
@@ -140,6 +152,76 @@ export class MenuManagementComponent implements OnInit {
   cancelForm(): void {
     this.showCategoryForm = false;
     this.showItemForm = false;
+  }
+
+  // ── Ingredient Mapping ──
+
+  openIngredients(item: MenuItem): void {
+    this.ingredientMenuItem = item;
+    this.ingredientsLoading = true;
+    this.showIngredientsDialog = true;
+    this.ingredientSuccessMsg = '';
+
+    // Load inventory items and current mappings in parallel
+    this.inventoryService.getItems().subscribe({
+      next: (items) => this.allInventoryItems = items,
+      error: () => this.allInventoryItems = []
+    });
+
+    this.menuService.getIngredients(item.id).subscribe({
+      next: (ingredients) => {
+        this.ingredientsList = ingredients;
+        this.ingredientMappings = ingredients.map(i => ({
+          inventoryItemId: i.inventoryItemId,
+          quantityUsed: i.quantityUsed
+        }));
+        this.ingredientsLoading = false;
+      },
+      error: () => {
+        this.ingredientMappings = [];
+        this.ingredientsLoading = false;
+      }
+    });
+  }
+
+  addIngredientRow(): void {
+    this.ingredientMappings.push({ inventoryItemId: '', quantityUsed: 0 });
+  }
+
+  removeIngredientRow(index: number): void {
+    this.ingredientMappings.splice(index, 1);
+  }
+
+  getInventoryItemName(id: string): string {
+    return this.allInventoryItems.find(i => i.id === id)?.name || '';
+  }
+
+  getInventoryItemUnit(id: string): string {
+    return this.allInventoryItems.find(i => i.id === id)?.unit || '';
+  }
+
+  saveIngredients(): void {
+    if (!this.ingredientMenuItem) return;
+    // Filter out empty rows
+    const valid = this.ingredientMappings.filter(m => m.inventoryItemId && m.quantityUsed > 0);
+    this.ingredientsSaving = true;
+
+    this.menuService.setIngredients(this.ingredientMenuItem.id, valid).subscribe({
+      next: (result) => {
+        this.ingredientsList = result;
+        this.ingredientsSaving = false;
+        this.ingredientSuccessMsg = 'Ingredients saved!';
+        setTimeout(() => this.ingredientSuccessMsg = '', 2000);
+      },
+      error: () => {
+        this.ingredientsSaving = false;
+      }
+    });
+  }
+
+  closeIngredients(): void {
+    this.showIngredientsDialog = false;
+    this.ingredientMenuItem = null;
   }
 
   onFileSelected(event: Event, target: 'category' | 'item'): void {

@@ -163,7 +163,6 @@
               <div class="tw-menu-item-info">
                 <div class="tw-menu-item-header">
                   <h4>{{ item.name }}</h4>
-                  <span class="tw-menu-item-price">{{ content.currencyCode === 'USD' ? '$' : '₹' }}{{ item.price | number:'1.0-0' }}</span>
                 </div>
                 <p class="tw-menu-item-desc" *ngIf="item.description">{{ item.description }}</p>
               </div>

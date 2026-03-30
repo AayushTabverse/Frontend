@@ -118,6 +118,11 @@ export const routes: Routes = [
     loadComponent: () => import('./admin/reviews/reviews.component').then(m => m.ReviewsComponent),
     canActivate: [adminGuard]
   },
+  {
+    path: 'admin/inventory',
+    loadComponent: () => import('./admin/inventory/inventory.component').then(m => m.InventoryComponent),
+    canActivate: [adminGuard]
+  },
 
   // ── Waiter Dashboard ──
   {

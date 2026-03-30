@@ -31,6 +31,10 @@ export class MenuComponent implements OnInit, OnDestroy {
   waiterCalled = false;
   activeOrders: OrderResponse[] = [];
   sessionExpired = false;
+  searchQuery = '';
+  searchResults: MenuItem[] = [];
+  isSearching = false;
+  vegFilter: 'all' | 'veg' | 'nonveg' = 'all';
   private subs: Subscription[] = [];
 
   constructor(
@@ -139,6 +143,51 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   selectCategory(category: MenuCategory): void {
     this.selectedCategory = category;
+    this.searchQuery = '';
+    this.isSearching = false;
+    this.searchResults = [];
+  }
+
+  onSearch(query: string): void {
+    this.searchQuery = query;
+    if (!query.trim()) {
+      this.isSearching = false;
+      this.searchResults = [];
+      return;
+    }
+    this.isSearching = true;
+    const q = query.toLowerCase().trim();
+    this.searchResults = [];
+    if (this.menu) {
+      for (const cat of this.menu.categories) {
+        for (const item of cat.items) {
+          if (item.name.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q)) {
+            this.searchResults.push(item);
+          }
+        }
+      }
+    }
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.isSearching = false;
+    this.searchResults = [];
+  }
+
+  get filteredCategoryItems(): MenuItem[] {
+    if (!this.selectedCategory) return [];
+    return this.applyVegFilter(this.selectedCategory.items);
+  }
+
+  get filteredSearchResults(): MenuItem[] {
+    return this.applyVegFilter(this.searchResults);
+  }
+
+  private applyVegFilter(items: MenuItem[]): MenuItem[] {
+    if (this.vegFilter === 'veg') return items.filter(i => i.isVeg);
+    if (this.vegFilter === 'nonveg') return items.filter(i => !i.isVeg);
+    return items;
   }
 
   getItemQuantity(item: MenuItem): number {

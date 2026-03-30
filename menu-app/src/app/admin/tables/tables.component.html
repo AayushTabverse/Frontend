@@ -12,6 +12,7 @@
     <a routerLink="/admin/menu" routerLinkActive="active" data-tooltip="Menu" (click)="mobileSidebarOpen = false">📋 <span class="nav-text">Menu</span></a>
     <a routerLink="/admin/tables" routerLinkActive="active" data-tooltip="Tables" (click)="mobileSidebarOpen = false">🪑 <span class="nav-text">Tables</span></a>
     <a routerLink="/admin/staff" routerLinkActive="active" data-tooltip="Staff" (click)="mobileSidebarOpen = false">👥 <span class="nav-text">Staff</span></a>
+    <a routerLink="/admin/inventory" routerLinkActive="active" data-tooltip="Inventory" (click)="mobileSidebarOpen = false">📦 <span class="nav-text">Inventory</span></a>
     <a routerLink="/admin/website" routerLinkActive="active" data-tooltip="Website" (click)="mobileSidebarOpen = false">🌐 <span class="nav-text">Website</span></a>
     <a routerLink="/admin/settings" routerLinkActive="active" data-tooltip="Settings" (click)="mobileSidebarOpen = false">⚙️ <span class="nav-text">Settings</span></a>
     <a routerLink="/admin/bills" routerLinkActive="active" data-tooltip="Bills" (click)="mobileSidebarOpen = false">🧾 <span class="nav-text">Bills</span></a>
@@ -29,7 +30,17 @@
           {{ themeService.isDark() ? '☀️ Light' : '🌙 Dark' }}
         </button>
         <button class="btn-primary" (click)="showForm = true">+ Add Table</button>
+        <button class="btn-assign" (click)="openAssignDialog()">👤 Assign Tables</button>
       </div>
+    </div>
+
+    <!-- Waiter Filter -->
+    <div class="waiter-filter" *ngIf="waiters.length > 0">
+      <label>Filter by Waiter:</label>
+      <select [(ngModel)]="filterWaiterId">
+        <option value="">All Tables</option>
+        <option *ngFor="let w of waiters" [value]="w.id">{{ w.fullName }}</option>
+      </select>
     </div>
 
   <!-- Add Table Form -->
@@ -62,7 +73,7 @@
 
   <!-- Tables Grid -->
   <div class="tables-grid" *ngIf="!loading">
-    <div class="table-card" *ngFor="let table of tables">
+    <div class="table-card" *ngFor="let table of getFilteredTables()">
       <!-- View mode -->
       <div class="table-info" *ngIf="editingTableId !== table.id">
         <h3>{{ table.tableNumber }}</h3>
@@ -70,6 +81,9 @@
         <p class="capacity">👥 {{ table.capacity }} seats</p>
         <span class="status" [class.active]="table.isActive">
           {{ table.isActive ? 'Active' : 'Inactive' }}
+        </span>
+        <span class="assigned-waiter" *ngIf="getAssignedWaitersForTable(table.id)">
+          👤 {{ getAssignedWaitersForTable(table.id) }}
         </span>
       </div>
       <div class="table-actions" *ngIf="editingTableId !== table.id">
@@ -150,6 +164,38 @@
         </button>
         <button class="btn-print" (click)="printQrTemplate()" [disabled]="qrLoading">
           🖨️ Print
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Assignment Dialog -->
+  <div class="modal-overlay" *ngIf="showAssignDialog">
+    <div class="modal assign-modal">
+      <h2>👤 Assign Tables to Waiter</h2>
+      <div class="form-group">
+        <label>Select Waiter</label>
+        <select [(ngModel)]="selectedWaiterId" (ngModelChange)="onWaiterSelected()" class="assign-select">
+          <option value="">-- Choose a waiter --</option>
+          <option *ngFor="let w of waiters" [value]="w.id">{{ w.fullName }}</option>
+        </select>
+      </div>
+      <div class="assign-tables-grid" *ngIf="selectedWaiterId">
+        <label>Select Tables to Assign:</label>
+        <div class="assign-table-list">
+          <div class="assign-table-item" *ngFor="let t of tables"
+               [class.selected]="assignmentTableIds.includes(t.id)"
+               (click)="toggleTableAssignment(t.id)">
+            <span class="assign-check">{{ assignmentTableIds.includes(t.id) ? '☑' : '☐' }}</span>
+            <span>{{ t.tableNumber }}</span>
+            <span class="assign-label" *ngIf="t.label">{{ t.label }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeAssignDialog()">Cancel</button>
+        <button class="btn-primary" (click)="saveAssignment()" [disabled]="!selectedWaiterId || assignmentSaving">
+          {{ assignmentSaving ? 'Saving...' : 'Save Assignment' }}
         </button>
       </div>
     </div>

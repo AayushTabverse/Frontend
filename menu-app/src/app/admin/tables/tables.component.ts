@@ -6,7 +6,7 @@ import { TableService } from '../../services/table.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
-import { TableResponse } from '../../models/api.models';
+import { TableResponse, StaffResponse, WaiterAssignmentResponse } from '../../models/api.models';
 
 @Component({
   selector: 'app-tables',
@@ -39,6 +39,17 @@ export class TablesComponent implements OnInit {
   restaurantName = '';
   restaurantLogo = '';
 
+  // Table Assignment
+  showAssignDialog = false;
+  waiters: StaffResponse[] = [];
+  selectedWaiterId = '';
+  assignmentTableIds: string[] = [];
+  assignmentSaving = false;
+  assignments: WaiterAssignmentResponse[] = [];
+
+  // Waiter filter
+  filterWaiterId = '';
+
   constructor(
     private tableService: TableService,
     private authService: AuthService,
@@ -50,6 +61,8 @@ export class TablesComponent implements OnInit {
   ngOnInit(): void {
     this.loadTables();
     this.loadRestaurantInfo();
+    this.loadWaiters();
+    this.loadAssignments();
   }
 
   loadTables(): void {
@@ -321,6 +334,84 @@ export class TablesComponent implements OnInit {
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
+  }
+
+  // ── Table Assignment ──
+
+  loadWaiters(): void {
+    this.authService.getStaff().subscribe({
+      next: (staff) => {
+        this.waiters = staff.filter(s => s.role === 'Waiter' && s.isActive);
+      }
+    });
+  }
+
+  loadAssignments(): void {
+    this.tableService.getAllAssignments().subscribe({
+      next: (a) => this.assignments = a,
+      error: () => this.assignments = []
+    });
+  }
+
+  openAssignDialog(): void {
+    this.showAssignDialog = true;
+    this.selectedWaiterId = '';
+    this.assignmentTableIds = [];
+  }
+
+  closeAssignDialog(): void {
+    this.showAssignDialog = false;
+  }
+
+  onWaiterSelected(): void {
+    if (!this.selectedWaiterId) {
+      this.assignmentTableIds = [];
+      return;
+    }
+    const existing = this.assignments.find(a => a.waiterId === this.selectedWaiterId);
+    this.assignmentTableIds = existing ? [...existing.assignedTableIds] : [];
+  }
+
+  toggleTableAssignment(tableId: string): void {
+    const idx = this.assignmentTableIds.indexOf(tableId);
+    if (idx >= 0) {
+      this.assignmentTableIds.splice(idx, 1);
+    } else {
+      this.assignmentTableIds.push(tableId);
+    }
+  }
+
+  saveAssignment(): void {
+    if (!this.selectedWaiterId) return;
+    this.assignmentSaving = true;
+    this.tableService.assignTables(this.selectedWaiterId, this.assignmentTableIds).subscribe({
+      next: () => {
+        this.assignmentSaving = false;
+        this.showAssignDialog = false;
+        this.loadAssignments();
+        this.loadTables();
+      },
+      error: () => {
+        this.assignmentSaving = false;
+      }
+    });
+  }
+
+  getAssignedWaitersForTable(tableId: string): string {
+    const names: string[] = [];
+    for (const a of this.assignments) {
+      if (a.assignedTableIds.includes(tableId)) {
+        names.push(a.waiterName);
+      }
+    }
+    return names.join(', ');
+  }
+
+  getFilteredTables(): TableResponse[] {
+    if (!this.filterWaiterId) return this.tables;
+    const assignment = this.assignments.find(a => a.waiterId === this.filterWaiterId);
+    if (!assignment) return [];
+    return this.tables.filter(t => assignment.assignedTableIds.includes(t.id));
   }
 
   logout(): void {

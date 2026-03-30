@@ -12,6 +12,7 @@
     <a routerLink="/admin/menu" routerLinkActive="active" data-tooltip="Menu" (click)="mobileSidebarOpen = false">📋 <span class="nav-text">Menu</span></a>
     <a routerLink="/admin/tables" routerLinkActive="active" data-tooltip="Tables" (click)="mobileSidebarOpen = false">🪑 <span class="nav-text">Tables</span></a>
     <a routerLink="/admin/staff" routerLinkActive="active" data-tooltip="Staff" (click)="mobileSidebarOpen = false">👥 <span class="nav-text">Staff</span></a>
+    <a routerLink="/admin/inventory" routerLinkActive="active" data-tooltip="Inventory" (click)="mobileSidebarOpen = false">📦 <span class="nav-text">Inventory</span></a>
     <a routerLink="/admin/website" routerLinkActive="active" data-tooltip="Website" (click)="mobileSidebarOpen = false">🌐 <span class="nav-text">Website</span></a>
     <a routerLink="/admin/settings" routerLinkActive="active" data-tooltip="Settings" (click)="mobileSidebarOpen = false">⚙️ <span class="nav-text">Settings</span></a>
     <a routerLink="/admin/bills" routerLinkActive="active" data-tooltip="Bills" (click)="mobileSidebarOpen = false">🧾 <span class="nav-text">Bills</span></a>
@@ -157,6 +158,7 @@
             <td>{{ item.arModelUrl ? '📱' : '—' }}</td>
             <td>
               <button class="btn-sm btn-edit" (click)="openEditItem(item)">✏️</button>
+              <button class="btn-sm btn-ingredients" (click)="openIngredients(item)">🔗</button>
               <button class="btn-sm btn-delete" (click)="deleteItem(item.id)">🗑️</button>
             </td>
           </tr>
@@ -167,5 +169,44 @@
   </div>
 
   <div class="loading-state" *ngIf="loading">Loading menu...</div>
+
+  <!-- Ingredient Mapping Dialog -->
+  <div class="modal-overlay" *ngIf="showIngredientsDialog">
+    <div class="modal ingredients-modal">
+      <h2>🔗 Ingredients — {{ ingredientMenuItem?.name }}</h2>
+      <p class="ingredients-subtitle">Link inventory items consumed when this dish is ordered.</p>
+
+      <div class="toast success" *ngIf="ingredientSuccessMsg" style="position:static;margin-bottom:12px;">✅ {{ ingredientSuccessMsg }}</div>
+
+      <div class="ingredients-loading" *ngIf="ingredientsLoading">Loading...</div>
+
+      <div class="ingredients-rows" *ngIf="!ingredientsLoading">
+        <div class="ing-row ing-header">
+          <span>Inventory Item</span>
+          <span>Qty Used</span>
+          <span>Unit</span>
+          <span></span>
+        </div>
+        <div class="ing-row" *ngFor="let m of ingredientMappings; let i = index">
+          <select [(ngModel)]="m.inventoryItemId">
+            <option value="">-- Select --</option>
+            <option *ngFor="let inv of allInventoryItems" [value]="inv.id">{{ inv.name }}</option>
+          </select>
+          <input type="number" [(ngModel)]="m.quantityUsed" min="0.001" step="0.01" placeholder="0" />
+          <span class="ing-unit">{{ getInventoryItemUnit(m.inventoryItemId) }}</span>
+          <button class="btn-sm btn-delete" (click)="removeIngredientRow(i)">✕</button>
+        </div>
+        <button class="btn-sm btn-add-ing" (click)="addIngredientRow()">+ Add Ingredient</button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeIngredients()">Cancel</button>
+        <button class="btn-primary" (click)="saveIngredients()" [disabled]="ingredientsSaving">
+          {{ ingredientsSaving ? 'Saving...' : 'Save Ingredients' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   </main>
 </div>

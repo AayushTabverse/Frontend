@@ -6,7 +6,9 @@ import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
-import { BillResponse } from '../../models/api.models';
+import { TableService } from '../../services/table.service';
+import { MenuService } from '../../services/menu.service';
+import { BillResponse, TableResponse, PastBillItem, MenuItem, MenuCategory } from '../../models/api.models';
 
 @Component({
   selector: 'app-bills',
@@ -44,6 +46,23 @@ export class BillsComponent implements OnInit {
   sgstPercent = 2.5;
   serviceChargePercent = 0;
 
+  // Past bill dialog
+  showPastBillDialog = false;
+  pastBillSaving = false;
+  tables: TableResponse[] = [];
+  allMenuItems: MenuItem[] = [];
+  vegFilter: 'all' | 'veg' | 'nonveg' = 'all';
+  pastBill = {
+    billDate: '',
+    tableId: '',
+    items: [{ menuItemId: '', quantity: 1 }] as PastBillItem[],
+    discountAmount: 0,
+    paidAmount: 0,
+    customerName: '',
+    customerMobile: '',
+    notes: ''
+  };
+
   getMergedItems(bill: BillResponse): { name: string; quantity: number; total: number }[] {
     const map = new Map<string, { name: string; quantity: number; total: number }>();
     for (const order of bill.orders) {
@@ -64,6 +83,8 @@ export class BillsComponent implements OnInit {
     private orderService: OrderService,
     private authService: AuthService,
     private settingsService: SettingsService,
+    private tableService: TableService,
+    private menuService: MenuService,
     private router: Router,
     public themeService: ThemeService
   ) {
@@ -76,6 +97,8 @@ export class BillsComponent implements OnInit {
     this.toDate = this.formatDate(today);
     this.loadBills();
     this.loadSettings();
+    this.loadTables();
+    this.loadMenuItems();
   }
 
   loadSettings(): void {
@@ -153,6 +176,98 @@ export class BillsComponent implements OnInit {
 
   private formatDate(d: Date): string {
     return d.toISOString().split('T')[0];
+  }
+
+  loadTables(): void {
+    this.tableService.getTables().subscribe({
+      next: (t) => this.tables = t
+    });
+  }
+
+  loadMenuItems(): void {
+    this.menuService.getCategories().subscribe({
+      next: (cats) => {
+        this.allMenuItems = cats.reduce((acc: MenuItem[], cat) => acc.concat(cat.items || []), []);
+      }
+    });
+  }
+
+  openPastBillDialog(): void {
+    this.vegFilter = 'all';
+    this.pastBill = {
+      billDate: this.formatDate(new Date()),
+      tableId: '',
+      items: [{ menuItemId: '', quantity: 1 }],
+      discountAmount: 0,
+      paidAmount: 0,
+      customerName: '',
+      customerMobile: '',
+      notes: ''
+    };
+    this.showPastBillDialog = true;
+  }
+
+  closePastBillDialog(): void {
+    this.showPastBillDialog = false;
+  }
+
+  addPastBillItem(): void {
+    this.pastBill.items.push({ menuItemId: '', quantity: 1 });
+  }
+
+  getMenuItemPrice(menuItemId: string): number {
+    return this.allMenuItems.find(m => m.id === menuItemId)?.price || 0;
+  }
+
+  get filteredMenuItems(): MenuItem[] {
+    if (this.vegFilter === 'veg') return this.allMenuItems.filter(m => m.isVeg);
+    if (this.vegFilter === 'nonveg') return this.allMenuItems.filter(m => !m.isVeg);
+    return this.allMenuItems;
+  }
+
+  getItemLineTotal(item: PastBillItem): number {
+    return this.getMenuItemPrice(item.menuItemId) * item.quantity;
+  }
+
+  removePastBillItem(index: number): void {
+    if (this.pastBill.items.length > 1) {
+      this.pastBill.items.splice(index, 1);
+    }
+  }
+
+  get pastBillSubTotal(): number {
+    return this.pastBill.items.reduce((sum, i) => sum + this.getItemLineTotal(i), 0);
+  }
+
+  get pastBillTotal(): number {
+    const taxRate = (this.cgstPercent + this.sgstPercent + this.serviceChargePercent) / 100;
+    return this.pastBillSubTotal + Math.round(this.pastBillSubTotal * taxRate * 100) / 100 - this.pastBill.discountAmount;
+  }
+
+  savePastBill(): void {
+    const validItems = this.pastBill.items.filter(i => i.menuItemId && i.quantity > 0);
+    if (!this.pastBill.billDate || !this.pastBill.tableId || validItems.length === 0) return;
+
+    this.pastBillSaving = true;
+    this.orderService.createPastBill({
+      billDate: this.pastBill.billDate,
+      tableId: this.pastBill.tableId,
+      items: validItems,
+      discountAmount: this.pastBill.discountAmount,
+      paidAmount: this.pastBill.paidAmount || this.pastBillTotal,
+      customerName: this.pastBill.customerName || undefined,
+      customerMobile: this.pastBill.customerMobile || undefined,
+      notes: this.pastBill.notes || undefined
+    }).subscribe({
+      next: () => {
+        this.pastBillSaving = false;
+        this.showPastBillDialog = false;
+        this.loadBills();
+      },
+      error: () => {
+        this.pastBillSaving = false;
+      }
+    });
   }
 
   logout(): void {

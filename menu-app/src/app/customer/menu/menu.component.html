@@ -21,8 +21,15 @@
     </div>
   </header>
 
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <input type="text" [value]="searchQuery" (input)="onSearch($any($event.target).value)"
+           placeholder="🔍 Search menu items..." class="search-input" />
+    <button class="search-clear" *ngIf="searchQuery" (click)="clearSearch()">✕</button>
+  </div>
+
   <!-- Category Tabs -->
-  <nav class="category-tabs" *ngIf="menu">
+  <nav class="category-tabs" *ngIf="menu && !isSearching">
     <button
       *ngFor="let cat of menu.categories"
       [class.active]="selectedCategory?.id === cat.id"
@@ -31,9 +38,56 @@
     </button>
   </nav>
 
+  <!-- Veg Filter -->
+  <div class="veg-filter-bar">
+    <button [class.active]="vegFilter === 'all'" (click)="vegFilter = 'all'">All</button>
+    <button [class.active]="vegFilter === 'veg'" (click)="vegFilter = 'veg'">🟢 Veg</button>
+    <button [class.active]="vegFilter === 'nonveg'" (click)="vegFilter = 'nonveg'">🔴 Non-Veg</button>
+  </div>
+
+  <!-- Search Results -->
+  <div class="items-grid" *ngIf="isSearching">
+    <div class="search-results-header" *ngIf="searchResults.length > 0">
+      <span>{{ searchResults.length }} result{{ searchResults.length > 1 ? 's' : '' }} for "{{ searchQuery }}"</span>
+    </div>
+    <div class="menu-card" *ngFor="let item of filteredSearchResults">
+      <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="item-image" />
+      <div class="item-info">
+        <div class="item-header">
+          <span class="veg-badge" [class.veg]="item.isVeg" [class.non-veg]="!item.isVeg">
+            {{ item.isVeg ? '🟢' : '🔴' }}
+          </span>
+          <h3>{{ item.name }}</h3>
+        </div>
+        <p class="description" *ngIf="item.description">{{ item.description }}</p>
+        <div class="item-footer">
+          <span class="price">₹{{ item.price | number:'1.0-0' }}</span>
+          <div class="actions">
+            <button class="ar-btn" *ngIf="item.arModelUrl" (click)="viewAR(item)">
+              📱 View in AR
+            </button>
+            <div class="qty-controls" *ngIf="getItemQuantity(item) > 0; else searchAddBtnTpl">
+              <button class="qty-btn" (click)="decrementItem(item)">−</button>
+              <span class="qty-count">{{ getItemQuantity(item) }}</span>
+              <button class="qty-btn" (click)="incrementItem(item)">+</button>
+            </div>
+            <ng-template #searchAddBtnTpl>
+              <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable">
+                {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
+              </button>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="empty-state" *ngIf="filteredSearchResults.length === 0">
+      <p>No items found for "{{ searchQuery }}"</p>
+    </div>
+  </div>
+
   <!-- Menu Items -->
-  <div class="items-grid" *ngIf="selectedCategory">
-    <div class="menu-card" *ngFor="let item of selectedCategory.items">
+  <div class="items-grid" *ngIf="selectedCategory && !isSearching">
+    <div class="menu-card" *ngFor="let item of filteredCategoryItems">
       <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="item-image" />
       <div class="item-info">
         <div class="item-header">
@@ -66,7 +120,7 @@
     </div>
   </div>
 
-  <div class="empty-state" *ngIf="selectedCategory && selectedCategory.items.length === 0">
+  <div class="empty-state" *ngIf="selectedCategory && filteredCategoryItems.length === 0 && !isSearching">
     <p>No items available in this category.</p>
   </div>
 

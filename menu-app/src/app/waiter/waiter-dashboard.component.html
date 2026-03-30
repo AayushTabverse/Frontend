@@ -13,6 +13,7 @@
     <a routerLink="/admin/menu" routerLinkActive="active" data-tooltip="Menu" (click)="mobileSidebarOpen = false">📋 <span class="nav-text">Menu</span></a>
     <a routerLink="/admin/tables" routerLinkActive="active" data-tooltip="Tables" (click)="mobileSidebarOpen = false">🪑 <span class="nav-text">Tables</span></a>
     <a routerLink="/admin/staff" routerLinkActive="active" data-tooltip="Staff" (click)="mobileSidebarOpen = false">👥 <span class="nav-text">Staff</span></a>
+    <a routerLink="/admin/inventory" routerLinkActive="active" data-tooltip="Inventory" (click)="mobileSidebarOpen = false">📦 <span class="nav-text">Inventory</span></a>
     <a routerLink="/admin/website" routerLinkActive="active" data-tooltip="Website" (click)="mobileSidebarOpen = false">🌐 <span class="nav-text">Website</span></a>
     <a routerLink="/admin/settings" routerLinkActive="active" data-tooltip="Settings" (click)="mobileSidebarOpen = false">⚙️ <span class="nav-text">Settings</span></a>
     <a routerLink="/admin/bills" routerLinkActive="active" data-tooltip="Bills" (click)="mobileSidebarOpen = false">🧾 <span class="nav-text">Bills</span></a>
@@ -232,14 +233,28 @@
 
     <!-- Step 1: Select a Table -->
     <div class="section" *ngIf="!selectedTable">
-      <h2>Select a Table</h2>
+      <div class="table-header-row">
+        <h2>Select a Table</h2>
+        <div class="table-header-actions">
+          <select class="waiter-filter-select" *ngIf="isAdmin && allWaiters.length > 0"
+                  [(ngModel)]="adminFilterWaiterId">
+            <option value="">All Tables</option>
+            <option *ngFor="let w of allWaiters" [value]="w.id">{{ w.fullName }}</option>
+          </select>
+          <button class="show-all-toggle" *ngIf="!isAdmin && assignedTableIds.length > 0"
+                  (click)="toggleShowAllTables()">
+            {{ showAllTables ? '👤 My Tables' : '📋 All Tables' }}
+          </button>
+        </div>
+      </div>
       <div class="loading-state" *ngIf="loading">Loading tables...</div>
 
       <div class="table-grid" *ngIf="!loading">
-        <div class="table-card" *ngFor="let t of tables"
+        <div class="table-card" *ngFor="let t of getVisibleTables()"
              [class.inactive]="!t.isActive"
              [class.occupied]="t.isOccupied"
              [class.calling]="t.isCallingWaiter"
+             [class.unassigned]="!isAdmin && !showAllTables && assignedTableIds.length > 0 && !assignedTableIds.includes(t.id)"
              (click)="t.isActive && selectTable(t)">
           <div class="calling-badge" *ngIf="t.isCallingWaiter">🔔 Calling!</div>
           <div class="table-number">{{ t.tableNumber }}</div>
@@ -322,15 +337,29 @@
       <div class="builder-body">
         <!-- Left: Menu -->
         <div class="menu-panel">
-          <div class="category-tabs">
+          <!-- Menu Search -->
+          <div class="menu-search-bar">
+            <input type="text" [value]="menuSearchQuery" (input)="onMenuSearch($any($event.target).value)"
+                   placeholder="🔍 Search menu items..." class="menu-search-input" />
+            <button class="menu-search-clear" *ngIf="menuSearchQuery" (click)="clearMenuSearch()">✕</button>
+            <button class="quick-add-floating" (click)="openQuickAdd()" title="Add item not on menu">
+              ＋ New
+            </button>
+          </div>
+
+          <div class="category-tabs" *ngIf="!menuSearchQuery">
             <button *ngFor="let cat of categories"
                     [class.active]="activeCategory === cat.id"
                     (click)="setCategory(cat.id)">
               {{ cat.name }}
             </button>
-            <button class="quick-add-tab" (click)="openQuickAdd()" title="Add item not on menu">
-              ＋ New Item
-            </button>
+          </div>
+
+          <!-- Veg Filter -->
+          <div class="menu-veg-filter">
+            <button [class.active]="menuVegFilter === 'all'" (click)="menuVegFilter = 'all'">All</button>
+            <button [class.active]="menuVegFilter === 'veg'" (click)="menuVegFilter = 'veg'">🟢 Veg</button>
+            <button [class.active]="menuVegFilter === 'nonveg'" (click)="menuVegFilter = 'nonveg'">🔴 Non-Veg</button>
           </div>
 
           <!-- Quick Add Item Form -->

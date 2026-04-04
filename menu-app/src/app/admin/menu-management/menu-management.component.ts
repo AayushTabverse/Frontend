@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { UploadService } from '../../services/upload.service';
@@ -21,6 +22,8 @@ export class MenuManagementComponent implements OnInit {
   loading = true;
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
 
   // Category form
   showCategoryForm = false;
@@ -58,6 +61,7 @@ export class MenuManagementComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadCategories();
   }
 

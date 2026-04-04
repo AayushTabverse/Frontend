@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { DueService } from '../../services/due.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { CustomerDue } from '../../models/api.models';
@@ -23,6 +24,8 @@ export class DuesComponent implements OnInit {
   errorMessage = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
   totalOutstanding = 0;
 
   settleAmounts: { [id: string]: number } = {};
@@ -38,6 +41,7 @@ export class DuesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadDues();
   }
 

@@ -1,0 +1,127 @@
+<div class="subscription-page">
+  <!-- Header -->
+  <div class="sub-header">
+    <div class="brand">🍽️ TabVerse</div>
+    <div class="header-actions">
+      <button class="dark-toggle" (click)="themeService.toggle()">
+        {{ themeService.isDark() ? '☀️' : '🌙' }}
+      </button>
+      <span class="user-name" *ngIf="userName">{{ userName }}</span>
+      <button class="btn-outline" *ngIf="status && !status.requiresSubscription" (click)="goToDashboard()">← Dashboard</button>
+      <button class="btn-outline" (click)="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading subscription info...</p>
+  </div>
+
+  <div class="sub-content" *ngIf="!loading">
+    <!-- Trial Banner -->
+    <div class="trial-banner" *ngIf="status?.isTrialActive">
+      <div class="trial-icon">⏰</div>
+      <div class="trial-info">
+        <h3>Free Trial Active</h3>
+        <p>You have <strong>{{ status!.trialDaysRemaining }} days</strong> remaining in your trial. All premium features are unlocked!</p>
+      </div>
+      <button class="btn-primary" (click)="goToDashboard()">Continue to Dashboard →</button>
+    </div>
+
+    <!-- Expired Banner -->
+    <div class="expired-banner" *ngIf="status?.requiresSubscription">
+      <div class="expired-icon">🔒</div>
+      <div class="expired-info">
+        <h3>Your Free Trial Has Ended</h3>
+        <p>Choose a plan below to continue using TabVerse and manage your restaurant.</p>
+      </div>
+    </div>
+
+    <!-- Active Subscription Banner -->
+    <div class="active-banner" *ngIf="status?.isSubscriptionActive">
+      <div class="active-icon">✅</div>
+      <div class="active-info">
+        <h3>{{ status!.plan }} Plan Active</h3>
+        <p>Your subscription is valid until <strong>{{ status!.expiresAt | date:'mediumDate' }}</strong>.</p>
+      </div>
+    </div>
+
+    <!-- Upgrade prompt -->
+    <div class="upgrade-banner" *ngIf="isUpgrade && status?.isSubscriptionActive && status?.plan === 'Standard'">
+      <div class="upgrade-icon">⬆️</div>
+      <div class="upgrade-info">
+        <h3>Upgrade to Premium</h3>
+        <p>Unlock AI Marketing, Google Reviews, and Inventory Management with a Premium plan.</p>
+      </div>
+    </div>
+
+    <!-- Success / Error Messages -->
+    <div class="alert success" *ngIf="success">✅ {{ success }}</div>
+    <div class="alert error" *ngIf="error">❌ {{ error }}</div>
+
+    <!-- Plan Selection Header -->
+    <div class="plans-header">
+      <h2>Choose Your Plan</h2>
+      <div class="cycle-toggle">
+        <button [class.active]="selectedCycle === 'Monthly'" (click)="selectCycle('Monthly')">Monthly</button>
+        <button [class.active]="selectedCycle === 'Yearly'" (click)="selectCycle('Yearly')">
+          Yearly <span class="save-badge">Save ~17%</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Plan Cards -->
+    <div class="plans-grid">
+      <!-- Standard Plan -->
+      <div class="plan-card" *ngIf="standardPlan" [class.current]="status?.isSubscriptionActive && status?.plan === 'Standard' && status?.cycle === selectedCycle">
+        <div class="plan-badge" *ngIf="status?.isSubscriptionActive && status?.plan === 'Standard'">Current Plan</div>
+        <h3 class="plan-name">Standard</h3>
+        <div class="plan-price">
+          <span class="currency">₹</span>
+          <span class="amount">{{ standardPlan!.price | number:'1.0-0' }}</span>
+          <span class="period">/{{ selectedCycle === 'Monthly' ? 'mo' : 'yr' }}</span>
+        </div>
+        <p class="plan-desc">Everything you need to run your restaurant digitally.</p>
+        <ul class="feature-list">
+          <li *ngFor="let f of standardPlan!.features">✅ {{ f }}</li>
+        </ul>
+        <button class="btn-subscribe"
+                [disabled]="processing || (status?.isSubscriptionActive && status?.plan === 'Standard' && status?.cycle === selectedCycle)"
+                (click)="subscribe(standardPlan!)">
+          <span *ngIf="!processing">
+            {{ status?.isSubscriptionActive && status?.plan === 'Standard' ? 'Current Plan' : 'Subscribe' }}
+          </span>
+          <span *ngIf="processing">Processing...</span>
+        </button>
+      </div>
+
+      <!-- Premium Plan -->
+      <div class="plan-card premium" *ngIf="premiumPlan" [class.current]="status?.isSubscriptionActive && status?.plan === 'Premium' && status?.cycle === selectedCycle">
+        <div class="plan-badge recommended">Recommended</div>
+        <div class="plan-badge current" *ngIf="status?.isSubscriptionActive && status?.plan === 'Premium'">Current Plan</div>
+        <h3 class="plan-name">Premium</h3>
+        <div class="plan-price">
+          <span class="currency">₹</span>
+          <span class="amount">{{ premiumPlan!.price | number:'1.0-0' }}</span>
+          <span class="period">/{{ selectedCycle === 'Monthly' ? 'mo' : 'yr' }}</span>
+        </div>
+        <p class="plan-desc">Full suite with AI-powered marketing and inventory.</p>
+        <ul class="feature-list">
+          <li *ngFor="let f of premiumPlan!.features" [class.premium-feature]="isPremiumExclusive(f)">
+            {{ isPremiumExclusive(f) ? '⭐' : '✅' }} {{ f }}
+          </li>
+        </ul>
+        <button class="btn-subscribe btn-premium"
+                [disabled]="processing || (status?.isSubscriptionActive && status?.plan === 'Premium' && status?.cycle === selectedCycle)"
+                (click)="subscribe(premiumPlan!)">
+          <span *ngIf="!processing">
+            {{ status?.isSubscriptionActive && status?.plan === 'Premium' ? 'Current Plan' :
+               (status?.isSubscriptionActive && status?.plan === 'Standard' ? 'Upgrade to Premium' : 'Subscribe') }}
+          </span>
+          <span *ngIf="processing">Processing...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, subdomainMatch, mainDomainMatch } from './guards/auth.guard';
+import { authGuard, adminGuard, subscriptionGuard, premiumGuard, subdomainMatch, mainDomainMatch } from './guards/auth.guard';
 
 export const routes: Routes = [
   // ── Subdomain: show tenant website at root URL ──
@@ -59,69 +59,74 @@ export const routes: Routes = [
     loadComponent: () => import('./admin/register/register.component').then(m => m.RegisterComponent)
   },
   {
+    path: 'admin/subscription',
+    loadComponent: () => import('./admin/subscription/subscription.component').then(m => m.SubscriptionComponent),
+    canActivate: [adminGuard]
+  },
+  {
     path: 'admin/dashboard',
     loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/menu',
     loadComponent: () => import('./admin/menu-management/menu-management.component').then(m => m.MenuManagementComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/orders',
     loadComponent: () => import('./admin/orders/orders.component').then(m => m.OrdersComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, subscriptionGuard]
   },
   {
     path: 'admin/tables',
     loadComponent: () => import('./admin/tables/tables.component').then(m => m.TablesComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/website',
     loadComponent: () => import('./admin/website-editor/website-editor.component').then(m => m.WebsiteEditorComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/settings',
     loadComponent: () => import('./admin/settings/settings.component').then(m => m.SettingsComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/bills',
     loadComponent: () => import('./admin/bills/bills.component').then(m => m.BillsComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/dues',
     loadComponent: () => import('./admin/dues/dues.component').then(m => m.DuesComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/staff',
     loadComponent: () => import('./admin/staff/staff.component').then(m => m.StaffComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/analytics',
     loadComponent: () => import('./admin/analytics/analytics.component').then(m => m.AnalyticsComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, subscriptionGuard]
   },
   {
     path: 'admin/ai-marketing',
     loadComponent: () => import('./admin/ai-marketing/ai-marketing.component').then(m => m.AiMarketingComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, premiumGuard]
   },
   {
     path: 'admin/reviews',
     loadComponent: () => import('./admin/reviews/reviews.component').then(m => m.ReviewsComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, premiumGuard]
   },
   {
     path: 'admin/inventory',
     loadComponent: () => import('./admin/inventory/inventory.component').then(m => m.InventoryComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, premiumGuard]
   },
 
   // ── Waiter Dashboard ──

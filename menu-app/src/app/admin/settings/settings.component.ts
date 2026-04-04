@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { SettingsService } from '../../services/settings.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { UploadService } from '../../services/upload.service';
@@ -48,6 +49,8 @@ export class SettingsComponent implements OnInit {
   userName = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
   uploading: { [key: string]: boolean } = {};
   settingsSubmitted = false;
 
@@ -62,6 +65,7 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.settingsService.getSettings().subscribe({
       next: (data) => {
         this.settings = data;

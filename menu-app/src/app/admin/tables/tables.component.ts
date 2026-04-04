@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { TableService } from '../../services/table.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
@@ -22,6 +23,8 @@ export class TablesComponent implements OnInit {
   formData = { tableNumber: '', label: '', capacity: 4 };
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
   tableSubmitted = false;
 
   // Rename
@@ -59,6 +62,7 @@ export class TablesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadTables();
     this.loadRestaurantInfo();
     this.loadWaiters();

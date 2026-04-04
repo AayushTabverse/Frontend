@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { ThemeService } from '../../services/theme.service';
 import { StaffResponse } from '../../models/api.models';
 
@@ -19,6 +20,8 @@ export class StaffComponent implements OnInit {
   userName = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
 
   // Add user form
   showAddForm = false;
@@ -37,6 +40,7 @@ export class StaffComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadStaff();
   }
 

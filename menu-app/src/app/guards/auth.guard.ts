@@ -1,6 +1,8 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, CanMatchFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { SubscriptionService } from '../services/subscription.service';
+import { map, catchError, of } from 'rxjs';
 
 /** Returns true if the current hostname has a tenant subdomain. */
 function hasSubdomain(): boolean {
@@ -38,4 +40,74 @@ export const adminGuard: CanActivateFn = () => {
 
   router.navigate(['/admin/login']);
   return false;
+};
+
+export const subscriptionGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const subscriptionService = inject(SubscriptionService);
+  const router = inject(Router);
+
+  if (!authService.isLoggedIn() || !authService.isAdmin()) {
+    router.navigate(['/admin/login']);
+    return false;
+  }
+
+  const cached = subscriptionService.getCachedStatus();
+  if (cached) {
+    if (cached.requiresSubscription) {
+      router.navigate(['/admin/subscription']);
+      return false;
+    }
+    return true;
+  }
+
+  return subscriptionService.getStatus().pipe(
+    map(status => {
+      if (status.requiresSubscription) {
+        router.navigate(['/admin/subscription']);
+        return false;
+      }
+      return true;
+    }),
+    catchError(() => of(true))
+  );
+};
+
+export const premiumGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const subscriptionService = inject(SubscriptionService);
+  const router = inject(Router);
+
+  if (!authService.isLoggedIn() || !authService.isAdmin()) {
+    router.navigate(['/admin/login']);
+    return false;
+  }
+
+  const cached = subscriptionService.getCachedStatus();
+  if (cached) {
+    if (cached.requiresSubscription) {
+      router.navigate(['/admin/subscription']);
+      return false;
+    }
+    if (cached.plan !== 'Premium' && !cached.isTrialActive) {
+      router.navigate(['/admin/subscription'], { queryParams: { upgrade: true } });
+      return false;
+    }
+    return true;
+  }
+
+  return subscriptionService.getStatus().pipe(
+    map(status => {
+      if (status.requiresSubscription) {
+        router.navigate(['/admin/subscription']);
+        return false;
+      }
+      if (status.plan !== 'Premium' && !status.isTrialActive) {
+        router.navigate(['/admin/subscription'], { queryParams: { upgrade: true } });
+        return false;
+      }
+      return true;
+    }),
+    catchError(() => of(true))
+  );
 };

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { InventoryService } from '../../services/inventory.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { InventoryItem, InventoryLog, InventorySummary } from '../../models/api.models';
+import { SubscriptionService } from '../../services/subscription.service';
 
 @Component({
   selector: 'app-inventory',
@@ -17,6 +18,8 @@ import { InventoryItem, InventoryLog, InventorySummary } from '../../models/api.
 export class InventoryComponent implements OnInit {
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
 
   // Data
   items: InventoryItem[] = [];
@@ -78,6 +81,7 @@ export class InventoryComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadAll();
   }
 

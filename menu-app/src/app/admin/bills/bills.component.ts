@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
@@ -23,6 +24,8 @@ export class BillsComponent implements OnInit {
   userName = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
 
   // Date filters (default: today)
   fromDate = '';
@@ -92,6 +95,7 @@ export class BillsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     const today = new Date();
     this.fromDate = this.formatDate(today);
     this.toDate = this.formatDate(today);

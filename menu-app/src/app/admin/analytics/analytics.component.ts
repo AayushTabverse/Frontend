@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { AnalyticsService } from '../../services/analytics.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
@@ -21,6 +22,8 @@ import { DueService } from '../../services/due.service';
 export class AnalyticsComponent implements OnInit {
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
   userName = '';
   loading = true;
 
@@ -67,6 +70,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadAll();
   }
 

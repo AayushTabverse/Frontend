@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -18,6 +18,7 @@ import {
   CheckSubdomainResponse
 } from '../../models/api.models';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
+import { SubscriptionService } from '../../services/subscription.service';
 
 @Component({
   selector: 'app-website-editor',
@@ -35,6 +36,8 @@ export class WebsiteEditorComponent implements OnInit {
   userName = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
   activeTab = 'domain';
 
   // Editable fields bound to form
@@ -114,6 +117,7 @@ export class WebsiteEditorComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.websiteService.getWebsiteContent().subscribe({
       next: (data) => {
         this.content = data;

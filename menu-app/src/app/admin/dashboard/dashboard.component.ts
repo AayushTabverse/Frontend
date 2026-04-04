@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AnalyticsService } from '../../services/analytics.service';
 import { AuthService } from '../../services/auth.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
 import { DueService } from '../../services/due.service';
@@ -22,6 +23,8 @@ export class DashboardComponent implements OnInit {
   logoUrl = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
   unsettledDues: CustomerDue[] = [];
 
   constructor(
@@ -38,6 +41,7 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.analyticsService.getDashboard().subscribe({
       next: (data) => {
         this.summary = data;

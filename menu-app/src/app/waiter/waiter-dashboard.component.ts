@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -9,6 +9,7 @@ import { AuthService } from '../services/auth.service';
 import { SignalRService } from '../services/signalr.service';
 import { ThemeService } from '../services/theme.service';
 import { SettingsService } from '../services/settings.service';
+import { SubscriptionService } from '../services/subscription.service';
 import {
   TableResponse, MenuCategory, MenuItem,
   CreateOrderRequest, CreateOrderItemRequest,
@@ -99,6 +100,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   isAdmin = false;
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
 
   // Table assignment
   showAllTables = false;
@@ -141,6 +144,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.authService.currentUser$.subscribe(user => {
       this.userName = user?.fullName || 'Staff';
       this.userId = user?.userId || '';

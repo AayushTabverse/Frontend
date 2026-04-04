@@ -637,3 +637,40 @@ export interface CategorySummary {
   itemCount: number;
   totalValue: number;
 }
+
+// ── Subscription ──
+export interface SubscriptionStatusResponse {
+  isTrialActive: boolean;
+  isSubscriptionActive: boolean;
+  requiresSubscription: boolean;
+  trialDaysRemaining: number;
+  plan?: string;
+  cycle?: string;
+  status?: string;
+  expiresAt?: string;
+  availableFeatures: string[];
+}
+
+export interface SubscriptionPlanDto {
+  plan: string;
+  cycle: string;
+  price: number;
+  displayName: string;
+  features: string[];
+}
+
+export interface CreateRazorpaySubscriptionRequest {
+  plan: string;
+  cycle: string;
+}
+
+export interface CreateRazorpaySubscriptionResponse {
+  subscriptionId: string;
+  razorpayKeyId: string;
+}
+
+export interface VerifyPaymentRequest {
+  razorpaySubscriptionId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}

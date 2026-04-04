@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { ReviewService } from '../../services/review.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import {
   GoogleReview,
   PaginatedReviewsResponse,
@@ -23,6 +24,8 @@ export class ReviewsComponent implements OnInit {
   // Sidebar
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  hasPremium = true;
+  private subService = inject(SubscriptionService);
   userName = '';
   logoUrl = '';
 
@@ -57,6 +60,7 @@ export class ReviewsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.settingsService.getSettings().subscribe({
       next: (s) => this.logoUrl = s.logoUrl || ''
     });

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -112,6 +112,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   confirmCancelItemId: string | null = null;
   cancellingItemId: string | null = null;
   private subs: Subscription[] = [];
+
+  @ViewChild('tableNavScroll') tableNavScroll?: ElementRef<HTMLDivElement>;
 
   // Quick-add item
   showQuickAdd = false;
@@ -245,6 +247,30 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.billSummary = null;
     this.loadTableSession(table.id);
     this.loadMenu();
+  }
+
+  switchTable(table: TableResponse): void {
+    if (this.selectedTable?.id === table.id) return;
+    this.selectedTable = table;
+    this.cart = [];
+    this.specialInstructions = '';
+    this.showBillSummary = false;
+    this.billSummary = null;
+    this.tableSession = null;
+    this.showQuickAdd = false;
+    this.menuSearchQuery = '';
+    this.menuSearchResults = [];
+    this.loadTableSession(table.id);
+    if (this.categories.length === 0) {
+      this.loadMenu();
+    }
+  }
+
+  scrollTableNav(direction: 'left' | 'right'): void {
+    const el = this.tableNavScroll?.nativeElement;
+    if (!el) return;
+    const scrollAmount = 200;
+    el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
   }
 
   deselectTable(): void {
@@ -476,7 +502,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.mergedBillItems = this.computeMergedItems(this.tableSession);
     this.billCustomerName = '';
     this.billCustomerMobile = '';
-    this.billDiscountAmount = 0;
+    this.billDiscountAmount = this.tableSession.grandDiscount || 0;
     this.billPaidAmount = 0;
     this.billPaymentMode = 'full';
     this.billNotes = '';

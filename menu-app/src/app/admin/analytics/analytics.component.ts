@@ -1,11 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { AnalyticsService } from '../../services/analytics.service';
-import { SubscriptionService } from '../../services/subscription.service';
 import { OrderService } from '../../services/order.service';
-import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import {
   DashboardSummary, TopItem, SalesData, PeakHour, OrderResponse, CustomerDue
@@ -20,11 +18,6 @@ import { DueService } from '../../services/due.service';
   styleUrls: ['./analytics.component.scss']
 })
 export class AnalyticsComponent implements OnInit {
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
-  userName = '';
   loading = true;
 
   // Data
@@ -61,16 +54,11 @@ export class AnalyticsComponent implements OnInit {
   constructor(
     private analyticsService: AnalyticsService,
     private orderService: OrderService,
-    private authService: AuthService,
-    private router: Router,
     public themeService: ThemeService,
     private dueService: DueService
-  ) {
-    this.authService.currentUser$.subscribe(u => this.userName = u?.fullName || '');
-  }
+  ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadAll();
   }
 
@@ -261,11 +249,6 @@ export class AnalyticsComponent implements OnInit {
     });
 
     return segments;
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 
   getItemsPreview(items: any[]): string {

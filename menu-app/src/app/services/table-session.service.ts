@@ -59,6 +59,7 @@ export class TableSessionService {
     sessionStorage.removeItem(this.SESSION_KEY);
     sessionStorage.removeItem(this.ORDERS_KEY);
     sessionStorage.removeItem('cart');
+    sessionStorage.removeItem('tabverse_lucky_result');
     this.sessionCleared.next(true);
   }
 

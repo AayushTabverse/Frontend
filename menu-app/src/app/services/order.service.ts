@@ -89,6 +89,13 @@ export class OrderService {
     );
   }
 
+  applyWheelDiscount(tableId: string, discountValue: number, discountType: string, tenantId: string): Observable<OrderResponse[]> {
+    return this.http.post<ApiResponse<OrderResponse[]>>(
+      `${this.apiUrl}/apply-wheel-discount?tenantId=${tenantId}`,
+      { tableId, discountValue, discountType }
+    ).pipe(map(res => res.data!));
+  }
+
   getOrderHistoryDownloadUrl(from: string, to: string): string {
     return `${this.apiUrl}/history/download?from=${from}&to=${to}`;
   }

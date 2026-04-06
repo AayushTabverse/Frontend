@@ -1,12 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AiService } from '../../services/ai.service';
-import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
-import { SettingsService } from '../../services/settings.service';
-import { SubscriptionService } from '../../services/subscription.service';
 import {
   GeneratedPost,
   MarketingPost,
@@ -23,13 +19,6 @@ import {
   styleUrl: './ai-marketing.component.scss'
 })
 export class AiMarketingComponent implements OnInit {
-  // Sidebar
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
-  userName = '';
-  logoUrl = '';
 
   // Tabs
   activeTab: 'generate' | 'calendar' | 'history' | 'connections' = 'generate';
@@ -68,23 +57,15 @@ export class AiMarketingComponent implements OnInit {
 
   constructor(
     private aiService: AiService,
-    private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute,
-    public themeService: ThemeService,
-    private settingsService: SettingsService
+    private route: ActivatedRoute
   ) {
     const now = new Date();
     this.calendarMonth = now.getMonth() + 1;
     this.calendarYear = now.getFullYear();
-    this.authService.currentUser$.subscribe(u => this.userName = u?.fullName || '');
   }
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
-    this.settingsService.getSettings().subscribe({
-      next: (s) => this.logoUrl = s.logoUrl || ''
-    });
     this.loadHistory();
 
     // Handle OAuth callback from popup
@@ -371,10 +352,5 @@ export class AiMarketingComponent implements OnInit {
       case 'weekly-special': return 'Weekly Special';
       default: return type;
     }
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 }

@@ -7,7 +7,10 @@ import {
   SubscriptionPlanDto,
   CreateRazorpaySubscriptionRequest,
   CreateRazorpaySubscriptionResponse,
-  VerifyPaymentRequest
+  VerifyPaymentRequest,
+  CancelSubscriptionRequest,
+  UpdateSubscriptionRequest,
+  UpdateSubscriptionResponse
 } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
@@ -42,6 +45,20 @@ export class SubscriptionService {
     return this.http.post<ApiResponse<SubscriptionStatusResponse>>(`${this.apiUrl}/verify-payment`, request).pipe(
       map(res => res.data!),
       tap(status => this.statusSubject.next(status))
+    );
+  }
+
+  cancelSubscription(request: CancelSubscriptionRequest): Observable<SubscriptionStatusResponse> {
+    return this.http.post<ApiResponse<SubscriptionStatusResponse>>(`${this.apiUrl}/cancel`, request).pipe(
+      map(res => res.data!),
+      tap(status => this.statusSubject.next(status))
+    );
+  }
+
+  updateSubscription(request: UpdateSubscriptionRequest): Observable<UpdateSubscriptionResponse> {
+    return this.http.post<ApiResponse<UpdateSubscriptionResponse>>(`${this.apiUrl}/update`, request).pipe(
+      map(res => res.data!),
+      tap(res => { if (res.status) this.statusSubject.next(res.status); })
     );
   }
 

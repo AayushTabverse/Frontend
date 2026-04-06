@@ -168,12 +168,17 @@
 // Plans Header
 .plans-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 
   h2 {
     font-size: 1.75rem;
     margin-bottom: 1rem;
   }
+}
+
+.cycle-toggle-wrap {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .cycle-toggle {
@@ -343,6 +348,251 @@
   }
 }
 
+// ─── Current Subscription Card ───
+.current-subscription {
+  margin-bottom: 2rem;
+}
+
+.current-sub-card {
+  background: var(--bg-card, #fff);
+  border: 2px solid #22c55e;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.current-sub-header {
+  padding: 1.5rem 2rem 0;
+}
+
+.current-sub-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.4rem;
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  &.active {
+    background: #dcfce7;
+    color: #166534;
+  }
+}
+
+.current-sub-body {
+  padding: 1.25rem 2rem;
+}
+
+.sub-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.sub-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .detail-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .detail-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+
+    &.plan-name-value {
+      color: #6366f1;
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.current-sub-features {
+  h4 {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    color: var(--text-secondary, #64748b);
+  }
+}
+
+.features-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.feature-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--bg-primary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+
+  &.premium-chip {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+    color: #4338ca;
+  }
+}
+
+.current-sub-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.25rem 2rem;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-primary, #f8fafc);
+}
+
+.btn-change {
+  padding: 0.625rem 1.25rem;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #4f46e5;
+  }
+}
+
+.btn-cancel {
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fef2f2;
+  }
+}
+
+// ─── Cancel Modal ───
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: var(--bg-card, #fff);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 460px;
+  width: 100%;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.3rem;
+  }
+
+  p {
+    color: var(--text-secondary, #64748b);
+    margin-bottom: 1.5rem;
+  }
+}
+
+.cancel-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+
+  button {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-primary, #f8fafc);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+
+    strong {
+      font-size: 0.95rem;
+      color: var(--text-primary, #1e293b);
+    }
+
+    small {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #64748b);
+    }
+
+    &:hover:not(:disabled) {
+      border-color: #6366f1;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.btn-cancel-now {
+  border-color: #fca5a5 !important;
+
+  &:hover:not(:disabled) {
+    background: #fef2f2 !important;
+    border-color: #dc2626 !important;
+  }
+}
+
+.modal-dismiss {
+  width: 100%;
+  text-align: center;
+}
+
+// ─── Change Plan Header ───
+.change-plan-header {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 1rem 0 0.25rem;
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: var(--text-secondary, #64748b);
+    margin: 0;
+  }
+}
+
 // Responsive
 @media (max-width: 640px) {
   .sub-header {
@@ -366,5 +616,18 @@
 
   .plan-price .amount {
     font-size: 2rem;
+  }
+
+  .current-sub-body, .current-sub-header, .current-sub-actions {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .current-sub-actions {
+    flex-direction: column;
+  }
+
+  .sub-detail-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

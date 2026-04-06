@@ -34,7 +34,7 @@
   <div class="hero-content">
     <div class="hero-badge animate-fade-in">
       <span class="badge-dot"></span>
-      1 Month Free Trial — No Credit Card Required
+      30-Day Free Trial — No Credit Card Required
     </div>
 
     <h1 class="hero-title animate-slide-up">
@@ -433,76 +433,71 @@
     </div>
 
     <div class="pricing-toggle">
-      <span>All plans include a <strong>1 month free trial</strong> — no credit card required</span>
+      <span>All plans include a <strong>30-day free trial</strong> — no credit card required</span>
     </div>
 
-    <div class="pricing-grid">
+    <div class="cycle-toggle">
+      <button [class.active]="billingCycle === 'monthly'" (click)="billingCycle = 'monthly'">Monthly</button>
+      <button [class.active]="billingCycle === 'yearly'" (click)="billingCycle = 'yearly'">
+        Yearly <span class="save-badge">Save ~17%</span>
+      </button>
+    </div>
+
+    <div class="pricing-grid two-col">
+      <!-- Standard Plan -->
       <div class="price-card">
-        <div class="price-tier">Starter</div>
-        <div class="price-amount">
+        <div class="price-tier">Standard</div>
+        <div class="price-amount" *ngIf="billingCycle === 'monthly'">
           <span class="currency">₹</span>
           <span class="amount">999</span>
           <span class="period">/month</span>
         </div>
-        <p class="price-desc">Everything you need, pay monthly</p>
+        <div class="price-amount" *ngIf="billingCycle === 'yearly'">
+          <span class="currency">₹</span>
+          <span class="amount">9,999</span>
+          <span class="period">/year</span>
+        </div>
+        <p class="price-desc" *ngIf="billingCycle === 'yearly'">That's just ₹833/mo — save ₹1,989/yr</p>
+        <p class="price-desc" *ngIf="billingCycle === 'monthly'">Everything you need to run your restaurant digitally</p>
         <ul class="price-features">
-          <li>✓ Unlimited tables</li>
-          <li>✓ Unlimited staff accounts</li>
-          <li>✓ QR code ordering</li>
-          <li>✓ Kitchen display system</li>
-          <li>✓ Your own branded website</li>
-          <li>✓ AI marketing & posts</li>
-          <li>✓ Due (Udhaar) management</li>
-          <li>✓ Smart analytics & reports</li>
-          <li>✓ AR menu preview</li>
-          <li>✓ Call waiter</li>
-          <li>✓ Bill history & PDF export</li>
-          <li>✓ Dark mode</li>
+          <li>✓ Menu Management</li>
+          <li>✓ Order Management</li>
+          <li>✓ Table Management & QR Codes</li>
+          <li>✓ Kitchen Display System</li>
+          <li>✓ Dashboard & Analytics</li>
+          <li>✓ Bills & Due (Udhaar) Management</li>
+          <li>✓ Staff Management</li>
+          <li>✓ Website Builder</li>
+          <li>✓ Waiter App</li>
+          <li>✓ Dark Mode</li>
         </ul>
         <a routerLink="/admin/register" class="price-btn">Start Free Trial</a>
       </div>
 
+      <!-- Premium Plan -->
       <div class="price-card popular">
-        <div class="popular-badge">Most Popular — Save 8%</div>
-        <div class="price-tier">Professional</div>
-        <div class="price-amount">
+        <div class="popular-badge">Recommended</div>
+        <div class="price-tier">Premium</div>
+        <div class="price-amount" *ngIf="billingCycle === 'monthly'">
           <span class="currency">₹</span>
-          <span class="amount">10,999</span>
+          <span class="amount">1,699</span>
+          <span class="period">/month</span>
+        </div>
+        <div class="price-amount" *ngIf="billingCycle === 'yearly'">
+          <span class="currency">₹</span>
+          <span class="amount">16,999</span>
           <span class="period">/year</span>
         </div>
-        <p class="price-desc">Best value — all features, billed yearly</p>
+        <p class="price-desc" *ngIf="billingCycle === 'yearly'">That's just ₹1,416/mo — save ₹3,389/yr</p>
+        <p class="price-desc" *ngIf="billingCycle === 'monthly'">Full suite with AI marketing, reviews & inventory</p>
         <ul class="price-features">
-          <li>✓ Everything in Starter</li>
-          <li>✓ Unlimited tables</li>
-          <li>✓ Unlimited staff accounts</li>
-          <li>✓ QR code ordering</li>
-          <li>✓ Kitchen display system</li>
-          <li>✓ Your own branded website</li>
-          <li>✓ AI marketing & posts</li>
-          <li>✓ Due (Udhaar) management</li>
-          <li>✓ Smart analytics & reports</li>
-          <li>✓ Priority support</li>
+          <li>✓ Everything in Standard</li>
+          <li class="premium-feature">⭐ AI Marketing & Posts</li>
+          <li class="premium-feature">⭐ Google Reviews Management</li>
+          <li class="premium-feature">⭐ Inventory Management</li>
+          <li>✓ Priority Support</li>
         </ul>
         <a routerLink="/admin/register" class="price-btn primary">Start Free Trial</a>
-      </div>
-
-      <div class="price-card">
-        <div class="price-tier">Enterprise</div>
-        <div class="price-amount">
-          <span class="currency"></span>
-          <span class="amount">Custom</span>
-          <span class="period"></span>
-        </div>
-        <p class="price-desc">For restaurant chains</p>
-        <ul class="price-features">
-          <li>✓ Everything in Professional</li>
-          <li>✓ Multi-location support</li>
-          <li>✓ Custom branding</li>
-          <li>✓ Priority support</li>
-          <li>✓ API access</li>
-          <li>✓ Dedicated account manager</li>
-        </ul>
-        <a href="mailto:contact@tabverse.in" class="price-btn">Contact Sales</a>
       </div>
     </div>
   </div>
@@ -564,7 +559,7 @@
   </div>
   <div class="cta-content">
     <h2>Ready to transform your restaurant?</h2>
-    <p>Start your 1 month free trial today. Set up in minutes, not days.</p>
+    <p>Start your 30-day free trial today. Set up in minutes, not days.</p>
     <div class="cta-actions">
       <a routerLink="/admin/register" class="btn-cta-primary">
         Start Your Free Trial

@@ -1,11 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { DueService } from '../../services/due.service';
-import { SubscriptionService } from '../../services/subscription.service';
-import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
 import { CustomerDue } from '../../models/api.models';
 
 @Component({
@@ -22,10 +19,6 @@ export class DuesComponent implements OnInit {
   showSettled = false;
   successMessage = '';
   errorMessage = '';
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
   totalOutstanding = 0;
 
   settleAmounts: { [id: string]: number } = {};
@@ -34,14 +27,10 @@ export class DuesComponent implements OnInit {
   private searchTimeout: any;
 
   constructor(
-    private dueService: DueService,
-    private authService: AuthService,
-    private router: Router,
-    public themeService: ThemeService
+    private dueService: DueService
   ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadDues();
   }
 
@@ -114,10 +103,5 @@ export class DuesComponent implements OnInit {
         setTimeout(() => this.errorMessage = '', 5000);
       }
     });
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 }

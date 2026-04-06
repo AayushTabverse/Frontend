@@ -1,11 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { OrderService } from '../../services/order.service';
-import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
 import { TableService } from '../../services/table.service';
 import { MenuService } from '../../services/menu.service';
@@ -21,11 +19,6 @@ import { BillResponse, TableResponse, PastBillItem, MenuItem, MenuCategory } fro
 export class BillsComponent implements OnInit {
   bills: BillResponse[] = [];
   loading = false;
-  userName = '';
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
 
   // Date filters (default: today)
   fromDate = '';
@@ -87,15 +80,10 @@ export class BillsComponent implements OnInit {
     private authService: AuthService,
     private settingsService: SettingsService,
     private tableService: TableService,
-    private menuService: MenuService,
-    private router: Router,
-    public themeService: ThemeService
-  ) {
-    this.authService.currentUser$.subscribe(u => this.userName = u?.fullName || '');
-  }
+    private menuService: MenuService
+  ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     const today = new Date();
     this.fromDate = this.formatDate(today);
     this.toDate = this.formatDate(today);
@@ -272,11 +260,6 @@ export class BillsComponent implements OnInit {
         this.pastBillSaving = false;
       }
     });
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 
   downloadInvoice(bill: BillResponse): void {

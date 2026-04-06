@@ -1,12 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReviewService } from '../../services/review.service';
-import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
-import { SettingsService } from '../../services/settings.service';
-import { SubscriptionService } from '../../services/subscription.service';
 import {
   GoogleReview,
   PaginatedReviewsResponse,
@@ -21,13 +17,6 @@ import {
   styleUrl: './reviews.component.scss'
 })
 export class ReviewsComponent implements OnInit {
-  // Sidebar
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
-  userName = '';
-  logoUrl = '';
 
   // Tabs
   activeTab: 'reviews' | 'analytics' = 'reviews';
@@ -50,20 +39,10 @@ export class ReviewsComponent implements OnInit {
   analyticsLoading = false;
 
   constructor(
-    private reviewService: ReviewService,
-    private authService: AuthService,
-    private router: Router,
-    public themeService: ThemeService,
-    private settingsService: SettingsService
-  ) {
-    this.authService.currentUser$.subscribe(u => this.userName = u?.fullName || '');
-  }
+    private reviewService: ReviewService
+  ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
-    this.settingsService.getSettings().subscribe({
-      next: (s) => this.logoUrl = s.logoUrl || ''
-    });
     this.loadReviews();
     this.loadAnalytics();
   }
@@ -175,10 +154,5 @@ export class ReviewsComponent implements OnInit {
 
   switchTab(tab: 'reviews' | 'analytics'): void {
     this.activeTab = tab;
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 }

@@ -14,6 +14,7 @@ export class LandingComponent implements OnInit, OnDestroy {
   activeFeature = 0;
   currentYear = new Date().getFullYear();
   activePolicy: string | null = null;
+  billingCycle: 'monthly' | 'yearly' = 'monthly';
 
   private featureInterval: any;
 

@@ -64,71 +64,67 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
   {
-    path: 'admin/dashboard',
-    loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [adminGuard, subscriptionGuard]
+    path: 'admin',
+    loadComponent: () => import('./shared/components/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    canActivate: [adminGuard, subscriptionGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'menu',
+        loadComponent: () => import('./admin/menu-management/menu-management.component').then(m => m.MenuManagementComponent)
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./admin/orders/orders.component').then(m => m.OrdersComponent)
+      },
+      {
+        path: 'tables',
+        loadComponent: () => import('./admin/tables/tables.component').then(m => m.TablesComponent)
+      },
+      {
+        path: 'website',
+        loadComponent: () => import('./admin/website-editor/website-editor.component').then(m => m.WebsiteEditorComponent)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./admin/settings/settings.component').then(m => m.SettingsComponent)
+      },
+      {
+        path: 'bills',
+        loadComponent: () => import('./admin/bills/bills.component').then(m => m.BillsComponent)
+      },
+      {
+        path: 'dues',
+        loadComponent: () => import('./admin/dues/dues.component').then(m => m.DuesComponent)
+      },
+      {
+        path: 'staff',
+        loadComponent: () => import('./admin/staff/staff.component').then(m => m.StaffComponent)
+      },
+      {
+        path: 'analytics',
+        loadComponent: () => import('./admin/analytics/analytics.component').then(m => m.AnalyticsComponent)
+      },
+      {
+        path: 'ai-marketing',
+        loadComponent: () => import('./admin/ai-marketing/ai-marketing.component').then(m => m.AiMarketingComponent),
+        canActivate: [premiumGuard]
+      },
+      {
+        path: 'reviews',
+        loadComponent: () => import('./admin/reviews/reviews.component').then(m => m.ReviewsComponent),
+        canActivate: [premiumGuard]
+      },
+      {
+        path: 'inventory',
+        loadComponent: () => import('./admin/inventory/inventory.component').then(m => m.InventoryComponent),
+        canActivate: [premiumGuard]
+      }
+    ]
   },
-  {
-    path: 'admin/menu',
-    loadComponent: () => import('./admin/menu-management/menu-management.component').then(m => m.MenuManagementComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/orders',
-    loadComponent: () => import('./admin/orders/orders.component').then(m => m.OrdersComponent),
-    canActivate: [authGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/tables',
-    loadComponent: () => import('./admin/tables/tables.component').then(m => m.TablesComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/website',
-    loadComponent: () => import('./admin/website-editor/website-editor.component').then(m => m.WebsiteEditorComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/settings',
-    loadComponent: () => import('./admin/settings/settings.component').then(m => m.SettingsComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/bills',
-    loadComponent: () => import('./admin/bills/bills.component').then(m => m.BillsComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/dues',
-    loadComponent: () => import('./admin/dues/dues.component').then(m => m.DuesComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/staff',
-    loadComponent: () => import('./admin/staff/staff.component').then(m => m.StaffComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/analytics',
-    loadComponent: () => import('./admin/analytics/analytics.component').then(m => m.AnalyticsComponent),
-    canActivate: [adminGuard, subscriptionGuard]
-  },
-  {
-    path: 'admin/ai-marketing',
-    loadComponent: () => import('./admin/ai-marketing/ai-marketing.component').then(m => m.AiMarketingComponent),
-    canActivate: [adminGuard, premiumGuard]
-  },
-  {
-    path: 'admin/reviews',
-    loadComponent: () => import('./admin/reviews/reviews.component').then(m => m.ReviewsComponent),
-    canActivate: [adminGuard, premiumGuard]
-  },
-  {
-    path: 'admin/inventory',
-    loadComponent: () => import('./admin/inventory/inventory.component').then(m => m.InventoryComponent),
-    canActivate: [adminGuard, premiumGuard]
-  },
-
   // ── Waiter Dashboard ──
   {
     path: 'waiter',

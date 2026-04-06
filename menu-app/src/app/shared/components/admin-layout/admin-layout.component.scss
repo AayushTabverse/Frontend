@@ -1,0 +1,66 @@
+/* Admin Layout — sidebar styles live in global styles.scss, only overrides here */
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+  }
+}
+
+.layout-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 0;
+
+  .header-spacer {
+    flex: 1;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .welcome {
+    color: var(--text-secondary, #666);
+    font-size: 0.9rem;
+  }
+}
+
+.logout-header-btn {
+  padding: 6px 14px;
+  background: none;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  color: var(--text-primary, #333);
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-header {
+    .welcome { display: none; }
+  }
+}

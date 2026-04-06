@@ -136,6 +136,191 @@
     <a *ngIf="menu.googleMapsUrl" [href]="menu.googleMapsUrl" target="_blank" class="maps-link">📍 View on Google Maps</a>
   </footer>
 
+  <!-- ═══════ GAMES PANEL ═══════ -->
+  <div class="games-fab" (click)="toggleGames()" [class.active]="showGames">
+    🎮
+  </div>
+
+  <div class="games-panel" *ngIf="showGames">
+    <div class="games-panel-header">
+      <h2>🎮 While You Wait</h2>
+      <button class="games-close" (click)="toggleGames()">✕</button>
+    </div>
+
+    <!-- Game List -->
+    <div class="game-list" *ngIf="activeGame === 'none'">
+      <div class="game-card" (click)="selectGame('tictactoe')">
+        <span class="game-card-icon">❌⭕</span>
+        <div>
+          <h3>Tic Tac Toe</h3>
+          <p>Classic X/O — play with a friend!</p>
+        </div>
+      </div>
+      <div class="game-card" (click)="selectGame('colormatch')">
+        <span class="game-card-icon">🎨</span>
+        <div>
+          <h3>Color Match</h3>
+          <p>Memorize the color, then pick it!</p>
+        </div>
+      </div>
+      <div class="game-card lucky-card" *ngIf="canShowLuckyDraw" (click)="selectGame('luckydraw')">
+        <span class="game-card-icon">🎰</span>
+        <div>
+          <h3>Lucky Draw</h3>
+          <p>Try your luck for a discount!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tic Tac Toe ── -->
+    <div class="game-area" *ngIf="activeGame === 'tictactoe'">
+      <button class="game-back" (click)="backToGameList()">← Back</button>
+      <div class="ttt-scores">
+        <span [class.active]="tttCurrentPlayer === 'X' && !tttWinner">❌ {{ tttScores.X }}</span>
+        <span class="ttt-vs">vs</span>
+        <span [class.active]="tttCurrentPlayer === 'O' && !tttWinner">⭕ {{ tttScores.O }}</span>
+      </div>
+
+      <div class="ttt-status" *ngIf="!tttWinner">
+        {{ tttCurrentPlayer === 'X' ? '❌' : '⭕' }}'s turn
+      </div>
+      <div class="ttt-status ttt-winner" *ngIf="tttWinner === 'X' || tttWinner === 'O'">
+        {{ tttWinner === 'X' ? '❌' : '⭕' }} wins! 🎉
+      </div>
+      <div class="ttt-status ttt-draw" *ngIf="tttWinner === 'draw'">
+        It's a draw! 🤝
+      </div>
+
+      <div class="ttt-board">
+        <button *ngFor="let cell of tttBoard; let i = index"
+                class="ttt-cell"
+                [class.x]="cell === 'X'"
+                [class.o]="cell === 'O'"
+                [class.win]="isTTTWinCell(i)"
+                (click)="tttPlay(i)">
+          {{ cell === 'X' ? '❌' : cell === 'O' ? '⭕' : '' }}
+        </button>
+      </div>
+
+      <button class="game-action-btn" *ngIf="tttWinner" (click)="resetTTT()">Play Again</button>
+    </div>
+
+    <!-- ── Color Match ── -->
+    <div class="game-area" *ngIf="activeGame === 'colormatch'">
+      <button class="game-back" (click)="backToGameList()">← Back</button>
+      <div class="cm-round-info">Round {{ cmRound }} / {{ cmTotalRounds }}</div>
+
+      <!-- Showing phase -->
+      <div class="cm-showing" *ngIf="cmPhase === 'showing'">
+        <p class="cm-instruction">Memorize this color!</p>
+        <div class="cm-target-display" [style.background]="cmTargetColor"></div>
+        <div class="cm-countdown">
+          <div class="cm-countdown-bar"></div>
+        </div>
+      </div>
+
+      <!-- Guessing phase -->
+      <div class="cm-guessing" *ngIf="cmPhase === 'guessing'">
+        <p class="cm-instruction">Pick the matching color!</p>
+        <div class="cm-picker">
+          <canvas #hueCanvas class="cm-hue-canvas"
+                  (click)="onHueCanvasClick($event)"
+                  (touchstart)="onHueCanvasClick($event)"></canvas>
+          <canvas #slCanvas class="cm-sl-canvas"
+                  (click)="onSLCanvasClick($event)"
+                  (touchstart)="onSLCanvasClick($event)"></canvas>
+          <div class="cm-picker-footer">
+            <div class="cm-preview-swatch" [style.background]="cmPreviewColor"></div>
+            <button class="game-action-btn cm-confirm-btn" (click)="cmConfirmColor()">Confirm</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result phase -->
+      <div class="cm-result" *ngIf="cmPhase === 'result'">
+        <div class="cm-compare">
+          <div class="cm-compare-item">
+            <div class="cm-color-box" [style.background]="cmTargetColor"></div>
+            <span>Target</span>
+          </div>
+          <div class="cm-compare-item">
+            <div class="cm-color-box" [style.background]="cmSelectedColor"></div>
+            <span>Your Pick</span>
+          </div>
+        </div>
+        <div class="cm-match-score" [class.perfect]="cmMatchPercent === 100"
+             [class.great]="cmMatchPercent >= 80 && cmMatchPercent < 100"
+             [class.ok]="cmMatchPercent >= 50 && cmMatchPercent < 80"
+             [class.bad]="cmMatchPercent < 50">
+          {{ cmMatchPercent }}% Match
+          <span class="cm-match-emoji">
+            {{ cmMatchPercent === 100 ? '🎯' : cmMatchPercent >= 80 ? '🔥' : cmMatchPercent >= 50 ? '👍' : '😅' }}
+          </span>
+        </div>
+        <button class="game-action-btn" *ngIf="!cmIsFinished" (click)="cmNextOrFinish()">Next Round →</button>
+
+        <!-- Final Results -->
+        <div class="cm-final" *ngIf="cmIsFinished">
+          <h3>Game Over!</h3>
+          <div class="cm-final-score"
+               [class.perfect]="cmFinalScore === 100"
+               [class.great]="cmFinalScore >= 80 && cmFinalScore < 100"
+               [class.ok]="cmFinalScore >= 50 && cmFinalScore < 80"
+               [class.bad]="cmFinalScore < 50">
+            Average: {{ cmFinalScore }}%
+            {{ cmFinalScore >= 90 ? '🏆' : cmFinalScore >= 70 ? '⭐' : cmFinalScore >= 50 ? '👍' : '🎯 Keep trying!' }}
+          </div>
+          <div class="cm-history">
+            <div class="cm-history-row" *ngFor="let r of cmHistory; let i = index">
+              <span class="cm-history-round">R{{ i + 1 }}</span>
+              <div class="cm-history-swatch" [style.background]="r.target"></div>
+              <span>→</span>
+              <div class="cm-history-swatch" [style.background]="r.picked"></div>
+              <span class="cm-history-pct">{{ r.percent }}%</span>
+            </div>
+          </div>
+          <button class="game-action-btn" (click)="startColorMatch()">Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Lucky Draw ── -->
+    <div class="game-area" *ngIf="activeGame === 'luckydraw'">
+      <button class="game-back" (click)="backToGameList()">← Back</button>
+      <h3 class="lucky-title">🎰 Lucky Draw!</h3>
+
+      <!-- 3x3 Grid — show when not yet drawn -->
+      <ng-container *ngIf="!luckyHasDrawn">
+        <div class="lucky-grid">
+          <div *ngFor="let block of luckyBlocks; let i = index"
+               class="lucky-block"
+               [class.highlighted]="luckyHighlightIndex === i"
+               [style.background]="luckyHighlightIndex === i ? block.color : ''"
+               [class.running]="luckyDrawRunning">
+            <span class="lucky-block-label">{{ block.label.replace('\n', ' ') }}</span>
+          </div>
+        </div>
+        <button class="game-action-btn lucky-btn"
+                [disabled]="luckyDrawRunning"
+                (click)="startLuckyDraw()">
+          {{ luckyDrawRunning ? 'Drawing...' : '🎰 TRY YOUR LUCK!' }}
+        </button>
+      </ng-container>
+
+      <!-- Result (persists across navigation) -->
+      <div class="lucky-result" *ngIf="luckyResult">
+        <div class="lucky-result-card" [class.win]="luckyResult.type !== 'none'" [class.lose]="luckyResult.type === 'none'">
+          <span class="lucky-result-emoji">{{ luckyResult.type !== 'none' ? '🎉' : '😅' }}</span>
+          <h3>{{ luckyResult.type !== 'none' ? 'You Won!' : 'Better Luck Next Time!' }}</h3>
+          <p class="lucky-result-discount" *ngIf="luckyResult.type === 'percent'">{{ luckyResult.value }}% OFF</p>
+          <p class="lucky-result-discount" *ngIf="luckyResult.type === 'flat'">₹{{ luckyResult.value }} OFF</p>
+          <p class="lucky-result-hint" *ngIf="luckyResult.type !== 'none'">✅ Discount applied to your bill!</p>
+          <p class="lucky-result-hint" *ngIf="luckyResult.type === 'none'">No discount this time. Enjoy your meal!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bottom Action Bar -->
   <div class="bottom-action-bar">
     <!-- Call Waiter Button -->

@@ -260,6 +260,8 @@ export interface BusinessSettings {
   cgstPercent?: number;
   sgstPercent?: number;
   serviceChargePercent?: number;
+  maxDiscountPercent?: number;
+  spinWheelEnabled?: boolean;
 }
 
 // ── Website Content ──
@@ -673,4 +675,21 @@ export interface VerifyPaymentRequest {
   razorpaySubscriptionId: string;
   razorpayPaymentId: string;
   razorpaySignature: string;
+}
+
+export interface CancelSubscriptionRequest {
+  cancelAtCycleEnd: boolean;
+}
+
+export interface UpdateSubscriptionRequest {
+  plan: string;
+  cycle: string;
+  scheduleAtCycleEnd: boolean;
+}
+
+export interface UpdateSubscriptionResponse {
+  requiresCheckout: boolean;
+  subscriptionId?: string;
+  razorpayKeyId?: string;
+  status?: SubscriptionStatusResponse;
 }

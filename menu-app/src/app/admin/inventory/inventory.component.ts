@@ -1,12 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { InventoryService } from '../../services/inventory.service';
-import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
 import { InventoryItem, InventoryLog, InventorySummary } from '../../models/api.models';
-import { SubscriptionService } from '../../services/subscription.service';
 
 @Component({
   selector: 'app-inventory',
@@ -16,10 +13,6 @@ import { SubscriptionService } from '../../services/subscription.service';
   styleUrls: ['./inventory.component.scss']
 })
 export class InventoryComponent implements OnInit {
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
 
   // Data
   items: InventoryItem[] = [];
@@ -74,14 +67,10 @@ export class InventoryComponent implements OnInit {
   errorMessage = '';
 
   constructor(
-    private inventoryService: InventoryService,
-    private authService: AuthService,
-    private router: Router,
-    public themeService: ThemeService
+    private inventoryService: InventoryService
   ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadAll();
   }
 
@@ -300,10 +289,5 @@ export class InventoryComponent implements OnInit {
   getMaxCategoryValue(): number {
     if (!this.summary) return 1;
     return Math.max(...this.summary.categoryBreakdown.map(c => c.totalValue), 1);
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 }

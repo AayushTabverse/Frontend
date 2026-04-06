@@ -1,11 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
-import { SubscriptionService } from '../../services/subscription.service';
-import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
 import { UploadService } from '../../services/upload.service';
 import { InventoryService } from '../../services/inventory.service';
 import { MenuCategory, MenuItem, InventoryItem, MenuItemIngredient } from '../../models/api.models';
@@ -20,10 +17,6 @@ import { MenuCategory, MenuItem, InventoryItem, MenuItemIngredient } from '../..
 export class MenuManagementComponent implements OnInit {
   categories: MenuCategory[] = [];
   loading = true;
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
 
   // Category form
   showCategoryForm = false;
@@ -53,15 +46,11 @@ export class MenuManagementComponent implements OnInit {
 
   constructor(
     private menuService: MenuService,
-    private authService: AuthService,
-    private router: Router,
-    public themeService: ThemeService,
     private uploadService: UploadService,
     private inventoryService: InventoryService
   ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadCategories();
   }
 
@@ -245,11 +234,6 @@ export class MenuManagementComponent implements OnInit {
         this.uploading[target] = false;
       }
     });
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 
   onlyNumbers(event: KeyboardEvent): void {

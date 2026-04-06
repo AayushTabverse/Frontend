@@ -1,11 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { TableService } from '../../services/table.service';
-import { SubscriptionService } from '../../services/subscription.service';
 import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
 import { SettingsService } from '../../services/settings.service';
 import { TableResponse, StaffResponse, WaiterAssignmentResponse } from '../../models/api.models';
 
@@ -21,10 +19,6 @@ export class TablesComponent implements OnInit {
   loading = true;
   showForm = false;
   formData = { tableNumber: '', label: '', capacity: 4 };
-  sidebarCollapsed = false;
-  mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
   tableSubmitted = false;
 
   // Rename
@@ -56,13 +50,10 @@ export class TablesComponent implements OnInit {
   constructor(
     private tableService: TableService,
     private authService: AuthService,
-    private settingsService: SettingsService,
-    private router: Router,
-    public themeService: ThemeService
+    private settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
     this.loadTables();
     this.loadRestaurantInfo();
     this.loadWaiters();
@@ -416,11 +407,6 @@ export class TablesComponent implements OnInit {
     const assignment = this.assignments.find(a => a.waiterId === this.filterWaiterId);
     if (!assignment) return [];
     return this.tables.filter(t => assignment.assignedTableIds.includes(t.id));
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/admin/login']);
   }
 
   onlyNumbers(event: KeyboardEvent): void {

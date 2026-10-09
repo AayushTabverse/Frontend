@@ -2,6 +2,17 @@
       <h1>👥 Staff Management</h1>
     </div>
 
+    <div class="staff-tabs">
+      <button [class.active]="activeTab === 'team'" (click)="activeTab = 'team'">👥 Team</button>
+      <button [class.active]="activeTab === 'attendance'" (click)="activeTab = 'attendance'">🗓️ Attendance</button>
+      <button *ngIf="canSeeSalary" [class.active]="activeTab === 'salary'" (click)="activeTab = 'salary'">💰 Salary</button>
+    </div>
+
+    <app-staff-attendance *ngIf="activeTab === 'attendance'"></app-staff-attendance>
+    <app-staff-payroll *ngIf="activeTab === 'salary' && canSeeSalary"></app-staff-payroll>
+
+    <ng-container *ngIf="activeTab === 'team'">
+
     <div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
 
     <!-- Add Staff Button -->
@@ -23,19 +34,17 @@
         <div class="form-group">
           <label>Role <span class="req">*</span></label>
           <select [(ngModel)]="newUser.role">
-            <option value="Waiter">🛎️ Waiter</option>
-            <option value="Kitchen">🍳 Kitchen</option>
+            <option *ngFor="let r of assignableRoles" [value]="r">{{ roleLabels[r] }}</option>
           </select>
+          <span class="role-hint">{{ roleHints[newUser.role] }}</span>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Email <span class="req">*</span></label>
-          <input type="email" [(ngModel)]="newUser.email" placeholder="staff@restaurant.com"
-                 [class.invalid]="staffSubmitted && (!newUser.email || !isValidEmail(newUser.email))" />
-          <span class="field-error" *ngIf="staffSubmitted && !newUser.email">Email is required</span>
-          <span class="field-error" *ngIf="staffSubmitted && newUser.email && !isValidEmail(newUser.email)">Enter a valid email address</span>
+          <label>Job Title</label>
+          <input type="text" [(ngModel)]="newUser.jobTitle" maxlength="100"
+                 [placeholder]="isPayrollOnly ? 'e.g. Cleaner, Dishwasher, Security' : 'e.g. Head waiter, Tandoor cook'" />
         </div>
         <div class="form-group">
           <label>Phone</label>
@@ -46,7 +55,14 @@
         </div>
       </div>
 
-      <div class="form-row">
+      <div class="form-row" *ngIf="!isPayrollOnly">
+        <div class="form-group">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" [(ngModel)]="newUser.email" placeholder="staff@restaurant.com"
+                 [class.invalid]="staffSubmitted && (!newUser.email || !isValidEmail(newUser.email))" />
+          <span class="field-error" *ngIf="staffSubmitted && !newUser.email">Email is required</span>
+          <span class="field-error" *ngIf="staffSubmitted && newUser.email && !isValidEmail(newUser.email)">Enter a valid email address</span>
+        </div>
         <div class="form-group">
           <label>Password <span class="req">*</span></label>
           <input type="password" [(ngModel)]="newUser.password" placeholder="Min 6 characters"
@@ -83,12 +99,16 @@
           <tr *ngFor="let user of staff" [class.inactive-row]="!user.isActive">
             <td class="name-cell">
               <strong>{{ user.fullName }}</strong>
+              <span class="phone" *ngIf="user.jobTitle">{{ user.jobTitle }}</span>
               <span class="phone" *ngIf="user.phone">{{ user.phone }}</span>
             </td>
-            <td>{{ user.email }}</td>
+            <td>
+              <ng-container *ngIf="user.email; else noLogin">{{ user.email }}</ng-container>
+              <ng-template #noLogin><span class="no-login">No app login</span></ng-template>
+            </td>
             <td>
               <span class="role-badge" [class]="getRoleBadgeClass(user.role)">
-                {{ user.role }}
+                {{ roleBadge(user.role) }}
               </span>
             </td>
             <td>
@@ -97,9 +117,10 @@
               </span>
             </td>
             <td class="time-cell">
-              {{ user.lastLoginAt ? (user.lastLoginAt | date:'short') : 'Never' }}
+              {{ user.lastLoginAt ? (user.lastLoginAt | date:'short') : (user.email ? 'Never' : '—') }}
             </td>
             <td class="actions-cell">
+              <ng-container *ngIf="canManage(user); else noActions">
               <button class="action-btn toggle-btn"
                       [class.deactivate]="user.isActive"
                       [class.activate]="!user.isActive"
@@ -107,10 +128,11 @@
                       [title]="user.isActive ? 'Deactivate' : 'Activate'">
                 {{ user.isActive ? '⏸️' : '▶️' }}
               </button>
-              <button class="action-btn delete-btn" (click)="deleteUser(user)"
-                      *ngIf="user.role !== 'RestaurantAdmin'" title="Delete">
+              <button class="action-btn delete-btn" (click)="deleteUser(user)" title="Delete">
                 🗑️
               </button>
+              </ng-container>
+              <ng-template #noActions><span class="no-actions">—</span></ng-template>
             </td>
           </tr>
         </tbody>
@@ -122,3 +144,4 @@
     </div>
 
     <div class="loading-state" *ngIf="loading">Loading staff...</div>
+    </ng-container>

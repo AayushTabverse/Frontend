@@ -388,9 +388,10 @@ export interface ForgotPasswordResponse {
 // ── Staff Management ──
 export interface RegisterUserRequest {
   fullName: string;
-  email: string;
-  password: string;
+  email?: string;      // not needed for payroll-only staff (role 'Helper')
+  password?: string;   // not needed for payroll-only staff (role 'Helper')
   phone?: string;
+  jobTitle?: string;
   role: string;
   tenantId: string;
 }
@@ -398,12 +399,76 @@ export interface RegisterUserRequest {
 export interface StaffResponse {
   id: string;
   fullName: string;
-  email: string;
+  email?: string;
   phone?: string;
   role: string;
+  jobTitle?: string;
   isActive: boolean;
   createdAt: string;
   lastLoginAt?: string;
+}
+
+// ── Staff Attendance & Payroll ──
+export type AttendanceStatus = 'Present' | 'Absent' | 'HalfDay' | 'Leave';
+
+export interface DailyAttendance {
+  userId: string;
+  fullName: string;
+  role: string;
+  jobTitle?: string;
+  status?: AttendanceStatus;
+  notes?: string;
+  markedBy?: string;
+}
+
+export interface MonthlySalary {
+  userId: string;
+  fullName: string;
+  role: string;
+  jobTitle?: string;
+  isActive: boolean;
+  monthlySalary: number;
+  daysInMonth: number;
+  presentDays: number;
+  absentDays: number;
+  halfDays: number;
+  leaveDays: number;
+  unmarkedDays: number;
+  deduction: number;
+  earned: number;
+  advancePaid: number;
+  salaryPaid: number;
+  bonusPaid: number;
+  balance: number;
+}
+
+export type StaffPaymentType = 'Salary' | 'Advance' | 'Bonus';
+export type StaffPaymentMode = 'Cash' | 'Upi' | 'BankTransfer';
+
+export interface StaffPayment {
+  id: string;
+  userId: string;
+  fullName: string;
+  year: number;
+  month: number;
+  type: StaffPaymentType;
+  amount: number;
+  mode: StaffPaymentMode;
+  paidOn: string;
+  notes?: string;
+  recordedBy?: string;
+  createdAt: string;
+}
+
+export interface CreateStaffPaymentRequest {
+  userId: string;
+  year: number;
+  month: number;
+  type: StaffPaymentType;
+  amount: number;
+  mode: StaffPaymentMode;
+  paidOn?: string;
+  notes?: string;
 }
 
 // ── Subdomain Management ──

@@ -9,6 +9,7 @@ import {
   DashboardSummary, TopItem, SalesData, PeakHour, OrderResponse, CustomerDue
 } from '../../models/api.models';
 import { DueService } from '../../services/due.service';
+import { parseDateKey, toDateKey } from '../../shared/date-utils';
 
 @Component({
   selector: 'app-analytics',
@@ -86,10 +87,7 @@ export class AnalyticsComponent implements OnInit {
     const to = new Date();
     const from = new Date();
     from.setDate(from.getDate() - parseInt(this.salesRange));
-    this.analyticsService.getSales(
-      from.toISOString().split('T')[0],
-      to.toISOString().split('T')[0]
-    ).subscribe({
+    this.analyticsService.getSales(toDateKey(from), toDateKey(to)).subscribe({
       next: (data) => {
         this.salesData = data;
         this.maxSales = Math.max(...data.map(d => d.totalSales), 1);
@@ -120,10 +118,7 @@ export class AnalyticsComponent implements OnInit {
     const to = new Date();
     const from = new Date();
     from.setDate(from.getDate() - 7);
-    this.orderService.getOrderHistory(
-      from.toISOString().split('T')[0],
-      to.toISOString().split('T')[0]
-    ).subscribe({
+    this.orderService.getOrderHistory(toDateKey(from), toDateKey(to)).subscribe({
       next: (orders) => {
         this.allRecentOrders = orders;
         this.ordersPage = 1;
@@ -204,7 +199,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   formatDate(dateStr: string): string {
-    const d = new Date(dateStr);
+    const d = parseDateKey(dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 

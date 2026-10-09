@@ -1,0 +1,62 @@
+<div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
+<div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+<!-- Date picker -->
+<div class="att-toolbar">
+  <div class="date-nav">
+    <button class="nav-btn" (click)="shiftDay(-1)" title="Previous day">‹</button>
+    <input type="date" [ngModel]="date" (ngModelChange)="changeDate($event)" [max]="today" />
+    <button class="nav-btn" (click)="shiftDay(1)" [disabled]="date >= today" title="Next day">›</button>
+    <button class="today-btn" *ngIf="date !== today" (click)="changeDate(today)">Today</button>
+  </div>
+
+  <div class="att-counts" *ngIf="rows.length > 0">
+    <span class="chip present">P {{ count('Present') }}</span>
+    <span class="chip absent">A {{ count('Absent') }}</span>
+    <span class="chip half">½ {{ count('HalfDay') }}</span>
+    <span class="chip leave">L {{ count('Leave') }}</span>
+    <span class="chip unmarked" *ngIf="unmarkedCount > 0">{{ unmarkedCount }} unmarked</span>
+  </div>
+</div>
+
+<!-- Attendance list -->
+<div class="att-list" *ngIf="!loading && rows.length > 0">
+  <div class="att-row" *ngFor="let row of rows" [class.dirty]="isDirty(row)">
+    <div class="att-person">
+      <strong>{{ row.fullName }}</strong>
+      <span class="att-role">{{ roleName(row.role, row.jobTitle) }}</span>
+    </div>
+
+    <div class="status-btns">
+      <button *ngFor="let s of statuses"
+              [class]="'status-btn s-' + s.value"
+              [class.active]="row.status === s.value"
+              [title]="s.title"
+              (click)="setStatus(row, s.value)">
+        {{ s.label }}
+      </button>
+    </div>
+
+    <input class="att-notes" type="text" [(ngModel)]="row.notes" placeholder="Note (optional)" maxlength="300" />
+  </div>
+</div>
+
+<div class="att-actions" *ngIf="!loading && rows.length > 0">
+  <button class="secondary-btn" (click)="markAllUnmarkedPresent()" [disabled]="unmarkedCount === 0">
+    ✓ Mark unmarked as present
+  </button>
+  <button class="save-btn" (click)="save()" [disabled]="!hasChanges || saving">
+    {{ saving ? 'Saving...' : '💾 Save attendance' }}
+  </button>
+</div>
+
+<p class="att-legend" *ngIf="!loading && rows.length > 0">
+  P = Present · A = Absent · ½ = Half day · L = Paid leave. Absent days and half-days are deducted from salary.
+  Click a selected status again to clear it.
+</p>
+
+<div class="empty-state" *ngIf="!loading && rows.length === 0">
+  <p>No active waiter or kitchen staff to mark attendance for.</p>
+</div>
+
+<div class="loading-state" *ngIf="loading">Loading attendance...</div>

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { ApiResponse, AuthResponse, LoginRequest, RegisterTenantRequest, ForgotPasswordResponse, RegisterUserRequest, StaffResponse } from '../models/api.models';
 import { environment } from '../../environments/environment';
+import { Permission, can, homeRouteFor, isPanelRole } from '../shared/permissions';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -62,9 +63,24 @@ export class AuthService {
     return !!auth && new Date(auth.expiresAt) > new Date();
   }
 
+  /** Restaurant owner (or super admin). */
   isAdmin(): boolean {
     const role = this.getRole();
     return role === 'RestaurantAdmin' || role === 'SuperAdmin';
+  }
+
+  /** Whether the current user may use a screen or action. See shared/permissions.ts. */
+  can(permission: Permission): boolean {
+    return can(this.getRole(), permission);
+  }
+
+  /** Whether the current user works inside the admin panel (sidebar layout). */
+  isPanelUser(): boolean {
+    return isPanelRole(this.getRole());
+  }
+
+  homeRoute(): string {
+    return homeRouteFor(this.getRole());
   }
 
   forgotPassword(email: string): Observable<ForgotPasswordResponse> {

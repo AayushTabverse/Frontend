@@ -1,0 +1,196 @@
+<div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
+<div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+<!-- Month picker -->
+<div class="pay-toolbar">
+  <div class="month-nav">
+    <button class="nav-btn" (click)="shiftMonth(-1)" title="Previous month">‹</button>
+    <input type="month" [ngModel]="month" (ngModelChange)="changeMonth($event)" />
+    <button class="nav-btn" (click)="shiftMonth(1)" title="Next month">›</button>
+    <button class="today-btn" *ngIf="month !== currentMonth" (click)="changeMonth(currentMonth)">This month</button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="pay-kpis" *ngIf="!loading && rows.length > 0">
+  <div class="pay-kpi">
+    <span class="kpi-label">Payroll ({{ monthLabel }})</span>
+    <span class="kpi-value">₹{{ totalEarned | number:'1.0-0' }}</span>
+  </div>
+  <div class="pay-kpi">
+    <span class="kpi-label">Paid (salary + advances)</span>
+    <span class="kpi-value">₹{{ totalPaid | number:'1.0-0' }}</span>
+  </div>
+  <div class="pay-kpi due">
+    <span class="kpi-label">Balance due</span>
+    <span class="kpi-value">₹{{ totalBalance | number:'1.0-0' }}</span>
+  </div>
+  <div class="pay-kpi" *ngIf="totalBonus > 0">
+    <span class="kpi-label">Bonuses</span>
+    <span class="kpi-value">₹{{ totalBonus | number:'1.0-0' }}</span>
+  </div>
+</div>
+
+<!-- Salary sheet -->
+<div class="pay-table-wrap" *ngIf="!loading && rows.length > 0">
+  <table class="pay-table">
+    <thead>
+      <tr>
+        <th>Staff</th>
+        <th>Monthly salary</th>
+        <th>Attendance</th>
+        <th class="num">Deduction</th>
+        <th class="num">Earned</th>
+        <th class="num">Advance</th>
+        <th class="num">Salary paid</th>
+        <th class="num">Balance</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of rows" [class.inactive-row]="!row.isActive">
+        <td class="name-cell">
+          <strong>{{ row.fullName }}</strong>
+          <span class="sub">{{ roleName(row.role, row.jobTitle) }}<ng-container *ngIf="!row.isActive"> · inactive</ng-container></span>
+        </td>
+
+        <td>
+          <div class="salary-edit" *ngIf="editingSalaryId === row.userId; else salaryView">
+            <input type="number" [(ngModel)]="salaryDraft" min="0" (keypress)="onlyNumbers($event)"
+                   (keyup.enter)="saveSalary(row)" (keyup.escape)="cancelEditSalary()" />
+            <button class="icon-btn ok" (click)="saveSalary(row)" title="Save">✓</button>
+            <button class="icon-btn" (click)="cancelEditSalary()" title="Cancel">✕</button>
+          </div>
+          <ng-template #salaryView>
+            <button class="salary-view" (click)="startEditSalary(row)" title="Edit monthly salary">
+              <span *ngIf="row.monthlySalary > 0">₹{{ row.monthlySalary | number:'1.0-0' }}</span>
+              <span *ngIf="row.monthlySalary === 0" class="not-set">Set salary</span>
+              ✏️
+            </button>
+          </ng-template>
+        </td>
+
+        <td>
+          <div class="mini-att" [title]="row.unmarkedDays + ' of ' + row.daysInMonth + ' days unmarked'">
+            <span class="m present">{{ row.presentDays }}P</span>
+            <span class="m absent" *ngIf="row.absentDays">{{ row.absentDays }}A</span>
+            <span class="m half" *ngIf="row.halfDays">{{ row.halfDays }}½</span>
+            <span class="m leave" *ngIf="row.leaveDays">{{ row.leaveDays }}L</span>
+          </div>
+        </td>
+
+        <td class="num" [class.neg]="row.deduction > 0">{{ row.deduction > 0 ? '−₹' + (row.deduction | number:'1.0-2') : '—' }}</td>
+        <td class="num"><strong>₹{{ row.earned | number:'1.0-2' }}</strong></td>
+        <td class="num">{{ row.advancePaid ? '₹' + (row.advancePaid | number:'1.0-2') : '—' }}</td>
+        <td class="num">{{ row.salaryPaid ? '₹' + (row.salaryPaid | number:'1.0-2') : '—' }}</td>
+        <td class="num balance" [class.due]="row.balance > 0" [class.settled]="row.balance === 0 && row.earned > 0"
+            [class.over]="row.balance < 0">
+          <ng-container *ngIf="row.balance > 0">₹{{ row.balance | number:'1.0-2' }}</ng-container>
+          <ng-container *ngIf="row.balance === 0 && row.earned > 0">✓ Paid</ng-container>
+          <ng-container *ngIf="row.balance === 0 && row.earned === 0">—</ng-container>
+          <ng-container *ngIf="row.balance < 0">Overpaid ₹{{ -row.balance | number:'1.0-2' }}</ng-container>
+        </td>
+
+        <td class="actions-cell">
+          <button class="pay-btn" (click)="openPayment(row, 'Salary')" [disabled]="row.balance <= 0">💸 Pay</button>
+          <button class="link-btn" (click)="openPayment(row, 'Advance')">+ Advance</button>
+          <button class="link-btn" (click)="openPayment(row, 'Bonus')">+ Bonus</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="pay-note" *ngIf="!loading && rows.length > 0">
+  Earned = monthly salary − (salary ÷ days in month) × (absent days + ½ × half-days). Paid leave and unmarked days are not deducted.
+  Balance = earned − advances − salary paid. Bonuses are paid on top and don't affect the balance.
+</p>
+
+<!-- Payments ledger -->
+<div class="ledger" *ngIf="!loading && payments.length > 0">
+  <h3>Payments for {{ monthLabel }}</h3>
+  <div class="pay-table-wrap">
+    <table class="pay-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Staff</th>
+          <th>Type</th>
+          <th class="num">Amount</th>
+          <th>Mode</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of payments">
+          <td>{{ p.paidOn | date:'d MMM y' }}</td>
+          <td>{{ p.fullName }}</td>
+          <td><span class="type-badge" [class]="'type-badge t-' + p.type">{{ p.type }}</span></td>
+          <td class="num"><strong>₹{{ p.amount | number:'1.0-2' }}</strong></td>
+          <td>{{ modeLabel(p.mode) }}</td>
+          <td class="notes-cell">{{ p.notes || '—' }}</td>
+          <td><button class="icon-btn danger" (click)="deletePayment(p)" title="Delete">🗑️</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="empty-state" *ngIf="!loading && rows.length === 0">
+  <p>No waiter or kitchen staff yet. Add staff from the Team tab to manage their salary.</p>
+</div>
+
+<div class="loading-state" *ngIf="loading">Loading salary sheet...</div>
+
+<!-- Record payment dialog -->
+<div class="modal-overlay" *ngIf="payFor" (click)="closePayment()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h2>Record payment · {{ payFor.fullName }}</h2>
+    <p class="modal-sub">
+      For {{ monthLabel }} · Balance due:
+      <strong>₹{{ (payFor.balance > 0 ? payFor.balance : 0) | number:'1.0-2' }}</strong>
+    </p>
+
+    <div class="form-group">
+      <label>Type</label>
+      <div class="type-btns">
+        <button *ngFor="let t of paymentTypes" [class.active]="payment.type === t.value" (click)="payment.type = t.value">
+          {{ t.label }}
+        </button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Amount (₹)</label>
+        <input type="number" [(ngModel)]="payment.amount" min="1" (keypress)="onlyNumbers($event)"
+               [class.invalid]="paySubmitted && !(payment.amount > 0)" />
+        <span class="field-error" *ngIf="paySubmitted && !(payment.amount > 0)">Enter an amount</span>
+      </div>
+      <div class="form-group">
+        <label>Paid on</label>
+        <input type="date" [(ngModel)]="payment.paidOn" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Mode</label>
+      <select [(ngModel)]="payment.mode">
+        <option *ngFor="let m of paymentModes" [value]="m.value">{{ m.label }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <input type="text" [(ngModel)]="payment.notes" maxlength="300" placeholder="e.g., UPI ref 12345" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="secondary-btn" (click)="closePayment()">Cancel</button>
+      <button class="save-btn" (click)="submitPayment()" [disabled]="paySubmitting">
+        {{ paySubmitting ? 'Saving...' : 'Record ' + payment.type.toLowerCase() }}
+      </button>
+    </div>
+  </div>
+</div>

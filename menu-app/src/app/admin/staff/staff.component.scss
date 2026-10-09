@@ -1,5 +1,30 @@
 /* Page-specific styles — sidebar & layout handled by global styles.scss */
 
+.staff-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  overflow-x: auto;
+
+  button {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all 0.2s;
+
+    &:hover { color: #e74c3c; }
+    &.active { color: #e74c3c; border-bottom-color: #e74c3c; }
+  }
+}
+
 .toast {
   padding: 12px 20px;
   border-radius: 8px;
@@ -216,6 +241,22 @@
     background: #fff3cd;
     color: #856404;
   }
+  &.role-manager {
+    background: #e2d9f3;
+    color: #4a2c82;
+  }
+  &.role-cashier {
+    background: #fde2cf;
+    color: #8a4510;
+  }
+  &.role-captain {
+    background: #cfe2ff;
+    color: #084298;
+  }
+  &.role-helper {
+    background: #eceff1;
+    color: #455a64;
+  }
   &.role-waiter {
     background: #d1ecf1;
     color: #0c5460;
@@ -246,6 +287,21 @@
 .actions-cell {
   display: flex;
   gap: 8px;
+
+  .no-actions { color: #bbb; padding: 6px 10px; }
+}
+
+.no-login {
+  color: #aaa;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.role-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #888;
 }
 
 .action-btn {
@@ -289,6 +345,7 @@
   }
 
   .page-header h1 { color: #f0f0f0; }
+  .staff-tabs { border-bottom-color: #333; }
   .page-header .welcome { color: #aaa; }
 
   .dark-mode-toggle {

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, subscriptionGuard, premiumGuard, subdomainMatch, mainDomainMatch } from './guards/auth.guard';
+import { adminGuard, permissionGuard, subscriptionGuard, premiumGuard, subdomainMatch, mainDomainMatch } from './guards/auth.guard';
 
 export const routes: Routes = [
   // ── Subdomain: show tenant website at root URL ──
@@ -61,7 +61,8 @@ export const routes: Routes = [
   {
     path: 'admin/subscription',
     loadComponent: () => import('./admin/subscription/subscription.component').then(m => m.SubscriptionComponent),
-    canActivate: [adminGuard]
+    canActivate: [adminGuard, permissionGuard],
+    data: { permission: 'subscription' }
   },
   {
     path: 'admin',
@@ -70,58 +71,81 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
-        loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
+        loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'dashboard' }
       },
       {
         path: 'menu',
-        loadComponent: () => import('./admin/menu-management/menu-management.component').then(m => m.MenuManagementComponent)
+        loadComponent: () => import('./admin/menu-management/menu-management.component').then(m => m.MenuManagementComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'menu' }
       },
       {
         path: 'orders',
-        loadComponent: () => import('./admin/orders/orders.component').then(m => m.OrdersComponent)
+        loadComponent: () => import('./admin/orders/orders.component').then(m => m.OrdersComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'orders' }
       },
       {
         path: 'tables',
-        loadComponent: () => import('./admin/tables/tables.component').then(m => m.TablesComponent)
+        loadComponent: () => import('./admin/tables/tables.component').then(m => m.TablesComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'tables' }
       },
       {
         path: 'website',
-        loadComponent: () => import('./admin/website-editor/website-editor.component').then(m => m.WebsiteEditorComponent)
+        loadComponent: () => import('./admin/website-editor/website-editor.component').then(m => m.WebsiteEditorComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'website' }
       },
       {
         path: 'settings',
-        loadComponent: () => import('./admin/settings/settings.component').then(m => m.SettingsComponent)
+        loadComponent: () => import('./admin/settings/settings.component').then(m => m.SettingsComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'settings' }
       },
       {
         path: 'bills',
-        loadComponent: () => import('./admin/bills/bills.component').then(m => m.BillsComponent)
+        loadComponent: () => import('./admin/bills/bills.component').then(m => m.BillsComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'bills' }
       },
       {
         path: 'dues',
-        loadComponent: () => import('./admin/dues/dues.component').then(m => m.DuesComponent)
+        loadComponent: () => import('./admin/dues/dues.component').then(m => m.DuesComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'dues' }
       },
       {
         path: 'staff',
-        loadComponent: () => import('./admin/staff/staff.component').then(m => m.StaffComponent)
+        loadComponent: () => import('./admin/staff/staff.component').then(m => m.StaffComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'staff' }
       },
       {
         path: 'analytics',
-        loadComponent: () => import('./admin/analytics/analytics.component').then(m => m.AnalyticsComponent)
+        loadComponent: () => import('./admin/analytics/analytics.component').then(m => m.AnalyticsComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'analytics' }
       },
       {
         path: 'ai-marketing',
         loadComponent: () => import('./admin/ai-marketing/ai-marketing.component').then(m => m.AiMarketingComponent),
-        canActivate: [premiumGuard]
+        canActivate: [permissionGuard, premiumGuard],
+        data: { permission: 'aiMarketing' }
       },
       {
         path: 'reviews',
         loadComponent: () => import('./admin/reviews/reviews.component').then(m => m.ReviewsComponent),
-        canActivate: [premiumGuard]
+        canActivate: [permissionGuard, premiumGuard],
+        data: { permission: 'reviews' }
       },
       {
         path: 'inventory',
         loadComponent: () => import('./admin/inventory/inventory.component').then(m => m.InventoryComponent),
-        canActivate: [premiumGuard]
+        canActivate: [permissionGuard, premiumGuard],
+        data: { permission: 'inventory' }
       }
     ]
   },
@@ -129,14 +153,16 @@ export const routes: Routes = [
   {
     path: 'waiter',
     loadComponent: () => import('./waiter/waiter-dashboard.component').then(m => m.WaiterDashboardComponent),
-    canActivate: [authGuard]
+    canActivate: [permissionGuard],
+    data: { permission: 'takeOrder' }
   },
 
   // ── Kitchen Display ──
   {
     path: 'kitchen',
     loadComponent: () => import('./kitchen/kitchen.component').then(m => m.KitchenComponent),
-    canActivate: [authGuard]
+    canActivate: [permissionGuard],
+    data: { permission: 'kitchen' }
   },
 
   // ── Default ──

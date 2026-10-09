@@ -20,6 +20,7 @@ import { DueService } from '../services/due.service';
 import { CustomerService, CustomerSearchResult } from '../services/customer.service';
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { NavItem, navItemsFor } from '../shared/permissions';
 
 interface WaiterCartItem {
   menuItem: MenuItem;
@@ -97,7 +98,14 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   successMessage = '';
   errorMessage = '';
   userName = '';
-  isAdmin = false;
+  // Role-based UI (see shared/permissions.ts)
+  usesSidebar = false;       // Owner, Manager, Cashier work inside the admin panel
+  seesAllTables = false;     // Everyone except waiters, who see their assigned tables
+  canFilterByWaiter = false;
+  canSettleBill = false;
+  canQuickAdd = false;
+  navItems: NavItem[] = [];
+  panelTitle = 'Admin';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
   hasPremium = true;
@@ -146,20 +154,29 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => this.hasPremium = s.isTrialActive || s.plan === 'Premium');
+    this.subService.getStatus().subscribe(s => {
+      this.hasPremium = s.isTrialActive || s.plan === 'Premium';
+      this.navItems = navItemsFor(this.authService.getRole(), this.hasPremium);
+    });
     this.authService.currentUser$.subscribe(user => {
       this.userName = user?.fullName || 'Staff';
       this.userId = user?.userId || '';
     });
-    this.isAdmin = this.authService.isAdmin();
+    this.usesSidebar = this.authService.isPanelUser();
+    this.seesAllTables = this.authService.can('seeAllTables');
+    this.canFilterByWaiter = this.authService.can('filterTablesByWaiter');
+    this.canSettleBill = this.authService.can('settleBill');
+    this.canQuickAdd = this.authService.can('quickAddMenuItem');
+    this.navItems = navItemsFor(this.authService.getRole(), this.hasPremium);
+    this.panelTitle = this.authService.isAdmin() ? 'Admin' : (this.authService.getRole() ?? 'Admin');
     this.loadTables();
     this.loadOrders();
     this.loadRestaurantName();
     this.setupRealTime();
-    if (!this.isAdmin && this.authService.getUserId()) {
+    if (!this.seesAllTables && this.authService.getUserId()) {
       this.loadAssignedTables();
     }
-    if (this.isAdmin) {
+    if (this.canFilterByWaiter) {
       this.loadWaitersForFilter();
     }
 
@@ -199,12 +216,12 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
 
   getVisibleTables(): TableResponse[] {
     // Admin with waiter filter active
-    if (this.isAdmin && this.adminFilterWaiterId) {
+    if (this.canFilterByWaiter && this.adminFilterWaiterId) {
       const assignment = this.adminFilterAssignments.find(a => a.waiterId === this.adminFilterWaiterId);
       if (!assignment) return [];
       return this.tables.filter(t => assignment.assignedTableIds.includes(t.id));
     }
-    if (this.isAdmin || this.showAllTables || this.assignedTableIds.length === 0) {
+    if (this.seesAllTables || this.showAllTables || this.assignedTableIds.length === 0) {
       return this.tables;
     }
     return this.tables.filter(t => this.assignedTableIds.includes(t.id));

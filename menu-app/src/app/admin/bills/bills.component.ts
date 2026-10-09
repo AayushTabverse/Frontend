@@ -8,6 +8,7 @@ import { SettingsService } from '../../services/settings.service';
 import { TableService } from '../../services/table.service';
 import { MenuService } from '../../services/menu.service';
 import { BillResponse, TableResponse, PastBillItem, MenuItem, MenuCategory } from '../../models/api.models';
+import { toDateKey } from '../../shared/date-utils';
 
 @Component({
   selector: 'app-bills',
@@ -83,14 +84,19 @@ export class BillsComponent implements OnInit {
     private menuService: MenuService
   ) {}
 
+  canCreatePastBill = false;
+
   ngOnInit(): void {
+    this.canCreatePastBill = this.authService.can('createPastBill');
     const today = new Date();
     this.fromDate = this.formatDate(today);
     this.toDate = this.formatDate(today);
     this.loadBills();
     this.loadSettings();
-    this.loadTables();
-    this.loadMenuItems();
+    if (this.canCreatePastBill) {
+      this.loadTables();
+      this.loadMenuItems();
+    }
   }
 
   loadSettings(): void {
@@ -167,7 +173,7 @@ export class BillsComponent implements OnInit {
   }
 
   private formatDate(d: Date): string {
-    return d.toISOString().split('T')[0];
+    return toDateKey(d);
   }
 
   loadTables(): void {

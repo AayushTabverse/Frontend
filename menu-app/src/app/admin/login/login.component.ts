@@ -345,14 +345,7 @@ export class LoginComponent {
 
   constructor(private authService: AuthService, private router: Router) {
     if (authService.isLoggedIn()) {
-      const role = authService.getRole();
-      if (role === 'Kitchen') {
-        router.navigate(['/kitchen']);
-      } else if (role === 'Waiter') {
-        router.navigate(['/waiter']);
-      } else {
-        router.navigate(['/admin/dashboard']);
-      }
+      router.navigate([authService.homeRoute()]);
     }
   }
 
@@ -372,14 +365,7 @@ export class LoginComponent {
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
-        const role = this.authService.getRole();
-        if (role === 'Kitchen') {
-          this.router.navigate(['/kitchen']);
-        } else if (role === 'Waiter') {
-          this.router.navigate(['/waiter']);
-        } else {
-          this.router.navigate(['/admin/dashboard']);
-        }
+        this.router.navigate([this.authService.homeRoute()]);
       },
       error: (err) => {
         this.error = err.error?.message || 'Invalid credentials.';

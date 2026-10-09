@@ -4,21 +4,38 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { StaffResponse } from '../../models/api.models';
+import { AppRole, ROLE_LABELS, manageableRoles } from '../../shared/permissions';
+import { StaffAttendanceComponent } from './attendance/staff-attendance.component';
+import { StaffPayrollComponent } from './payroll/staff-payroll.component';
 
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, StaffAttendanceComponent, StaffPayrollComponent],
   templateUrl: './staff.component.html',
   styleUrls: ['./staff.component.scss']
 })
 export class StaffComponent implements OnInit {
+  activeTab: 'team' | 'attendance' | 'salary' = 'team';
+
+  readonly roleLabels = ROLE_LABELS;
+  readonly roleHints: Record<string, string> = {
+    Manager: 'Runs the floor: menu, tables, staff, inventory, bills. No settings, website or subscription.',
+    Cashier: 'Takes orders, settles bills and handles udhaar.',
+    Captain: 'Takes orders on any table. Cannot settle bills.',
+    Waiter: 'Takes orders on assigned tables.',
+    Kitchen: 'Sees the kitchen display only.',
+    Helper: 'For cleaners, dishwashers, security etc. No login — only tracked in attendance and salary.'
+  };
+  assignableRoles: AppRole[] = [];
+  canSeeSalary = false;
+  private myUserId: string | null = null;
   staff: StaffResponse[] = [];
   loading = true;
 
   // Add user form
   showAddForm = false;
-  newUser = { fullName: '', email: '', password: '', phone: '', role: 'Waiter' };
+  newUser = { fullName: '', email: '', password: '', phone: '', jobTitle: '', role: 'Waiter' };
   adding = false;
   formError = '';
   successMessage = '';
@@ -29,6 +46,9 @@ export class StaffComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.assignableRoles = manageableRoles(this.authService.getRole());
+    this.canSeeSalary = this.authService.can('staffSalary');
+    this.myUserId = this.authService.getUserId();
     this.loadStaff();
   }
 
@@ -36,7 +56,8 @@ export class StaffComponent implements OnInit {
     this.loading = true;
     this.authService.getStaff().subscribe({
       next: (data) => {
-        this.staff = data;
+        const order: string[] = ['SuperAdmin', 'RestaurantAdmin', 'Manager', 'Cashier', 'Captain', 'Waiter', 'Kitchen', 'Helper'];
+        this.staff = data.sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role) || a.fullName.localeCompare(b.fullName));
         this.loading = false;
       },
       error: () => this.loading = false
@@ -45,7 +66,7 @@ export class StaffComponent implements OnInit {
 
   openAddForm(): void {
     this.showAddForm = true;
-    this.newUser = { fullName: '', email: '', password: '', phone: '', role: 'Waiter' };
+    this.newUser = { fullName: '', email: '', password: '', phone: '', jobTitle: '', role: 'Waiter' };
     this.formError = '';
     this.staffSubmitted = false;
   }
@@ -57,17 +78,23 @@ export class StaffComponent implements OnInit {
 
   addUser(): void {
     this.staffSubmitted = true;
-    if (!this.newUser.fullName || !this.newUser.email || !this.newUser.password) {
-      this.formError = 'Name, email and password are required.';
+    if (!this.newUser.fullName) {
+      this.formError = 'Name is required.';
       return;
     }
-    if (!this.isValidEmail(this.newUser.email)) {
-      this.formError = 'Please enter a valid email address.';
-      return;
-    }
-    if (this.newUser.password.length < 6) {
-      this.formError = 'Password must be at least 6 characters.';
-      return;
+    if (!this.isPayrollOnly) {
+      if (!this.newUser.email || !this.newUser.password) {
+        this.formError = 'Email and password are required for staff who use the app.';
+        return;
+      }
+      if (!this.isValidEmail(this.newUser.email)) {
+        this.formError = 'Please enter a valid email address.';
+        return;
+      }
+      if (this.newUser.password.length < 6) {
+        this.formError = 'Password must be at least 6 characters.';
+        return;
+      }
     }
     if (this.newUser.phone && this.newUser.phone.length !== 10) {
       this.formError = 'Phone number must be exactly 10 digits.';
@@ -80,16 +107,18 @@ export class StaffComponent implements OnInit {
     const tenantId = this.authService.getTenantId()!;
     this.authService.registerUser({
       fullName: this.newUser.fullName,
-      email: this.newUser.email,
-      password: this.newUser.password,
+      email: this.isPayrollOnly ? undefined : this.newUser.email,
+      password: this.isPayrollOnly ? undefined : this.newUser.password,
       phone: this.newUser.phone || undefined,
+      jobTitle: this.newUser.jobTitle.trim() || undefined,
       role: this.newUser.role,
       tenantId
     }).subscribe({
       next: () => {
         this.adding = false;
         this.showAddForm = false;
-        this.successMessage = `${this.newUser.role} "${this.newUser.fullName}" added successfully!`;
+        const as = this.newUser.jobTitle.trim() || this.roleBadge(this.newUser.role);
+        this.successMessage = `${this.newUser.fullName} added as ${as}.`;
         this.loadStaff();
         setTimeout(() => this.successMessage = '', 4000);
       },
@@ -122,13 +151,33 @@ export class StaffComponent implements OnInit {
     });
   }
 
+  /** Payroll-only staff ('Helper') get no email or password and cannot log in. */
+  get isPayrollOnly(): boolean {
+    return this.newUser.role === 'Helper';
+  }
+
+  roleBadge(role: string): string {
+    if (role === 'RestaurantAdmin') return 'Owner';
+    if (role === 'Helper') return 'Payroll only';
+    return role;
+  }
+
   getRoleBadgeClass(role: string): string {
     switch (role) {
       case 'RestaurantAdmin': return 'role-admin';
+      case 'Manager': return 'role-manager';
+      case 'Cashier': return 'role-cashier';
+      case 'Captain': return 'role-captain';
       case 'Waiter': return 'role-waiter';
       case 'Kitchen': return 'role-kitchen';
+      case 'Helper': return 'role-helper';
       default: return '';
     }
+  }
+
+  /** Mirrors the backend rule: owners manage all staff, managers manage roles below manager, nobody manages themselves. */
+  canManage(user: StaffResponse): boolean {
+    return user.id !== this.myUserId && (this.assignableRoles as string[]).includes(user.role);
   }
 
   isValidEmail(email: string): boolean {

@@ -18,7 +18,7 @@
       <button class="download-btn" (click)="downloadCSV()" [disabled]="bills.length === 0">
         📥 Download CSV
       </button>
-      <button class="past-bill-btn" (click)="openPastBillDialog()">
+      <button class="past-bill-btn" *ngIf="canCreatePastBill" (click)="openPastBillDialog()">
         ➕ Add Past Bill
       </button>
       <label class="view-toggle">

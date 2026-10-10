@@ -9,14 +9,19 @@
 <!-- Error State -->
 <div class="tw-error" *ngIf="error && !loading">
   <div class="tw-error-content">
-    <span class="tw-error-icon">🍽️</span>
-    <h2>Restaurant Not Found</h2>
+    <span class="tw-error-icon">{{ notPublished ? '🚧' : '🍽️' }}</span>
+    <h2>{{ notPublished ? 'Coming soon' : 'Restaurant Not Found' }}</h2>
     <p>{{ error }}</p>
   </div>
 </div>
 
 <!-- Website Content -->
 <div class="tenant-website" *ngIf="content && !loading && !error">
+
+  <!-- Owner preview of an unpublished site (visitors get the "Coming soon" page instead) -->
+  <div class="tw-preview-banner" *ngIf="!content.isPublished">
+    👁️ Preview — this website isn't published yet, so only you can see it.
+  </div>
 
   <!-- ═══════ ANNOUNCEMENT BANNER ═══════ -->
   <div class="tw-announcement" *ngIf="content.showAnnouncement && content.announcementText">

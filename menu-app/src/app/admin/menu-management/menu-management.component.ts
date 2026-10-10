@@ -5,18 +5,39 @@ import { RouterModule } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
 import { UploadService } from '../../services/upload.service';
 import { InventoryService } from '../../services/inventory.service';
-import { MenuCategory, MenuItem, InventoryItem, MenuItemIngredient } from '../../models/api.models';
+import { MenuCategory, MenuItem, InventoryItem, MenuItemIngredient, MenuImportResult, MenuImportRow } from '../../models/api.models';
+import { ExcelImportComponent, ExcelImportConfig } from '../../shared/components/excel-import/excel-import.component';
 
 @Component({
   selector: 'app-menu-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ExcelImportComponent],
   templateUrl: './menu-management.component.html',
   styleUrl: './menu-management.component.scss'
 })
 export class MenuManagementComponent implements OnInit {
   categories: MenuCategory[] = [];
   loading = true;
+  showImport = false;
+  readonly importConfig: ExcelImportConfig<MenuImportRow> = {
+    title: 'Import menu from Excel',
+    noun: ['item', 'items'],
+    templateFileName: 'tabverse-menu-template.xlsx',
+    downloadTemplate: () => this.menuService.downloadImportTemplate(),
+    runImport: (file, updateExisting, apply) => this.menuService.importMenu(file, updateExisting, apply),
+    updateExistingLabel: 'Update items that already exist on the menu (matched by item name)',
+    updateExistingHint: 'Blank cells keep the current value. Unticked: existing items are left untouched.',
+    columns: [
+      { header: 'Category', value: r => r.category },
+      { header: 'Item', value: r => r.name, kind: 'strong' },
+      { header: 'Price', value: r => r.price, kind: 'money' },
+      { header: 'Type', value: r => r.isVeg, kind: 'veg' }
+    ],
+    summaryNotes: r => {
+      const cats = (r as MenuImportResult).newCategories ?? [];
+      return cats.length ? [`New categories: ${cats.join(', ')}`] : [];
+    }
+  };
 
   // Category form
   showCategoryForm = false;

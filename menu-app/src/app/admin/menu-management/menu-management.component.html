@@ -1,6 +1,7 @@
 <div class="page-header">
       <h1>📋 Menu Management</h1>
       <div class="header-actions">
+        <button class="btn-secondary btn-import" (click)="showImport = true">📥 Import from Excel</button>
         <button class="btn-primary" (click)="openAddCategory()">+ Add Category</button>
       </div>
     </div>
@@ -100,6 +101,16 @@
   </div>
 
   <!-- Category + Items List -->
+  <div class="empty-menu" *ngIf="!loading && categories.length === 0">
+    <div class="empty-icon">📋</div>
+    <h3>Your menu is empty</h3>
+    <p>Add categories and items one by one, or upload your whole menu from an Excel sheet.</p>
+    <div class="empty-actions">
+      <button class="btn-primary" (click)="showImport = true">📥 Import from Excel</button>
+      <button class="btn-secondary" (click)="openAddCategory()">+ Add Category</button>
+    </div>
+  </div>
+
   <div class="categories-list" *ngIf="!loading">
     <div class="category-card" *ngFor="let cat of categories">
       <div class="category-header">
@@ -179,3 +190,5 @@
       </div>
     </div>
   </div>
+
+  <app-excel-import *ngIf="showImport" [config]="importConfig" (closed)="showImport = false" (imported)="loadCategories()"></app-excel-import>

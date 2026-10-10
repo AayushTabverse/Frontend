@@ -1,14 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { InventoryService } from '../../services/inventory.service';
-import { InventoryItem, InventoryLog, InventorySummary } from '../../models/api.models';
+import { InventoryImportRow, InventoryItem, InventoryLog, InventorySummary } from '../../models/api.models';
+import { ExcelImportComponent, ExcelImportConfig } from '../../shared/components/excel-import/excel-import.component';
+import { InventoryAnalyticsComponent } from './inventory-analytics/inventory-analytics.component';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ExcelImportComponent, InventoryAnalyticsComponent],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })
@@ -65,6 +67,25 @@ export class InventoryComponent implements OnInit {
 
   successMessage = '';
   errorMessage = '';
+
+  showImport = false;
+  readonly importConfig: ExcelImportConfig<InventoryImportRow> = {
+    title: 'Import inventory from Excel',
+    noun: ['item', 'items'],
+    templateFileName: 'tabverse-inventory-template.xlsx',
+    downloadTemplate: () => this.inventoryService.downloadImportTemplate(),
+    runImport: (file, updateExisting, apply) => this.inventoryService.importItems(file, updateExisting, apply),
+    updateExistingLabel: 'Update items that are already in inventory (matched by item name)',
+    updateExistingHint: 'Blank cells keep the current value. Stock changes are recorded in the Activity Log.',
+    columns: [
+      { header: 'Item', value: r => r.name, kind: 'strong' },
+      { header: 'Stock', value: r => r.currentQuantity != null ? `${+r.currentQuantity.toFixed(2)} ${r.unit ?? ''}` : (r.unit ?? '') },
+      { header: 'Min', value: r => r.minimumQuantity, kind: 'number' },
+      { header: 'Cost/unit', value: r => r.costPerUnit, kind: 'money' },
+      { header: 'Category', value: r => r.category },
+      { header: 'Supplier', value: r => r.supplier, kind: 'muted' }
+    ]
+  };
 
   constructor(
     private inventoryService: InventoryService
@@ -226,6 +247,14 @@ export class InventoryComponent implements OnInit {
 
   // ── Quantity Adjustment ──
 
+  @ViewChild(InventoryAnalyticsComponent) analyticsTab?: InventoryAnalyticsComponent;
+
+  /** Restock button on the analytics reorder list. */
+  openAdjustById(id: string): void {
+    const item = this.items.find(i => i.id === id);
+    if (item) this.openAdjust(item);
+  }
+
   openAdjust(item: InventoryItem): void {
     this.adjustItem = item;
     this.adjustData = { quantity: 0, changeType: 'Restock', notes: '' };
@@ -246,6 +275,7 @@ export class InventoryComponent implements OnInit {
         this.showAdjustDialog = false;
         this.successMessage = 'Quantity adjusted!';
         this.loadAll();
+        this.analyticsTab?.load(); // reorder list and stock health reflect the change
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
@@ -286,8 +316,4 @@ export class InventoryComponent implements OnInit {
     }
   }
 
-  getMaxCategoryValue(): number {
-    if (!this.summary) return 1;
-    return Math.max(...this.summary.categoryBreakdown.map(c => c.totalValue), 1);
-  }
 }

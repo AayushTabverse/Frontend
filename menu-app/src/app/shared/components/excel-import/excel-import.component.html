@@ -1,0 +1,138 @@
+<div class="modal-overlay" (click)="close()">
+  <div class="modal import-modal" [class.wide]="step === 'preview'" (click)="$event.stopPropagation()">
+
+    <div class="import-head">
+      <h2>📥 {{ config.title }}</h2>
+      <button class="close-x" (click)="close()" [disabled]="busy" title="Close">✕</button>
+    </div>
+
+    <!-- ── Step 1: choose file ── -->
+    <ng-container *ngIf="step === 'choose'">
+      <ol class="import-steps">
+        <li>
+          <span>Download the template and fill one row per {{ config.noun[0] }}.</span>
+          <button class="btn-secondary btn-template" (click)="downloadTemplate()" [disabled]="downloading">
+            {{ downloading ? 'Downloading…' : '⬇️ Download template' }}
+          </button>
+        </li>
+        <li><span>Upload the filled sheet. You'll see a preview before anything is saved.</span></li>
+      </ol>
+
+      <label class="drop-zone" [class.over]="dragOver" [class.has-file]="file"
+             (dragover)="$event.preventDefault(); dragOver = true" (dragleave)="dragOver = false" (drop)="onDrop($event)">
+        <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="onFileInput($event)" />
+        <ng-container *ngIf="!file">
+          <span class="drop-icon">📄</span>
+          <strong>Choose an Excel file</strong>
+          <span class="drop-hint">or drag it here · .xlsx, up to 5 MB</span>
+        </ng-container>
+        <ng-container *ngIf="file">
+          <span class="drop-icon">✅</span>
+          <strong>{{ file.name }}</strong>
+          <span class="drop-hint">{{ fileSize(file.size) }} · click to choose a different file</span>
+        </ng-container>
+      </label>
+
+      <label class="check-row">
+        <input type="checkbox" [(ngModel)]="updateExisting" />
+        <span>
+          {{ config.updateExistingLabel }}
+          <small>{{ config.updateExistingHint }}</small>
+        </span>
+      </label>
+
+      <p class="warning" *ngIf="config.warning">⚠️ {{ config.warning }}</p>
+
+      <div class="import-error" *ngIf="error">{{ error }}</div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="close()">Cancel</button>
+        <button class="btn-primary" (click)="runPreview()" [disabled]="!file || busy">
+          {{ busy ? 'Reading file…' : 'Preview import →' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ── Step 2: preview ── -->
+    <ng-container *ngIf="step === 'preview' && preview">
+      <p class="import-sub">{{ file?.name }} · {{ preview.rows.length }} rows · nothing has been saved yet</p>
+
+      <div class="summary-chips">
+        <span class="chip c-create" *ngIf="preview.createCount">{{ preview.createCount }} new</span>
+        <span class="chip c-update" *ngIf="preview.updateCount">{{ preview.updateCount }} to update</span>
+        <span class="chip c-same" *ngIf="preview.unchangedCount">{{ preview.unchangedCount }} unchanged</span>
+        <span class="chip c-skip" *ngIf="preview.skipCount">{{ preview.skipCount }} already exist (skipped)</span>
+        <span class="chip c-error" *ngIf="preview.errorCount">{{ preview.errorCount }} with errors</span>
+      </div>
+
+      <p class="note" *ngFor="let n of notes">{{ n }}</p>
+
+      <label class="check-row compact" *ngIf="preview.errorCount > 0">
+        <input type="checkbox" [(ngModel)]="onlyProblems" />
+        <span>Show only rows with errors</span>
+      </label>
+
+      <div class="preview-wrap">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th *ngFor="let col of config.columns" [class.num]="col.kind === 'number' || col.kind === 'money'">{{ col.header }}</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of visibleRows" [class]="'r-' + r.action">
+              <td class="muted">{{ r.rowNumber }}</td>
+              <td *ngFor="let col of config.columns" [class.num]="col.kind === 'number' || col.kind === 'money'" [class.muted]="col.kind === 'muted'">
+                <span *ngIf="col.kind === 'veg'" class="veg-dot" [class.veg]="col.value(r)" [title]="col.value(r) ? 'Veg' : 'Non-veg'"></span>
+                <strong *ngIf="col.kind === 'strong'">{{ display(col, r) }}</strong>
+                <ng-container *ngIf="col.kind !== 'veg' && col.kind !== 'strong'">{{ display(col, r) }}</ng-container>
+              </td>
+              <td><span class="status" [class]="'status s-' + r.action">{{ actionLabel(r.action) }}</span></td>
+              <td class="details">
+                <span class="err" *ngFor="let e of r.errors">{{ e }}</span>
+                <span class="chg" *ngFor="let c of r.changes">{{ c }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="skip-note" *ngIf="preview.errorCount > 0 && importableCount > 0">
+        ⚠️ {{ preview.errorCount }} row{{ preview.errorCount > 1 ? 's' : '' }} with errors will be skipped.
+        Fix them in the sheet and upload again, or import the valid rows now.
+      </p>
+      <p class="skip-note" *ngIf="importableCount === 0">
+        Nothing to import{{ preview.errorCount ? ' — fix the errors in the sheet and upload again' : ': everything is already up to date' }}.
+      </p>
+
+      <div class="import-error" *ngIf="error">{{ error }}</div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="back()" [disabled]="busy">← Choose another file</button>
+        <button class="btn-primary" (click)="confirmImport()" [disabled]="busy || importableCount === 0">
+          {{ busy ? 'Importing…' : 'Import ' + importableCount + ' ' + noun(importableCount) }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ── Step 3: done ── -->
+    <ng-container *ngIf="step === 'done' && result">
+      <div class="done">
+        <div class="done-icon">🎉</div>
+        <h3>Import complete</h3>
+        <p>
+          <strong>{{ result.createCount }}</strong> new {{ noun(result.createCount) }} added<ng-container *ngIf="result.updateCount">,
+          <strong>{{ result.updateCount }}</strong> updated</ng-container>.
+        </p>
+        <p class="muted" *ngIf="result.errorCount">{{ result.errorCount }} row{{ result.errorCount > 1 ? 's' : '' }} with errors {{ result.errorCount > 1 ? 'were' : 'was' }} skipped.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" (click)="close()">Done</button>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

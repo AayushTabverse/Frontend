@@ -1,6 +1,7 @@
 <div class="page-header">
       <h1>📦 Inventory Management</h1>
       <div class="header-actions">
+        <button class="btn-secondary" (click)="showImport = true">📥 Import from Excel</button>
         <button class="btn-primary" (click)="openAddForm()">+ Add Item</button>
       </div>
     </div>
@@ -130,6 +131,7 @@
         <div class="empty-state" *ngIf="filteredItems.length === 0">
           <p>No inventory items found.</p>
           <button class="btn-primary" (click)="openAddForm()">+ Add First Item</button>
+          <button class="btn-secondary" (click)="showImport = true">📥 Import from Excel</button>
         </div>
       </div>
       <div class="loading-state" *ngIf="loading">Loading inventory...</div>
@@ -186,45 +188,8 @@
     </div>
 
     <!-- ═══ TAB: ANALYTICS ═══ -->
-    <div class="inv-tab-content" *ngIf="activeTab === 'analytics' && summary">
-      <div class="inv-analytics-grid">
-        <!-- Category Breakdown -->
-        <div class="inv-chart-card">
-          <h3>📊 Category Breakdown</h3>
-          <div class="category-bars" *ngIf="summary.categoryBreakdown.length > 0">
-            <div class="cat-bar-row" *ngFor="let cat of summary.categoryBreakdown">
-              <div class="cat-bar-name">{{ cat.category }}</div>
-              <div class="cat-bar-track">
-                <div class="cat-bar-fill" [style.width.%]="(cat.totalValue / getMaxCategoryValue()) * 100"></div>
-              </div>
-              <div class="cat-bar-stats">
-                <span>{{ cat.itemCount }} items</span>
-                <span>₹{{ cat.totalValue | number:'1.0-0' }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="empty-state" *ngIf="summary.categoryBreakdown.length === 0">No categories yet.</div>
-        </div>
-
-        <!-- Summary Stats -->
-        <div class="inv-chart-card">
-          <h3>📈 Stock Overview</h3>
-          <div class="stock-overview">
-            <div class="stock-stat">
-              <div class="stock-circle ok">{{ summary.totalItems - summary.lowStockItems - summary.outOfStockItems }}</div>
-              <span>In Stock</span>
-            </div>
-            <div class="stock-stat">
-              <div class="stock-circle low">{{ summary.lowStockItems }}</div>
-              <span>Low Stock</span>
-            </div>
-            <div class="stock-stat">
-              <div class="stock-circle out">{{ summary.outOfStockItems }}</div>
-              <span>Out of Stock</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="inv-tab-content" *ngIf="activeTab === 'analytics'">
+      <app-inventory-analytics (restock)="openAdjustById($event)"></app-inventory-analytics>
     </div>
 
     <!-- ═══ ADD/EDIT FORM DIALOG ═══ -->
@@ -318,3 +283,5 @@
       <div class="spinner"></div>
       <span>Loading inventory...</span>
     </div>
+
+    <app-excel-import *ngIf="showImport" [config]="importConfig" (closed)="showImport = false" (imported)="loadAll()"></app-excel-import>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { WebsiteService } from '../../services/website.service';
 import { WebsiteContent } from '../../models/api.models';
+import { isTenantHost } from '../../shared/site-host';
 
 @Component({
   selector: 'app-tenant-website',
@@ -15,6 +16,8 @@ export class TenantWebsiteComponent implements OnInit {
   content: WebsiteContent | null = null;
   loading = true;
   error = '';
+  /** The site exists but its owner hasn't published it. */
+  notPublished = false;
   tenantId = '';
   navScrolled = false;
   mobileMenuOpen = false;
@@ -28,19 +31,11 @@ export class TenantWebsiteComponent implements OnInit {
   private isSubdomainAccess = false;
 
   ngOnInit(): void {
-    // Try subdomain first, fallback to route param
-    const hostname = window.location.hostname;
-    const parts = hostname.split('.');
-
-    // Check for subdomain:
-    // Production: restaurant-name.tabverse.in (3+ parts)
-    // Local dev:  restaurant-name.localhost (2 parts)
-    const isLocalDev = parts.length === 2 && parts[1] === 'localhost';
-    const isSubdomain = parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'app';
-
-    if ((isLocalDev || isSubdomain) && parts[0] !== 'localhost') {
+    // On a restaurant's own host (name.tabverse.in or its own domain) resolve the host;
+    // on the main site fall back to /website/:tenantId
+    if (isTenantHost()) {
       this.isSubdomainAccess = true;
-      this.tenantId = parts[0]; // This is the subdomain name, not the tenantId yet
+      this.tenantId = window.location.hostname; // a host, resolved to the tenantId below
     } else {
       // Fallback to route param
       this.tenantId = this.route.snapshot.paramMap.get('tenantId') || '';
@@ -49,7 +44,7 @@ export class TenantWebsiteComponent implements OnInit {
     if (this.tenantId) {
       if (this.isSubdomainAccess) {
         // Resolve subdomain → tenantId, then load content
-        this.websiteService.resolveSubdomain(this.tenantId).subscribe({
+        this.websiteService.resolveHost(this.tenantId).subscribe({
           next: (result) => {
             this.tenantId = result.tenantId;
             this.loadContent();
@@ -93,8 +88,11 @@ export class TenantWebsiteComponent implements OnInit {
         // Apply theme colors as CSS variables
         setTimeout(() => this.applyTheme(), 0);
       },
-      error: () => {
-        this.error = 'This restaurant website is not available.';
+      error: (err) => {
+        this.notPublished = err.status === 404 && (err.error?.errors ?? []).includes('not_published');
+        this.error = this.notPublished
+          ? "This restaurant's website isn't published yet. Please check back soon."
+          : 'This restaurant website is not available.';
         this.loading = false;
       }
     });

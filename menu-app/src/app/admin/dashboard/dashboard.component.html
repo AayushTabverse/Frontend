@@ -1,84 +1,113 @@
 <div class="page-header">
-      <h1>Dashboard</h1>
-    </div>
+  <div>
+    <h1>{{ greeting }}{{ userName ? ', ' + userName : '' }}</h1>
+    <p class="page-sub" *ngIf="data">{{ todayLabel }} · updated {{ data.now | date:'shortTime' }}{{ refreshing ? ' · refreshing…' : '' }}</p>
+  </div>
+  <div class="header-links">
+    <button type="button" class="ghost-btn" (click)="load(true)" [disabled]="refreshing">↻ Refresh</button>
+    <a routerLink="/admin/analytics" class="ghost-btn">Full analytics →</a>
+  </div>
+</div>
 
-    <div class="stats-grid" *ngIf="summary">
-      <div class="stat-card">
-        <div class="stat-value">₹{{ summary.todaySales | number:'1.0-0' }}</div>
-        <div class="stat-label">Today's Sales</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ summary.todayOrderCount }}</div>
-        <div class="stat-label">Today's Orders</div>
-      </div>
-      <div class="stat-card highlight">
-        <div class="stat-value">{{ summary.liveOrderCount }}</div>
-        <div class="stat-label">Live Orders</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">₹{{ summary.avgOrderValue | number:'1.0-0' }}</div>
-        <div class="stat-label">Avg Order Value</div>
-      </div>
-      <div class="stat-card due" *ngIf="summary.totalUnsettledDues > 0">
-        <div class="stat-value">₹{{ summary.totalUnsettledDues | number:'1.0-0' }}</div>
-        <div class="stat-label">Unsettled Udhaar ({{ summary.unsettledDueCount }})</div>
-      </div>
-      <div class="stat-card discount" *ngIf="summary.todayDiscountGiven > 0">
-        <div class="stat-value">₹{{ summary.todayDiscountGiven | number:'1.0-0' }}</div>
-        <div class="stat-label">Today's Discount</div>
-      </div>
-    </div>
+<div class="error" *ngIf="error">{{ error }}</div>
+<div class="first-load" *ngIf="loading && !data">Loading today's numbers…</div>
 
-    <div class="top-items" *ngIf="summary?.topItems?.length">
-      <h2>Top Items Today</h2>
+<div class="dash" *ngIf="data">
+
+  <!-- Today, in a sentence or two -->
+  <ul class="insights" *ngIf="data.insights.length">
+    <li *ngFor="let i of data.insights" [ngClass]="'tone-' + i.tone">
+      <span aria-hidden="true">{{ i.icon }}</span><span>{{ i.text }}</span>
+    </li>
+  </ul>
+
+  <!-- Hero + KPIs: today so far vs the same weekday last week at the same time -->
+  <div class="kpis">
+    <app-stat-tile class="hero-tile" [hero]="true" label="Today's revenue" [value]="inr(data.revenue.value)" [delta]="data.revenue.changePct" [vs]="compareLabel"></app-stat-tile>
+    <app-stat-tile label="Orders" [value]="num(data.orders.value)" [delta]="data.orders.changePct" [vs]="compareLabel"></app-stat-tile>
+    <app-stat-tile label="Avg order value" [value]="inr(data.avgOrderValue.value)" [delta]="data.avgOrderValue.changePct" [vs]="compareLabel"></app-stat-tile>
+    <app-stat-tile label="Last 7 days" [value]="inr(data.last7Total)" [spark]="last7Values" vs="Including today so far" [showDelta]="false"></app-stat-tile>
+  </div>
+
+  <div class="grid-main">
+    <app-chart-card title="Revenue through the day" [subtitle]="'Running total, today vs last ' + compareName" [table]="tables['cumulative']">
+      <app-line-chart [labels]="hourLabels" [tooltipLabels]="hourTooltips" [series]="cumulativeSeries" [height]="250"
+                      [format]="inrCompact" ariaLabel="Running revenue total today and last week"></app-line-chart>
+    </app-chart-card>
+
+    <!-- Right now -->
+    <section class="live card">
+      <header><h3>Right now</h3><a routerLink="/waiter" class="card-link">Take order →</a></header>
+      <div class="pipeline">
+        <div class="stage"><strong>{{ data.live.pending }}</strong><span>New</span></div>
+        <div class="stage"><strong>{{ data.live.preparing }}</strong><span>Preparing</span></div>
+        <div class="stage"><strong>{{ data.live.ready }}</strong><span>Ready</span></div>
+        <div class="stage"><strong>{{ data.live.served }}</strong><span>Served, unpaid</span></div>
+      </div>
+      <div class="meter-block">
+        <div class="meter-label"><span>Tables occupied</span><strong>{{ data.live.occupiedTables }} / {{ data.live.totalTables }}</strong></div>
+        <div class="meter" role="meter" [attr.aria-valuenow]="occupancyPct" aria-valuemin="0" aria-valuemax="100">
+          <span [style.width.%]="occupancyPct"></span>
+        </div>
+      </div>
+      <p class="wait" *ngIf="data.live.oldestWaitMinutes > 0" [class.late]="data.live.oldestWaitMinutes >= 30">
+        {{ data.live.oldestWaitMinutes >= 30 ? '⚠️' : '⏱️' }} Longest wait: <strong>{{ data.live.oldestWaitMinutes }} min</strong>
+      </p>
+      <p class="wait calm" *ngIf="data.live.oldestWaitMinutes === 0">✓ No orders waiting on the kitchen.</p>
+    </section>
+  </div>
+
+  <div class="grid-3">
+    <app-chart-card title="Last 7 days" subtitle="Revenue per day" [table]="tables['last7']">
+      <app-column-chart [labels]="last7Labels" [tooltipLabels]="last7Tooltips" [values]="last7Values" [height]="170"
+                        valueName="revenue" [format]="inrCompact" ariaLabel="Revenue for each of the last 7 days"></app-column-chart>
+    </app-chart-card>
+
+    <app-chart-card title="Top items today" subtitle="By revenue">
+      <app-bar-list [rows]="topItemRows" [ranked]="true" emptyText="No items sold yet today."></app-bar-list>
+    </app-chart-card>
+
+    <section class="card attention">
+      <header><h3>Needs attention</h3></header>
+      <a class="att-row" routerLink="/admin/inventory" *ngIf="data.outOfStockCount + data.lowStockCount > 0">
+        <span class="att-icon">📦</span>
+        <span><strong>{{ data.outOfStockCount }} out of stock</strong>, {{ data.lowStockCount }} running low</span>
+        <span class="chev">›</span>
+      </a>
+      <a class="att-row" routerLink="/admin/dues" *ngIf="data.unsettledDueCount > 0">
+        <span class="att-icon">📒</span>
+        <span><strong>{{ inr(data.unsettledDues) }}</strong> udhaar pending · {{ data.unsettledDueCount }} bill{{ data.unsettledDueCount === 1 ? '' : 's' }}, oldest {{ data.oldestDueDays }} days</span>
+        <span class="chev">›</span>
+      </a>
+      <a class="att-row" routerLink="/admin/orders" *ngIf="data.live.oldestWaitMinutes >= 30">
+        <span class="att-icon">⏳</span>
+        <span>An order has waited <strong>{{ data.live.oldestWaitMinutes }} min</strong></span>
+        <span class="chev">›</span>
+      </a>
+      <p class="all-good" *ngIf="data.outOfStockCount + data.lowStockCount === 0 && data.unsettledDueCount === 0 && data.live.oldestWaitMinutes < 30">
+        ✓ Nothing needs your attention right now.
+      </p>
+      <div class="discount-note" *ngIf="data.discounts.value > 0">Discounts given today: <strong>{{ inr(data.discounts.value) }}</strong></div>
+    </section>
+  </div>
+
+  <section class="card recent">
+    <header><h3>Latest orders today</h3><a routerLink="/admin/bills" class="card-link">All bills →</a></header>
+    <div class="table-scroll" *ngIf="data.recentOrders.length">
       <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Qty Sold</th>
-            <th>Revenue</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Order</th><th>Table</th><th class="num">Items</th><th class="num">Amount</th><th>Status</th><th class="num">Time</th></tr></thead>
         <tbody>
-          <tr *ngFor="let item of summary!.topItems">
-            <td>{{ item.itemName }}</td>
-            <td>{{ item.totalQuantity }}</td>
-            <td>₹{{ item.totalRevenue | number:'1.0-0' }}</td>
+          <tr *ngFor="let o of data.recentOrders">
+            <td class="mono">{{ o.orderNumber }}</td>
+            <td>{{ o.table || '—' }}</td>
+            <td class="num">{{ o.items }}</td>
+            <td class="num">{{ inr(o.total) }}</td>
+            <td><span class="status" [ngClass]="statusClass(o.status)">{{ o.status }}</span></td>
+            <td class="num muted">{{ o.createdAt | date:'shortTime' }}</td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <!-- Unsettled Udhaar -->
-    <div class="udhaar-section" *ngIf="unsettledDues.length > 0">
-      <div class="udhaar-header">
-        <h2>📋 Unsettled Udhaar</h2>
-        <a routerLink="/admin/dues" class="view-all-link">Manage All →</a>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Customer</th>
-            <th>Mobile</th>
-            <th>Bill #</th>
-            <th>Bill Amount</th>
-            <th>Paid</th>
-            <th>Due</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let d of unsettledDues">
-            <td class="customer-name">{{ d.customerName }}</td>
-            <td>{{ d.customerMobile || '—' }}</td>
-            <td>{{ d.billNumber || '—' }}</td>
-            <td>₹{{ d.billAmount | number:'1.0-0' }}</td>
-            <td class="paid">₹{{ d.paidAmount | number:'1.0-0' }}</td>
-            <td class="due-amount">₹{{ d.dueAmount | number:'1.0-0' }}</td>
-            <td>{{ d.createdAt | date:'dd MMM yy' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="loading" *ngIf="loading">Loading...</div>
+    <p class="empty" *ngIf="!data.recentOrders.length">No orders yet today.</p>
+  </section>
+</div>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, FullMenuResponse, MenuCategory, MenuItem, MenuItemIngredient } from '../models/api.models';
+import { ApiResponse, FullMenuResponse, MenuCategory, MenuImportResult, MenuItem, MenuItemIngredient } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -78,6 +78,22 @@ export class MenuService {
 
   setIngredients(menuItemId: string, ingredients: { inventoryItemId: string; quantityUsed: number }[]): Observable<MenuItemIngredient[]> {
     return this.http.put<ApiResponse<MenuItemIngredient[]>>(`${this.apiUrl}/item/${menuItemId}/ingredients`, { ingredients }).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  // ── Excel import ──
+
+  downloadImportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/import/template`, { responseType: 'blob' });
+  }
+
+  /** apply = false parses and validates only (preview); apply = true saves valid rows. */
+  importMenu(file: File, updateExisting: boolean, apply: boolean): Observable<MenuImportResult> {
+    const form = new FormData();
+    form.append('file', file);
+    const params = new HttpParams().set('updateExisting', updateExisting).set('apply', apply);
+    return this.http.post<ApiResponse<MenuImportResult>>(`${this.apiUrl}/import`, form, { params }).pipe(
       map(res => res.data!)
     );
   }

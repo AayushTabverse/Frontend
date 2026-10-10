@@ -1,327 +1,172 @@
 <div class="page-header">
-      <h1>📈 Analytics</h1>
-    </div>
+  <div>
+    <h1>📈 Analytics</h1>
+    <p class="page-sub" *ngIf="data">{{ compareLabel }} · updated {{ today | date:'d MMM' }}</p>
+  </div>
+</div>
 
-    <!-- ═══ KPI CARDS ═══ -->
-    <div class="kpi-grid" *ngIf="dashboard">
-      <div class="kpi-card">
-        <div class="kpi-icon sales-icon">💰</div>
-        <div class="kpi-info">
-          <span class="kpi-label">Today's Revenue</span>
-          <span class="kpi-value">₹{{ dashboard.todaySales | number:'1.0-0' }}</span>
-          <span class="kpi-change positive" *ngIf="kpiChanges.sales > 0">↑ {{ kpiChanges.sales }}%</span>
-          <span class="kpi-change negative" *ngIf="kpiChanges.sales < 0">↓ {{ kpiChanges.sales }}%</span>
-        </div>
+<!-- ═══ One filter row scopes everything below ═══ -->
+<div class="filters">
+  <div class="presets" role="group" aria-label="Date range">
+    <button *ngFor="let p of presets" type="button" [class.on]="preset === p.id" (click)="applyPreset(p.id)">{{ p.label }}</button>
+  </div>
+  <div class="custom" [class.on]="preset === 'custom'">
+    <input type="date" [(ngModel)]="from" [max]="to || today" (change)="onCustomChange()" aria-label="From" />
+    <span>to</span>
+    <input type="date" [(ngModel)]="to" [min]="from" [max]="today" (change)="onCustomChange()" aria-label="To" />
+  </div>
+</div>
+
+<div class="error" *ngIf="error">{{ error }}</div>
+<div class="first-load" *ngIf="!data && loading">Loading analytics…</div>
+
+<div class="ana-content" *ngIf="data" [class.refetching]="loading">
+
+  <!-- ═══ Key findings ═══ -->
+  <section class="insights" *ngIf="data.insights.length">
+    <h2>Key findings</h2>
+    <ul>
+      <li *ngFor="let i of data.insights" [ngClass]="'tone-' + i.tone">
+        <span class="ins-icon" aria-hidden="true">{{ i.icon }}</span><span>{{ i.text }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ═══ KPI row ═══ -->
+  <div class="kpis">
+    <app-stat-tile label="Revenue" [value]="inr(data.revenue.value)" [delta]="data.revenue.changePct" [vs]="compareLabel" [spark]="revenueSpark"></app-stat-tile>
+    <app-stat-tile label="Orders" [value]="num(data.orders.value)" [delta]="data.orders.changePct" [vs]="compareLabel" [spark]="ordersSpark"></app-stat-tile>
+    <app-stat-tile label="Avg order value" [value]="inr(data.avgOrderValue.value)" [delta]="data.avgOrderValue.changePct" [vs]="compareLabel" [spark]="aovSpark"></app-stat-tile>
+    <app-stat-tile label="Items per order" [value]="num(data.itemsPerOrder.value, 1)" [delta]="data.itemsPerOrder.changePct" [vs]="compareLabel"></app-stat-tile>
+    <app-stat-tile label="Discounts given" [value]="num(data.discountRate.value, 1) + '%'" [delta]="data.discountRate.changePct" [upIsGood]="false"
+                   [vs]="compareLabel" [note]="inr(data.discounts.value) + ' off sales'"></app-stat-tile>
+    <app-stat-tile label="Cancelled orders" [value]="num(data.cancelRate.value, 1) + '%'" [delta]="data.cancelRate.changePct" [upIsGood]="false"
+                   [vs]="compareLabel" [note]="num(data.cancelledOrders.value) + ' cancelled'"></app-stat-tile>
+  </div>
+
+  <!-- ═══ Revenue over time ═══ -->
+  <app-chart-card title="Revenue by day" [subtitle]="'Each day compared with the matching day of the previous ' + data.days + ' days'" [table]="tables['trend']">
+    <app-line-chart [labels]="lineLabels" [tooltipLabels]="lineTooltipLabels" [series]="lineSeries" [height]="260"
+                    [format]="inrCompact" ariaLabel="Revenue by day, current and previous period"></app-line-chart>
+  </app-chart-card>
+
+  <!-- ═══ When are you busy? ═══ -->
+  <div class="grid-2 wide-left">
+    <app-chart-card title="Busy times" subtitle="Orders by day of week and hour" [table]="tables['heat']">
+      <app-heatmap [rows]="heatRows" [rowNames]="weekdays" [cols]="heatCols" [colNames]="heatColNames" [values]="heatValues"
+                   [colLabelEvery]="2" valueName="orders" ariaLabel="Orders by weekday and hour"></app-heatmap>
+    </app-chart-card>
+    <app-chart-card title="Orders by hour" subtitle="All days combined" [table]="tables['hourly']">
+      <app-column-chart [labels]="heatCols" [tooltipLabels]="heatColNames" [values]="hourValues" [labelEvery]="2"
+                        valueName="orders" [format]="fmtOrders" ariaLabel="Orders by hour of day"></app-column-chart>
+    </app-chart-card>
+  </div>
+
+  <!-- ═══ Menu ═══ -->
+  <div class="grid-2">
+    <app-chart-card title="Sales by category" subtitle="Share of item sales" [table]="tables['categories']">
+      <app-bar-list [rows]="categoryRows"></app-bar-list>
+    </app-chart-card>
+
+    <app-chart-card title="Top items" subtitle="By revenue, with change in quantity vs the previous period">
+      <div class="table-scroll">
+        <table class="items">
+          <thead><tr><th>#</th><th>Item</th><th class="num">Sold</th><th class="num">Revenue</th><th class="num">Share</th><th class="num">Change</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let it of data.topItems; let i = index">
+              <td class="muted">{{ i + 1 }}</td>
+              <td><strong>{{ it.name }}</strong><span class="cat" *ngIf="it.category">{{ it.category }}</span></td>
+              <td class="num">{{ num(it.quantity) }}</td>
+              <td class="num">{{ inr(it.revenue) }}</td>
+              <td class="num">{{ it.sharePct }}%</td>
+              <td class="num" [class.good]="(it.changePct ?? 0) > 0" [class.bad]="(it.changePct ?? 0) < 0">{{ change(it.changePct) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="empty" *ngIf="!data.topItems.length">No items sold in this period.</p>
       </div>
+    </app-chart-card>
+  </div>
 
-      <div class="kpi-card">
-        <div class="kpi-icon orders-icon">📦</div>
-        <div class="kpi-info">
-          <span class="kpi-label">Today's Orders</span>
-          <span class="kpi-value">{{ dashboard.todayOrderCount }}</span>
-          <span class="kpi-change positive" *ngIf="kpiChanges.orders > 0">↑ {{ kpiChanges.orders }}%</span>
+  <div class="grid-3">
+    <app-chart-card title="Trending up" subtitle="Biggest rise in quantity sold">
+      <ul class="movers">
+        <li *ngFor="let it of data.rising">
+          <span class="mv-name">{{ it.name }}</span>
+          <span class="mv-detail">{{ it.prevQuantity }} → {{ it.quantity }}</span>
+          <span class="mv-chg good">▲ {{ it.changePct }}%</span>
+        </li>
+      </ul>
+      <p class="empty" *ngIf="!data.rising.length">Nothing rose noticeably.</p>
+    </app-chart-card>
+    <app-chart-card title="Trending down" subtitle="Biggest drop in quantity sold">
+      <ul class="movers">
+        <li *ngFor="let it of data.falling">
+          <span class="mv-name">{{ it.name }}</span>
+          <span class="mv-detail">{{ it.prevQuantity }} → {{ it.quantity }}</span>
+          <span class="mv-chg bad">▼ {{ -(it.changePct ?? 0) }}%</span>
+        </li>
+      </ul>
+      <p class="empty" *ngIf="!data.falling.length">Nothing dropped noticeably.</p>
+    </app-chart-card>
+    <app-chart-card title="Not selling" [subtitle]="data.notSellingCount + ' available item' + (data.notSellingCount === 1 ? '' : 's') + ' with no orders'">
+      <ul class="chips" *ngIf="data.notSelling.length">
+        <li *ngFor="let n of data.notSelling">{{ n }}</li>
+        <li class="more" *ngIf="data.notSellingCount > data.notSelling.length">+{{ data.notSellingCount - data.notSelling.length }} more</li>
+      </ul>
+      <p class="empty" *ngIf="!data.notSelling.length">Every item sold at least once. 👏</p>
+      <a routerLink="/admin/menu" class="card-link" *ngIf="data.notSelling.length">Review menu →</a>
+    </app-chart-card>
+  </div>
+
+  <!-- ═══ Operations ═══ -->
+  <div class="grid-3">
+    <app-chart-card title="Kitchen speed" [subtitle]="data.kitchen.measured + ' orders measured'">
+      <dl class="kitchen">
+        <div>
+          <dt>Median prep time<span>Accepted → ready</span></dt>
+          <dd><strong>{{ num(data.kitchen.medianPrepMinutes.value, 1) }} min</strong>
+            <em [ngClass]="deltaTone(data.kitchen.medianPrepMinutes.changePct, false)">{{ deltaText(data.kitchen.medianPrepMinutes.changePct) }}</em></dd>
         </div>
+        <div>
+          <dt>Median order to table<span>Placed → served</span></dt>
+          <dd><strong>{{ num(data.kitchen.medianServeMinutes.value, 1) }} min</strong>
+            <em [ngClass]="deltaTone(data.kitchen.medianServeMinutes.changePct, false)">{{ deltaText(data.kitchen.medianServeMinutes.changePct) }}</em></dd>
+        </div>
+        <div>
+          <dt>Ready on time<span>Within the estimated time</span></dt>
+          <dd><strong>{{ num(data.kitchen.onTimePct.value, 0) }}%</strong>
+            <em [ngClass]="deltaTone(data.kitchen.onTimePct.changePct, true)">{{ deltaText(data.kitchen.onTimePct.changePct) }}</em></dd>
+        </div>
+      </dl>
+    </app-chart-card>
+
+    <app-chart-card title="How customers order" subtitle="Share of orders">
+      <div class="split" *ngIf="data.sources.qrOrders + data.sources.staffOrders > 0" role="img"
+           [attr.aria-label]="qrPct + '% via QR code, ' + (100 - qrPct) + '% taken by staff'">
+        <div class="split-bar">
+          <span class="seg qr" [style.flex]="data.sources.qrOrders" *ngIf="data.sources.qrOrders"></span>
+          <span class="seg staff" [style.flex]="data.sources.staffOrders" *ngIf="data.sources.staffOrders"></span>
+        </div>
+        <ul class="split-legend">
+          <li><span class="key qr"></span><strong>{{ qrPct }}%</strong> QR self-order <span class="muted">· {{ num(data.sources.qrOrders) }} orders · {{ inrCompact(data.sources.qrRevenue) }}</span></li>
+          <li><span class="key staff"></span><strong>{{ 100 - qrPct }}%</strong> Taken by staff <span class="muted">· {{ num(data.sources.staffOrders) }} orders · {{ inrCompact(data.sources.staffRevenue) }}</span></li>
+        </ul>
       </div>
+      <p class="empty" *ngIf="data.sources.qrOrders + data.sources.staffOrders === 0">No orders in this period.</p>
+    </app-chart-card>
 
-      <div class="kpi-card">
-        <div class="kpi-icon avg-icon">📊</div>
-        <div class="kpi-info">
-          <span class="kpi-label">Avg Order Value</span>
-          <span class="kpi-value">₹{{ dashboard.avgOrderValue | number:'1.0-0' }}</span>
-          <span class="kpi-change negative" *ngIf="kpiChanges.avgValue < 0">↓ {{ kpiChanges.avgValue * -1 }}%</span>
-          <span class="kpi-change positive" *ngIf="kpiChanges.avgValue > 0">↑ {{ kpiChanges.avgValue }}%</span>
-        </div>
-      </div>
+    <app-chart-card title="Udhaar outstanding" subtitle="Unsettled dues by age (today)" [table]="tables['dues']">
+      <app-bar-list [rows]="dueRows" emptyText="No unsettled udhaar."></app-bar-list>
+      <a routerLink="/admin/dues" class="card-link">Manage udhaar →</a>
+    </app-chart-card>
+  </div>
 
-      <div class="kpi-card live">
-        <div class="kpi-icon live-icon">
-          <span class="live-pulse"></span>
-          🔴
-        </div>
-        <div class="kpi-info">
-          <span class="kpi-label">Live Orders</span>
-          <span class="kpi-value">{{ dashboard.liveOrderCount }}</span>
-          <span class="kpi-change neutral">Right now</span>
-        </div>
-      </div>
+  <app-chart-card title="Top tables" subtitle="Revenue by table" [table]="tables['tablesPerf']">
+    <app-bar-list [rows]="tableRows" [ranked]="true"></app-bar-list>
+  </app-chart-card>
 
-      <div class="kpi-card due" *ngIf="dashboard.totalUnsettledDues > 0">
-        <div class="kpi-icon due-icon">📋</div>
-        <div class="kpi-info">
-          <span class="kpi-label">Unsettled Udhaar</span>
-          <span class="kpi-value">₹{{ dashboard.totalUnsettledDues | number:'1.0-0' }}</span>
-          <span class="kpi-change neutral">{{ dashboard.unsettledDueCount }} pending</span>
-        </div>
-      </div>
-
-      <div class="kpi-card discount" *ngIf="dashboard.todayDiscountGiven > 0">
-        <div class="kpi-icon discount-icon">💸</div>
-        <div class="kpi-info">
-          <span class="kpi-label">Today's Discount</span>
-          <span class="kpi-value">₹{{ dashboard.todayDiscountGiven | number:'1.0-0' }}</span>
-          <span class="kpi-change neutral">Given today</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ CHARTS ROW 1: Sales Trend + Order Status ═══ -->
-    <div class="charts-row">
-
-      <!-- Sales Trend Chart -->
-      <div class="chart-card wide">
-        <div class="chart-header">
-          <h3>Revenue Trend</h3>
-          <div class="chart-controls">
-            <select [(ngModel)]="salesRange" (ngModelChange)="loadSales()">
-              <option value="7">Last 7 days</option>
-              <option value="14">Last 14 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="90">Last 90 days</option>
-            </select>
-          </div>
-        </div>
-        <div class="chart-body">
-          <div class="bar-chart sales-chart" *ngIf="salesData.length > 0">
-            <!-- Y-axis labels -->
-            <div class="y-axis">
-              <span>{{ formatCurrency(maxSales) }}</span>
-              <span>{{ formatCurrency(maxSales * 0.5) }}</span>
-              <span>₹0</span>
-            </div>
-
-            <!-- Bars -->
-            <div class="bars-container">
-              <div class="bar-group" *ngFor="let day of salesData">
-                <div class="bar-wrapper">
-                  <div class="bar revenue-bar"
-                       [style.height.%]="getSalesBarHeight(day.totalSales)"
-                       [title]="'₹' + day.totalSales + ' | ' + day.orderCount + ' orders'">
-                  </div>
-                  <div class="bar orders-bar"
-                       [style.height.%]="getOrderBarHeight(day.orderCount) * 0.7"
-                       [title]="day.orderCount + ' orders'">
-                  </div>
-                </div>
-                <span class="bar-label">{{ formatDate(day.date) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="chart-legend">
-            <span class="legend-item"><span class="legend-dot revenue"></span>Revenue</span>
-            <span class="legend-item"><span class="legend-dot orders"></span>Orders</span>
-          </div>
-
-          <div class="empty-chart" *ngIf="salesData.length === 0">No sales data for this period</div>
-        </div>
-      </div>
-
-      <!-- Order Status Donut -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Order Status</h3>
-          <span class="chart-subtitle">Last 7 days</span>
-        </div>
-        <div class="chart-body donut-body">
-          <div class="donut-chart" *ngIf="statusDistribution.length > 0">
-            <svg viewBox="0 0 100 100" class="donut-svg">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="20" />
-              <g *ngFor="let seg of getDonutSegments()">
-                <path [attr.d]="seg.path" [attr.fill]="seg.color" opacity="0.85" />
-              </g>
-              <circle cx="50" cy="50" r="28" [attr.fill]="themeService.isDark() ? '#1a1a2e' : '#ffffff'" />
-              <text x="50" y="46" text-anchor="middle" fill="currentColor" font-size="10" font-weight="800">
-                {{ getStatusTotal() }}
-              </text>
-              <text x="50" y="57" text-anchor="middle" fill="currentColor" font-size="5" opacity="0.5">
-                orders
-              </text>
-            </svg>
-          </div>
-          <div class="donut-legend">
-            <div class="donut-legend-item" *ngFor="let s of statusDistribution">
-              <span class="legend-color" [style.background]="s.color"></span>
-              <span class="legend-label">{{ s.status }}</span>
-              <span class="legend-count">{{ s.count }}</span>
-              <span class="legend-pct">{{ getStatusPercent(s.count) | number:'1.0-0' }}%</span>
-            </div>
-          </div>
-          <div class="empty-chart" *ngIf="statusDistribution.length === 0">No order data</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ CHARTS ROW 2: Peak Hours + Top Items ═══ -->
-    <div class="charts-row">
-
-      <!-- Peak Hours -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Peak Hours</h3>
-          <div class="chart-controls">
-            <select [(ngModel)]="peakHoursDays" (ngModelChange)="loadPeakHours()">
-              <option value="7">Last 7 days</option>
-              <option value="14">Last 14 days</option>
-              <option value="30">Last 30 days</option>
-            </select>
-          </div>
-        </div>
-        <div class="chart-body">
-          <div class="bar-chart peak-chart" *ngIf="peakHours.length > 0">
-            <div class="bars-container peak-bars">
-              <div class="bar-group" *ngFor="let h of peakHours">
-                <div class="bar-wrapper">
-                  <div class="bar peak-bar"
-                       [style.height.%]="getPeakBarHeight(h.orderCount)"
-                       [class.peak-high]="h.orderCount === maxPeakOrders"
-                       [title]="h.orderCount + ' orders · ₹' + h.totalSales">
-                    <span class="bar-value" *ngIf="h.orderCount > 0">{{ h.orderCount }}</span>
-                  </div>
-                </div>
-                <span class="bar-label">{{ formatHour(h.hour) }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="empty-chart" *ngIf="peakHours.length === 0">No peak hour data</div>
-        </div>
-      </div>
-
-      <!-- Top Selling Items -->
-      <div class="chart-card wide">
-        <div class="chart-header">
-          <h3>Top Selling Items</h3>
-          <div class="chart-controls">
-            <select [(ngModel)]="topItemsDays" (ngModelChange)="loadTopItems()">
-              <option value="1">Today</option>
-              <option value="7">Last 7 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="90">Last 90 days</option>
-            </select>
-          </div>
-        </div>
-        <div class="chart-body">
-          <div class="horizontal-bar-chart" *ngIf="topItems.length > 0">
-            <div class="h-bar-row" *ngFor="let item of topItems; let i = index">
-              <div class="h-bar-rank">#{{ i + 1 }}</div>
-              <div class="h-bar-name">{{ item.itemName }}</div>
-              <div class="h-bar-track">
-                <div class="h-bar-fill"
-                     [style.width.%]="getTopItemWidth(item.totalQuantity)"
-                     [class]="'rank-' + (i < 3 ? i : 'default')">
-                </div>
-              </div>
-              <div class="h-bar-stats">
-                <span class="h-bar-qty">{{ item.totalQuantity }} sold</span>
-                <span class="h-bar-rev">₹{{ item.totalRevenue | number:'1.0-0' }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="empty-chart" *ngIf="topItems.length === 0">No item data</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ RECENT ORDERS TABLE ═══ -->
-    <div class="chart-card full-width">
-      <div class="chart-header">
-        <h3>Recent Orders</h3>
-        <a routerLink="/admin/bills" class="view-all-link">View All Bills →</a>
-      </div>
-      <div class="chart-body">
-        <div class="orders-table" *ngIf="recentOrders.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Table</th>
-                <th>Items</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let order of recentOrders">
-                <td class="order-num">{{ order.orderNumber }}</td>
-                <td>{{ order.tableNumber }}</td>
-                <td class="items-cell">
-                  {{ order.items.length }} item{{ order.items.length > 1 ? 's' : '' }}
-                  <span class="items-preview">{{ getItemsPreview(order.items) }}</span>
-                </td>
-                <td class="amount">₹{{ order.totalAmount | number:'1.0-0' }}</td>
-                <td>
-                  <span class="status-pill" [class]="'status-' + order.status.toLowerCase()">
-                    {{ order.status }}
-                  </span>
-                </td>
-                <td class="time-cell">{{ order.createdAt | date:'short' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="empty-chart" *ngIf="recentOrders.length === 0">No recent orders</div>
-
-        <!-- Pagination -->
-        <div class="table-pagination" *ngIf="ordersTotalPages > 1">
-          <button (click)="goToOrdersPage(1)" [disabled]="ordersPage === 1">«</button>
-          <button (click)="goToOrdersPage(ordersPage - 1)" [disabled]="ordersPage === 1">‹</button>
-          <button *ngFor="let p of ordersPageNumbers"
-                  (click)="goToOrdersPage(p)"
-                  [class.active]="p === ordersPage">{{ p }}</button>
-          <button (click)="goToOrdersPage(ordersPage + 1)" [disabled]="ordersPage === ordersTotalPages">›</button>
-          <button (click)="goToOrdersPage(ordersTotalPages)" [disabled]="ordersPage === ordersTotalPages">»</button>
-          <span class="page-info">Page {{ ordersPage }} of {{ ordersTotalPages }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ UNSETTLED UDHAAR TABLE ═══ -->
-    <div class="chart-card full-width udhaar-card udhaar-spacing" *ngIf="unsettledDues.length > 0">
-      <div class="chart-header">
-        <h3>📋 Unsettled Udhaar</h3>
-        <a routerLink="/admin/dues" class="view-all-link">Manage Dues →</a>
-      </div>
-      <div class="chart-body">
-        <div class="udhaar-summary">
-          <div class="udhaar-stat">
-            <span class="udhaar-stat-value">{{ unsettledDues.length }}</span>
-            <span class="udhaar-stat-label">Pending</span>
-          </div>
-          <div class="udhaar-stat">
-            <span class="udhaar-stat-value total-due">₹{{ getTotalUnsettledDue() | number:'1.0-0' }}</span>
-            <span class="udhaar-stat-label">Total Due</span>
-          </div>
-        </div>
-        <div class="orders-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Mobile</th>
-                <th>Bill #</th>
-                <th>Bill Amount</th>
-                <th>Paid</th>
-                <th>Due</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let d of unsettledDues">
-                <td class="customer-name">{{ d.customerName }}</td>
-                <td>{{ d.customerMobile || '—' }}</td>
-                <td class="order-num">{{ d.billNumber || '—' }}</td>
-                <td>₹{{ d.billAmount | number:'1.0-0' }}</td>
-                <td class="paid-amount">₹{{ d.paidAmount | number:'1.0-0' }}</td>
-                <td class="due-amount">₹{{ d.dueAmount | number:'1.0-0' }}</td>
-                <td class="time-cell">{{ d.createdAt | date:'dd MMM yy' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="loading-overlay" *ngIf="loading">
-      <div class="spinner"></div>
-      <span>Loading analytics...</span>
-    </div>
+  <p class="footnote">
+    Revenue counts every order that wasn't cancelled, after discounts and including tax. Days and hours use your restaurant's local time.
+  </p>
+</div>

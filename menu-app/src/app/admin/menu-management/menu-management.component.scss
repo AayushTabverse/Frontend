@@ -32,6 +32,17 @@
   &.btn-delete:hover { background: #f8d7da; }
 }
 
+.header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-import { font-weight: 600; }
+
+.empty-menu {
+  text-align: center; background: white; border-radius: 14px; padding: 48px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  .empty-icon { font-size: 2.6rem; }
+  h3 { margin: 8px 0 6px; color: #1a1a2e; }
+  p { margin: 0 auto 18px; color: #777; max-width: 420px; }
+  .empty-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -156,6 +167,7 @@
 
 // ═══ DARK MODE OVERRIDES ═══
 :host-context(body.dark-mode) {
+  .empty-menu { background: var(--bg-card); h3 { color: var(--text-primary); } p { color: var(--text-secondary); } }
   .btn-secondary { background: var(--bg-hover); color: var(--text-primary); }
   .btn-sm { background: var(--bg-hover); color: var(--text-primary);
     &.btn-edit:hover { background: #14532d; color: #a7f3d0; }

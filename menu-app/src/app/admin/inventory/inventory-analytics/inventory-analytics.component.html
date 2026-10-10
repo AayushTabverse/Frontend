@@ -1,0 +1,113 @@
+<!-- One range control scopes the whole tab -->
+<div class="filters">
+  <div class="presets" role="group" aria-label="Period">
+    <button *ngFor="let d of ranges" type="button" [class.on]="days === d" (click)="setRange(d)">Last {{ d }} days</button>
+  </div>
+  <span class="as-of" *ngIf="data">Stock levels as of now · usage {{ data.from | date:'d MMM' }} – {{ data.to | date:'d MMM' }}</span>
+</div>
+
+<div class="error" *ngIf="error">{{ error }}</div>
+<div class="first-load" *ngIf="!data && loading">Loading inventory analytics…</div>
+
+<div class="ia" *ngIf="data" [class.refetching]="loading">
+
+  <!-- Findings -->
+  <section class="insights" *ngIf="data.insights.length">
+    <h3>What needs attention</h3>
+    <ul>
+      <li *ngFor="let i of data.insights" [ngClass]="'tone-' + i.tone">
+        <span aria-hidden="true">{{ i.icon }}</span><span>{{ i.text }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <app-stat-tile label="Stock value now" [value]="inr(data.stockValue)" [showDelta]="false" [vs]="data.totalItems + ' items'"></app-stat-tile>
+    <app-stat-tile label="Stock used" [value]="inr(data.usedValue.value)" [delta]="data.usedValue.changePct" [vs]="compareLabel" [spark]="usedSpark"
+                   [note]="data.autoDeductions ? num(data.autoDeductions) + ' auto-deducted from orders' : ''"></app-stat-tile>
+    <app-stat-tile label="Wasted" [value]="inr(data.wastedValue.value)" [delta]="data.wastedValue.changePct" [upIsGood]="false" [vs]="compareLabel"
+                   [note]="num(data.wasteRate.value, 1) + '% of what you used'"></app-stat-tile>
+    <app-stat-tile label="Restocked" [value]="inr(data.restockedValue.value)" [delta]="data.restockedValue.changePct" [vs]="compareLabel"></app-stat-tile>
+  </div>
+
+  <div class="grid-2 wide-right">
+    <!-- Stock health: status colours, always with icon + label -->
+    <section class="card health">
+      <h3>Stock health</h3>
+      <p class="sub">{{ data.totalItems }} items right now</p>
+      <div class="health-bar" role="img"
+           [attr.aria-label]="data.inStock + ' in stock, ' + data.lowStock + ' low, ' + data.outOfStock + ' out of stock'">
+        <span class="seg good" *ngIf="data.inStock" [style.flex]="data.inStock"></span>
+        <span class="seg warning" *ngIf="data.lowStock" [style.flex]="data.lowStock"></span>
+        <span class="seg critical" *ngIf="data.outOfStock" [style.flex]="data.outOfStock"></span>
+      </div>
+      <ul class="health-legend">
+        <li><span class="key good"></span><span class="hl-label">✓ In stock</span><strong>{{ data.inStock }}</strong></li>
+        <li><span class="key warning"></span><span class="hl-label">⚠ Running low</span><strong>{{ data.lowStock }}</strong></li>
+        <li><span class="key critical"></span><span class="hl-label">✕ Out of stock</span><strong>{{ data.outOfStock }}</strong></li>
+      </ul>
+    </section>
+
+    <!-- Reorder list -->
+    <section class="card reorder">
+      <header>
+        <div><h3>Reorder soon</h3><p class="sub">Runs out within 7 days at your average daily use · order covers 2 weeks</p></div>
+      </header>
+      <div class="table-scroll" *ngIf="data.runningOut.length">
+        <table>
+          <thead><tr><th>Item</th><th class="num">In stock</th><th class="num">Uses / day</th><th>Runs out</th><th class="num">Order</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of data.runningOut">
+              <td><strong>{{ r.name }}</strong><span class="supplier" *ngIf="r.supplier">{{ r.supplier }}</span></td>
+              <td class="num">{{ num(r.currentQuantity, 1) }} {{ r.unit }}</td>
+              <td class="num">{{ num(r.avgDailyUse, 1) }} {{ r.unit }}</td>
+              <td><span class="pill" [ngClass]="urgency(r.daysLeft)">{{ r.daysLeft < 2 ? '✕' : '⚠' }} {{ runsOut(r.daysLeft) }}</span></td>
+              <td class="num"><strong>{{ num(r.suggestedOrder, 1) }} {{ r.unit }}</strong></td>
+              <td class="num"><button type="button" class="restock-btn" (click)="restock.emit(r.id)">+ Restock</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="empty" *ngIf="!data.runningOut.length">✓ Nothing will run out in the next 7 days at current usage.</p>
+    </section>
+  </div>
+
+  <app-chart-card title="Stock used vs restocked" [subtitle]="'Value per day, last ' + data.days + ' days'" [table]="tables['trend']">
+    <app-line-chart [labels]="labels" [tooltipLabels]="tooltipLabels" [series]="series" [height]="230"
+                    [format]="inrCompact" ariaLabel="Value of stock used and restocked per day"></app-line-chart>
+  </app-chart-card>
+
+  <div class="grid-2">
+    <app-chart-card title="Most used" subtitle="By value of stock used" [table]="tables['used']">
+      <app-bar-list [rows]="usedRows" [ranked]="true" emptyText="No usage recorded in this period."></app-bar-list>
+    </app-chart-card>
+    <app-chart-card title="Most wasted" [subtitle]="inr(data.wastedValue.value) + ' wasted in this period'" [table]="tables['wasted']">
+      <app-bar-list [rows]="wastedRows" [ranked]="true" emptyText="No wastage recorded. 👏"></app-bar-list>
+    </app-chart-card>
+  </div>
+
+  <div class="grid-3">
+    <app-chart-card title="Stock value by category" [table]="tables['category']">
+      <app-bar-list [rows]="categoryRows" emptyText="Add a cost per unit to see stock value."></app-bar-list>
+    </app-chart-card>
+    <app-chart-card title="Where your money sits" subtitle="Highest-value items in stock" [table]="tables['value']">
+      <app-bar-list [rows]="valueRows" emptyText="Nothing in stock."></app-bar-list>
+    </app-chart-card>
+    <section class="card dead">
+      <h3>Not moving</h3>
+      <p class="sub">In stock but not used in {{ data.days }} days · {{ inr(data.deadStockValue) }} tied up</p>
+      <ul *ngIf="data.deadStock.length">
+        <li *ngFor="let i of data.deadStock">
+          <span class="dead-name">{{ i.name }}<span>{{ num(i.quantity, 1) }} {{ i.unit }}</span></span>
+          <strong>{{ i.value ? inr(i.value) : 'no cost set' }}</strong>
+        </li>
+      </ul>
+      <p class="empty" *ngIf="!data.deadStock.length">✓ Every item in stock was used.</p>
+    </section>
+  </div>
+
+  <p class="footnote">
+    Values use each item's current cost per unit. Usage comes from the Activity Log: completed orders (when ingredients are linked to menu items) and manual adjustments.
+  </p>
+</div>

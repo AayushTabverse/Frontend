@@ -111,6 +111,11 @@
 // ═══════════════════════════════════════
 // ERROR STATE
 // ═══════════════════════════════════════
+.tw-preview-banner {
+  position: sticky; top: 0; z-index: 1100; padding: 10px 16px; text-align: center;
+  background: #fff3cd; color: #856404; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid #ffe08a;
+}
+
 .tw-error {
   min-height: 100vh;
   display: flex;

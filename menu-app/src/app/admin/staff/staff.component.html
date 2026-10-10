@@ -15,10 +15,11 @@
 
     <div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
 
-    <!-- Add Staff Button -->
-    <button class="add-staff-btn" (click)="openAddForm()" *ngIf="!showAddForm">
-      ➕ Add Staff Member
-    </button>
+    <!-- Add Staff Buttons -->
+    <div class="team-actions" *ngIf="!showAddForm">
+      <button class="add-staff-btn" (click)="openAddForm()">➕ Add Staff Member</button>
+      <button class="import-staff-btn" (click)="showImport = true">📥 Import from Excel</button>
+    </div>
 
     <!-- Add Staff Form -->
     <div class="add-form" *ngIf="showAddForm">
@@ -145,3 +146,5 @@
 
     <div class="loading-state" *ngIf="loading">Loading staff...</div>
     </ng-container>
+
+    <app-excel-import *ngIf="showImport" [config]="importConfig" (closed)="showImport = false" (imported)="loadStaff()"></app-excel-import>

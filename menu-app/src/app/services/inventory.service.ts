@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, InventoryItem, InventoryLog, InventorySummary } from '../models/api.models';
+import { ApiResponse, ImportResult, InventoryAnalytics, InventoryImportRow, InventoryItem, InventoryLog, InventorySummary } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -68,5 +68,26 @@ export class InventoryService {
     return this.http.get<ApiResponse<string[]>>(`${this.apiUrl}/categories`).pipe(
       map(res => res.data!)
     );
+  }
+
+  // ── Excel import ──
+
+  downloadImportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/import/template`, { responseType: 'blob' });
+  }
+
+  /** apply = false parses and validates only (preview); apply = true saves valid rows. */
+  importItems(file: File, updateExisting: boolean, apply: boolean): Observable<ImportResult<InventoryImportRow>> {
+    const form = new FormData();
+    form.append('file', file);
+    const params = new HttpParams().set('updateExisting', updateExisting).set('apply', apply);
+    return this.http.post<ApiResponse<ImportResult<InventoryImportRow>>>(`${this.apiUrl}/import`, form, { params }).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  /** Stock health now + usage, waste and restocks over the last N days. */
+  getAnalytics(days: number): Observable<InventoryAnalytics> {
+    return this.http.get<ApiResponse<InventoryAnalytics>>(`${this.apiUrl}/analytics`, { params: { days } }).pipe(map(res => res.data!));
   }
 }

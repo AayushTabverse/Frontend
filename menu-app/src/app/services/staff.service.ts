@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
-  ApiResponse, AttendanceStatus, CreateStaffPaymentRequest, DailyAttendance, MonthlySalary, StaffPayment
+  ApiResponse, AttendanceStatus, CreateStaffPaymentRequest, DailyAttendance, ImportResult, MonthlySalary, StaffImportRow, StaffPayment
 } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
@@ -60,6 +60,22 @@ export class StaffService {
   deletePayment(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/payments/${id}`).pipe(
       map(() => void 0)
+    );
+  }
+
+  // ── Excel import ──
+
+  downloadImportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/import/template`, { responseType: 'blob' });
+  }
+
+  /** apply = false parses and validates only (preview); apply = true saves valid rows. */
+  importStaff(file: File, updateExisting: boolean, apply: boolean): Observable<ImportResult<StaffImportRow>> {
+    const form = new FormData();
+    form.append('file', file);
+    const params = new HttpParams().set('updateExisting', updateExisting).set('apply', apply);
+    return this.http.post<ApiResponse<ImportResult<StaffImportRow>>>(`${this.apiUrl}/import`, form, { params }).pipe(
+      map(res => res.data!)
     );
   }
 }

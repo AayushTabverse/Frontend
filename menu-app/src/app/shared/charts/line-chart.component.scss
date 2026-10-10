@@ -1,0 +1,23 @@
+@use './viz' as viz;
+@include viz.host;
+@include viz.tooltip;
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; color: var(--viz-ink-2); margin-bottom: 6px; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-key { width: 16px; height: 2px; border-radius: 1px; background: var(--viz-series-1); }
+.legend-key.compare { background: var(--viz-compare); }
+.legend-key.secondary { background: var(--viz-series-2); }
+.plot { position: relative; outline: none; touch-action: pan-y; }
+.plot:focus-visible { box-shadow: 0 0 0 2px var(--viz-series-1); border-radius: 6px; }
+svg { display: block; overflow: visible; }
+.grid { stroke: var(--viz-grid); stroke-width: 1; shape-rendering: crispEdges; }
+.tick { fill: var(--viz-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.line { fill: none; stroke: var(--viz-series-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.line.compare { stroke: var(--viz-compare); }
+.line.secondary { stroke: var(--viz-series-2); }
+.area { fill: var(--viz-series-1-wash); stroke: none; }
+.dot { fill: var(--viz-series-1); stroke: var(--viz-surface); stroke-width: 2; }
+.dot.compare { fill: var(--viz-compare); }
+.dot.secondary { fill: var(--viz-series-2); }
+.crosshair { stroke: var(--viz-axis); stroke-width: 1; }
+.end-label { fill: var(--viz-ink); font-size: 12px; font-weight: 700; paint-order: stroke; stroke: var(--viz-surface); stroke-width: 4px; }
+  

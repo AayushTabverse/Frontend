@@ -42,6 +42,63 @@ export interface MenuCategory {
   items: MenuItem[];
 }
 
+// ── Excel import (menu, staff, inventory) ──
+export type ImportAction = 'Create' | 'Update' | 'Unchanged' | 'Skip' | 'Error';
+
+export interface ImportRow {
+  rowNumber: number;
+  action: ImportAction;
+  errors: string[];
+  changes: string[];
+}
+
+export interface ImportResult<T extends ImportRow> {
+  rows: T[];
+  createCount: number;
+  updateCount: number;
+  unchangedCount: number;
+  skipCount: number;
+  errorCount: number;
+  applied: boolean;
+}
+
+export interface MenuImportRow extends ImportRow {
+  category: string;
+  name: string;
+  price?: number;
+  description?: string;
+  isVeg: boolean;
+  isAvailable: boolean;
+  preparationTimeMinutes: number;
+  imageUrl?: string;
+}
+
+export interface MenuImportResult extends ImportResult<MenuImportRow> {
+  newCategories: string[];
+}
+
+export interface StaffImportRow extends ImportRow {
+  fullName: string;
+  role?: string;
+  email?: string;
+  phone?: string;
+  jobTitle?: string;
+  monthlySalary?: number;
+  hasPassword: boolean;
+}
+
+export interface InventoryImportRow extends ImportRow {
+  name: string;
+  unit?: string;
+  currentQuantity?: number;
+  minimumQuantity?: number;
+  costPerUnit?: number;
+  category?: string;
+  supplier?: string;
+  supplierContact?: string;
+  description?: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -497,6 +554,58 @@ export interface SubdomainResponse {
   message?: string;
 }
 
+export type WebsiteState =
+  'not_started' | 'published_no_domain' | 'unpublished' | 'dns_not_configured' |
+  'dns_failed' | 'connecting' | 'unreachable' | 'live';
+
+export interface WebsiteStatusStep {
+  key: 'address' | 'dns' | 'reachable' | 'published';
+  label: string;
+  status: 'done' | 'pending' | 'failed' | 'todo';
+  detail?: string;
+}
+
+/** Honest website status from the server: stored DNS outcome + live checks. */
+export interface WebsiteStatus {
+  state: WebsiteState;
+  title: string;
+  message: string;
+  subdomain?: string;
+  url?: string;
+  previewPath: string;
+  isPublished: boolean;
+  steps: WebsiteStatusStep[];
+  canRetryDns: boolean;
+  shouldRecheck: boolean;
+  checkedAt: string;
+}
+
+/** A DNS record the owner adds at their registrar, with its live check. */
+export interface DnsRecordInstruction {
+  purpose: 'ownership' | 'pointing' | 'hosting';
+  type: 'TXT' | 'CNAME' | 'A';
+  host: string;
+  fullName: string;
+  value: string;
+  status: 'ok' | 'missing' | 'wrong';
+  found?: string;
+  description: string;
+}
+
+export interface CustomDomainStatus {
+  state: 'none' | 'dns_pending' | 'activating' | 'unpublished' | 'live';
+  title: string;
+  message: string;
+  domain?: string;
+  url?: string;
+  isApex: boolean;
+  rootDomain?: string;
+  records: DnsRecordInstruction[];
+  steps: WebsiteStatusStep[];
+  shouldRecheck: boolean;
+  checkedAt: string;
+}
+
 export interface ClaimSubdomainRequest {
   subdomain: string;
 }
@@ -757,4 +866,61 @@ export interface UpdateSubscriptionResponse {
   subscriptionId?: string;
   razorpayKeyId?: string;
   status?: SubscriptionStatusResponse;
+}
+
+// ── Analytics overview & today dashboard ──
+export interface Metric { value: number; previous: number; changePct?: number | null; }
+
+export interface DailyPoint { date: string; revenue: number; orders: number; prevDate?: string; prevRevenue?: number; prevOrders?: number; }
+export interface HeatCell { weekday: number; hour: number; orders: number; revenue: number; }
+export interface HourPoint { hour: number; orders: number; revenue: number; }
+export interface CategoryShare { name: string; revenue: number; quantity: number; sharePct: number; }
+export interface ItemPerformance {
+  menuItemId: string; name: string; category?: string; quantity: number; revenue: number;
+  sharePct: number; prevQuantity: number; changePct?: number | null;
+}
+export interface KitchenPerformance { medianPrepMinutes: Metric; medianServeMinutes: Metric; onTimePct: Metric; measured: number; }
+export interface OrderSources { qrOrders: number; qrRevenue: number; staffOrders: number; staffRevenue: number; }
+export interface TablePerformance { table: string; orders: number; revenue: number; avgOrderValue: number; }
+export interface DueBucket { label: string; count: number; amount: number; }
+export interface Insight { icon: string; text: string; tone: 'good' | 'bad' | 'neutral'; }
+
+export interface AnalyticsOverview {
+  from: string; to: string; previousFrom: string; previousTo: string; days: number;
+  revenue: Metric; orders: Metric; avgOrderValue: Metric; itemsPerOrder: Metric;
+  discounts: Metric; discountRate: Metric; cancelledOrders: Metric; cancelRate: Metric; tax: Metric;
+  daily: DailyPoint[]; heatmap: HeatCell[]; hourly: HourPoint[];
+  categories: CategoryShare[]; topItems: ItemPerformance[]; rising: ItemPerformance[]; falling: ItemPerformance[];
+  notSelling: string[]; notSellingCount: number;
+  kitchen: KitchenPerformance; sources: OrderSources; tables: TablePerformance[]; duesAging: DueBucket[];
+  insights: Insight[];
+}
+
+export interface CumulativePoint { hour: number; today?: number | null; lastWeek: number; }
+export interface LiveStatus { pending: number; preparing: number; ready: number; served: number; occupiedTables: number; totalTables: number; oldestWaitMinutes: number; }
+export interface RecentOrderRow { id: string; orderNumber: string; table: string; status: string; total: number; items: number; createdAt: string; }
+
+export interface TodayDashboard {
+  now: string; date: string; compareDate: string;
+  revenue: Metric; orders: Metric; avgOrderValue: Metric; discounts: Metric;
+  cumulative: CumulativePoint[]; last7Days: DailyPoint[]; last7Total: number;
+  live: LiveStatus; topItems: ItemPerformance[]; recentOrders: RecentOrderRow[];
+  lowStockCount: number; outOfStockCount: number; unsettledDues: number; unsettledDueCount: number; oldestDueDays: number;
+  insights: Insight[];
+}
+
+// ── Inventory analytics ──
+export interface InventoryDailyPoint { date: string; usedValue: number; wastedValue: number; restockedValue: number; }
+export interface StockRunway { id: string; name: string; unit: string; currentQuantity: number; avgDailyUse: number; daysLeft: number; suggestedOrder: number; supplier?: string; }
+export interface InventoryItemMovement { id: string; name: string; category?: string; unit: string; quantity: number; value: number; sharePct: number; }
+export interface InventoryAnalytics {
+  days: number; from: string; to: string;
+  totalItems: number; inStock: number; lowStock: number; outOfStock: number; stockValue: number;
+  itemsWithoutCost: number; itemsWithoutMinimum: number;
+  usedValue: Metric; wastedValue: Metric; restockedValue: Metric; wasteRate: Metric; autoDeductions: number;
+  daily: InventoryDailyPoint[]; runningOut: StockRunway[];
+  topUsed: InventoryItemMovement[]; topWasted: InventoryItemMovement[]; topValue: InventoryItemMovement[];
+  deadStock: InventoryItemMovement[]; deadStockValue: number;
+  valueByCategory: { category: string; itemCount: number; totalValue: number }[];
+  insights: Insight[];
 }

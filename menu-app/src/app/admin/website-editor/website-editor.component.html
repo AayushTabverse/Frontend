@@ -8,6 +8,13 @@
       </div>
     </div>
 
+    <!-- Website status strip (visible on every tab) -->
+    <button class="status-strip" *ngIf="status && activeTab !== 'domain'" [ngClass]="'tone-' + statusTone()" (click)="activeTab = 'domain'">
+      <span class="strip-icon">{{ statusIcon() }}</span>
+      <span class="strip-title">{{ status.title }}</span>
+      <span class="strip-link">View status →</span>
+    </button>
+
     <!-- Toast Messages -->
     <div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
     <div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
@@ -32,32 +39,51 @@
         <!-- ═══════ DOMAIN TAB ═══════ -->
         <div class="tab-panel" *ngIf="activeTab === 'domain'">
           <div class="panel-header">
-            <h2>🔗 Custom Domain</h2>
-            <p>Choose a subdomain for your restaurant website</p>
+            <h2>🔗 Website Address</h2>
+            <p>Get a free name.tabverse.in address, or connect a domain you already own</p>
           </div>
 
-          <!-- Current Domain Status -->
-          <div class="form-section domain-status-section" *ngIf="currentSubdomain?.isActive">
-            <div class="domain-active-badge">
-              <span class="status-dot active"></span>
-              <div class="domain-active-info">
-                <h3>Your website is live!</h3>
-                <a [href]="'https://' + currentSubdomain?.fullDomain" target="_blank" class="live-domain-link">
-                  🌐 {{ currentSubdomain?.fullDomain }}
-                </a>
-                <span class="dns-status" [ngClass]="currentSubdomain?.dnsStatus || ''">
-                  DNS: {{ currentSubdomain?.dnsStatus }}
-                </span>
+          <!-- Website status: built from facts (DNS outcome, address resolves, site responds) -->
+          <div class="form-section status-card" *ngIf="status" [ngClass]="'tone-' + statusTone()">
+            <div class="status-head">
+              <span class="status-big-icon">{{ statusIcon() }}</span>
+              <div class="status-text">
+                <h3>{{ status.title }}</h3>
+                <p>{{ status.message }}</p>
+                <a *ngIf="status.url && (status.state === 'live' || status.state === 'published_no_domain')"
+                   [href]="status.url" target="_blank" rel="noopener" class="status-url">🌐 {{ status.url }}</a>
               </div>
-              <button class="release-btn" (click)="releaseSubdomain()" [disabled]="subdomainPublishing">
-                {{ subdomainPublishing ? 'Releasing...' : '✕ Remove Domain' }}
-              </button>
             </div>
+
+            <ol class="status-steps">
+              <li *ngFor="let step of status.steps" [ngClass]="'step-' + step.status">
+                <span class="step-icon">{{ stepIcon(step.status) }}</span>
+                <span class="step-label">{{ step.label }}</span>
+                <span class="step-detail" *ngIf="step.detail">{{ step.detail }}</span>
+              </li>
+            </ol>
+
+            <div class="status-actions">
+              <a *ngIf="status.url && status.state === 'live'" [href]="status.url" target="_blank" rel="noopener" class="status-btn primary">Open website ↗</a>
+              <button *ngIf="status.url && (status.state === 'live' || status.state === 'published_no_domain')" class="status-btn" (click)="copyLink()">
+                {{ linkCopied ? '✓ Copied' : '📋 Copy link' }}
+              </button>
+              <button *ngIf="status.canRetryDns" class="status-btn primary" (click)="retryDns()" [disabled]="subdomainPublishing">
+                {{ subdomainPublishing ? '⏳ Retrying…' : '↻ Retry setup' }}
+              </button>
+              <button *ngIf="status.subdomain" class="status-btn" (click)="checkNow()" [disabled]="statusChecking">
+                {{ statusChecking ? '⏳ Checking…' : '🔍 Check now' }}
+              </button>
+              <button *ngIf="status.isPublished" class="status-btn subtle" (click)="togglePublish()" [disabled]="saving">Unpublish</button>
+              <button *ngIf="status.subdomain" class="status-btn danger" (click)="releaseSubdomain()" [disabled]="subdomainPublishing">Remove address</button>
+            </div>
+            <p class="status-foot" *ngIf="status.shouldRecheck">Checking automatically every 20 seconds · last checked {{ status.checkedAt | date:'shortTime' }}</p>
+            <p class="status-foot" *ngIf="!status.shouldRecheck">Last checked {{ status.checkedAt | date:'shortTime' }}</p>
           </div>
 
           <!-- Subdomain Input -->
           <div class="form-section subdomain-input-section">
-            <h3>Choose Your Subdomain</h3>
+            <h3>{{ status?.subdomain ? 'Your web address' : 'Choose your web address' }}</h3>
             <div class="subdomain-input-wrapper">
               <div class="subdomain-field">
                 <input
@@ -87,11 +113,15 @@
             <button
               class="publish-domain-btn"
               (click)="publishSubdomain()"
+              *ngIf="subdomainChanged || !status?.isPublished || status?.canRetryDns"
               [disabled]="subdomainPublishing || !subdomainInput || subdomainInput.length < 3 || (subdomainCheckResult && !subdomainCheckResult.isAvailable)">
-              <span *ngIf="!subdomainPublishing">🚀 Publish Domain</span>
-              <span *ngIf="subdomainPublishing">⏳ Publishing...</span>
+              <span *ngIf="!subdomainPublishing">{{ publishLabel }}</span>
+              <span *ngIf="subdomainPublishing">⏳ Publishing… setting up your address</span>
             </button>
 
+            <p class="publish-hint" *ngIf="subdomainChanged && status?.subdomain">
+              Switching addresses: {{ status?.subdomain }} stops working and the new address needs a few minutes to start.
+            </p>
             <div class="subdomain-toast success" *ngIf="subdomainMessage">✅ {{ subdomainMessage }}</div>
             <div class="subdomain-toast error" *ngIf="subdomainError">❌ {{ subdomainError }}</div>
           </div>
@@ -115,6 +145,88 @@
             </div>
           </div>
 
+          <!-- ═══ Bring-your-own domain ═══ -->
+          <div class="form-section custom-domain-section" *ngIf="customDomain">
+            <h3>🌍 Use your own domain</h3>
+
+            <!-- Not connected yet, or changing it -->
+            <ng-container *ngIf="customDomain.state === 'none' || customDomainEditing">
+              <p class="cd-intro">
+                Already own a domain like <strong>www.yourrestaurant.in</strong>? Connect it and your website opens there too.
+                You'll add 2–3 DNS records where you bought the domain (GoDaddy, Hostinger, BigRock…) — we'll check them for you.
+              </p>
+              <div class="cd-input-row">
+                <input type="text" [(ngModel)]="customDomainInput" placeholder="www.yourrestaurant.in" maxlength="253"
+                       (keyup.enter)="connectCustomDomain()" class="cd-input" autocapitalize="off" spellcheck="false" />
+                <button class="status-btn primary" (click)="connectCustomDomain()" [disabled]="customDomainBusy || !customDomainInput.trim()">
+                  {{ customDomainBusy ? '⏳ Connecting…' : 'Connect domain' }}
+                </button>
+                <button *ngIf="customDomainEditing" class="status-btn" (click)="customDomainEditing = false">Cancel</button>
+              </div>
+              <p class="cd-tip">Tip: use <strong>www.</strong>yourrestaurant.in — it's the easiest to set up. Then ask your domain provider to forward yourrestaurant.in to it.</p>
+            </ng-container>
+            <div class="subdomain-toast error" *ngIf="customDomainError">❌ {{ customDomainError }}</div>
+
+            <!-- Connected: status, steps and the records to add -->
+            <ng-container *ngIf="customDomain.state !== 'none' && !customDomainEditing">
+              <div class="status-card cd-status" [ngClass]="'tone-' + customDomainTone()">
+                <div class="status-head">
+                  <span class="status-big-icon">{{ { ok: '🟢', wait: '🟡', bad: '🔴', idle: '⚪' }[customDomainTone()] }}</span>
+                  <div class="status-text">
+                    <h3>{{ customDomain.title }}</h3>
+                    <p>{{ customDomain.message }}</p>
+                    <a *ngIf="customDomain.state === 'live'" [href]="customDomain.url" target="_blank" rel="noopener" class="status-url">🌐 {{ customDomain.url }}</a>
+                  </div>
+                </div>
+                <ol class="status-steps">
+                  <li *ngFor="let step of customDomain.steps" [ngClass]="'step-' + step.status">
+                    <span class="step-icon">{{ stepIcon(step.status) }}</span>
+                    <span class="step-label">{{ step.label }}</span>
+                    <span class="step-detail" *ngIf="step.detail">{{ step.detail }}</span>
+                  </li>
+                </ol>
+              </div>
+
+              <div class="dns-records" *ngIf="customDomain.state === 'dns_pending' || customDomain.state === 'activating'">
+                <h4>DNS records for {{ customDomain.rootDomain }}</h4>
+                <p class="cd-help">
+                  In your domain provider's <strong>DNS settings</strong> for <strong>{{ customDomain.rootDomain }}</strong>, add each record below.
+                  Use the <em>Host</em> value as the record's Name/Host — some providers want the full name instead, so it's shown too.
+                </p>
+                <div class="dns-record" *ngFor="let r of customDomain.records; let i = index" [ngClass]="'rec-' + r.status">
+                  <div class="rec-head">
+                    <span class="rec-status">{{ r.status === 'ok' ? '✅ Found' : r.status === 'wrong' ? '❌ Wrong value' : '⏳ Not found yet' }}</span>
+                    <span class="rec-purpose">{{ recordPurpose(r) }}</span>
+                  </div>
+                  <div class="rec-grid">
+                    <span class="rec-label">Type</span>
+                    <code class="rec-value">{{ r.type }}</code>
+                    <span></span>
+                    <span class="rec-label">Host</span>
+                    <code class="rec-value">{{ r.host }}</code>
+                    <button class="copy-btn" (click)="copy(r.host, 'h' + i)">{{ copiedKey === 'h' + i ? '✓' : 'Copy' }}</button>
+                    <span class="rec-label">Value</span>
+                    <code class="rec-value">{{ r.value }}</code>
+                    <button class="copy-btn" (click)="copy(r.value, 'v' + i)">{{ copiedKey === 'v' + i ? '✓' : 'Copy' }}</button>
+                  </div>
+                  <p class="rec-found" *ngIf="r.status === 'wrong'">We found: {{ r.found }}</p>
+                  <p class="rec-desc">{{ r.description }} <span class="muted">Full name: {{ r.fullName }}</span></p>
+                </div>
+              </div>
+
+              <div class="status-actions">
+                <a *ngIf="customDomain.state === 'live'" [href]="customDomain.url" target="_blank" rel="noopener" class="status-btn primary">Open website ↗</a>
+                <button class="status-btn" (click)="checkCustomDomainNow()" [disabled]="customDomainChecking">
+                  {{ customDomainChecking ? '⏳ Checking…' : '🔍 Check now' }}
+                </button>
+                <button class="status-btn subtle" (click)="startChangeCustomDomain()">Change domain</button>
+                <button class="status-btn danger" (click)="removeCustomDomain()" [disabled]="customDomainBusy">Disconnect</button>
+              </div>
+              <p class="status-foot" *ngIf="customDomain.shouldRecheck">Checking automatically every 30 seconds · last checked {{ customDomain.checkedAt | date:'shortTime' }}</p>
+              <p class="status-foot" *ngIf="!customDomain.shouldRecheck">Last checked {{ customDomain.checkedAt | date:'shortTime' }}</p>
+            </ng-container>
+          </div>
+
           <!-- Info -->
           <div class="form-section domain-info-section">
             <h3>ℹ️ How It Works</h3>
@@ -130,14 +242,14 @@
                 <span class="step-number">2</span>
                 <div>
                   <strong>Publish</strong>
-                  <p>Click publish and we'll set up the DNS automatically</p>
+                  <p>Press Publish website — we reserve the address, set it up and publish your site</p>
                 </div>
               </div>
               <div class="info-step">
                 <span class="step-number">3</span>
                 <div>
                   <strong>Go Live</strong>
-                  <p>Your website will be accessible at your chosen domain</p>
+                  <p>New addresses usually start working within 5–30 minutes. The status above updates by itself</p>
                 </div>
               </div>
             </div>

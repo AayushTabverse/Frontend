@@ -44,6 +44,29 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+.team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+
+  .add-staff-btn { margin-bottom: 0; }
+}
+
+.import-staff-btn {
+  padding: 12px 24px;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #e2e2e2; }
+}
+
 .add-staff-btn {
   padding: 12px 24px;
   background: #e74c3c;
@@ -405,6 +428,8 @@
     background: #2a2a3e;
   }
 
+  .import-staff-btn { background: #2a2a3e; color: #f0f0f0; &:hover { background: #3a3a4e; } }
+
   .empty-state p, .loading-state { color: #777; }
 }
 
@@ -417,5 +442,5 @@
 }
 
 @media (max-width: 480px) {
-  .add-staff-btn { width: 100%; text-align: center; }
+  .add-staff-btn, .import-staff-btn { width: 100%; text-align: center; }
 }

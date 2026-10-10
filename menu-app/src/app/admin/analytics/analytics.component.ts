@@ -3,255 +3,172 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AnalyticsService } from '../../services/analytics.service';
-import { OrderService } from '../../services/order.service';
-import { ThemeService } from '../../services/theme.service';
-import {
-  DashboardSummary, TopItem, SalesData, PeakHour, OrderResponse, CustomerDue
-} from '../../models/api.models';
-import { DueService } from '../../services/due.service';
+import { AnalyticsOverview } from '../../models/api.models';
 import { parseDateKey, toDateKey } from '../../shared/date-utils';
+import { LineChartComponent, LineSeries } from '../../shared/charts/line-chart.component';
+import { StatTileComponent } from '../../shared/charts/stat-tile.component';
+import { ColumnChartComponent } from '../../shared/charts/column-chart.component';
+import { HeatmapComponent } from '../../shared/charts/heatmap.component';
+import { BarListComponent, BarRow } from '../../shared/charts/bar-list.component';
+import { ChartCardComponent, ChartTable } from '../../shared/charts/chart-card.component';
+import { hourLabel, inr, inrCompact, num } from '../../shared/charts/format';
+
+type Preset = '7d' | '30d' | '90d' | 'month' | 'lastMonth' | 'custom';
+
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LineChartComponent, StatTileComponent, ColumnChartComponent,
+    HeatmapComponent, BarListComponent, ChartCardComponent],
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.scss']
 })
 export class AnalyticsComponent implements OnInit {
-  loading = true;
+  readonly presets: { id: Preset; label: string }[] = [
+    { id: '7d', label: 'Last 7 days' },
+    { id: '30d', label: 'Last 30 days' },
+    { id: '90d', label: 'Last 90 days' },
+    { id: 'month', label: 'This month' },
+    { id: 'lastMonth', label: 'Last month' }
+  ];
+  preset: Preset = '30d';
+  from = '';
+  to = '';
+  readonly today = toDateKey(new Date());
 
-  // Data
-  dashboard?: DashboardSummary;
-  salesData: SalesData[] = [];
-  topItems: TopItem[] = [];
-  peakHours: PeakHour[] = [];
-  recentOrders: OrderResponse[] = [];
-  unsettledDues: CustomerDue[] = [];
+  data: AnalyticsOverview | null = null;
+  loading = false;
+  error = '';
 
-  // Filters
-  salesRange = '7'; // days
-  topItemsDays = '30';
-  topItemsCount = 10;
-  peakHoursDays = '7';
+  // View models (recomputed when data arrives)
+  compareLabel = '';
+  lineLabels: string[] = [];
+  lineTooltipLabels: string[] = [];
+  lineSeries: LineSeries[] = [];
+  revenueSpark: number[] = [];
+  ordersSpark: number[] = [];
+  aovSpark: number[] = [];
+  heatRows = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  heatCols: string[] = [];
+  heatColNames: string[] = [];
+  heatValues: number[][] = [];
+  hourValues: number[] = [];
+  categoryRows: BarRow[] = [];
+  tableRows: BarRow[] = [];
+  dueRows: BarRow[] = [];
+  qrPct = 0;
 
-  // Orders pagination
-  allRecentOrders: OrderResponse[] = [];
-  ordersPage = 1;
-  ordersPageSize = 10;
+  tables: Record<string, ChartTable> = {};
 
-  // Computed chart data
-  maxSales = 0;
-  maxSalesCount = 0;
-  maxTopItemQty = 0;
-  maxPeakOrders = 0;
+  readonly weekdays = WEEKDAYS;
+  readonly inr = inr;
+  readonly inrCompact = inrCompact;
+  readonly num = num;
+  readonly hourLabel = hourLabel;
+  readonly fmtOrders = (v: number) => num(v);
 
-  // KPI comparisons (mock previous period)
-  kpiChanges = { sales: 12.5, orders: 8.3, avgValue: -2.1, live: 0 };
-
-  // Order status distribution
-  statusDistribution: { status: string; count: number; color: string; }[] = [];
-
-  constructor(
-    private analyticsService: AnalyticsService,
-    private orderService: OrderService,
-    public themeService: ThemeService,
-    private dueService: DueService
-  ) {}
+  constructor(private analytics: AnalyticsService) {}
 
   ngOnInit(): void {
-    this.loadAll();
+    this.applyPreset('30d');
   }
 
-  loadAll(): void {
-    this.loading = true;
-    this.loadDashboard();
-    this.loadSales();
-    this.loadTopItems();
-    this.loadPeakHours();
-    this.loadRecentOrders();
-    this.loadUnsettledDues();
+  applyPreset(p: Preset): void {
+    this.preset = p;
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    const daysBack = (n: number) => { const d = new Date(now); d.setDate(d.getDate() - (n - 1)); return d; };
+    switch (p) {
+      case '7d': this.from = toDateKey(daysBack(7)); this.to = this.today; break;
+      case '30d': this.from = toDateKey(daysBack(30)); this.to = this.today; break;
+      case '90d': this.from = toDateKey(daysBack(90)); this.to = this.today; break;
+      case 'month': this.from = toDateKey(new Date(y, m, 1)); this.to = this.today; break;
+      case 'lastMonth': this.from = toDateKey(new Date(y, m - 1, 1)); this.to = toDateKey(new Date(y, m, 0)); break;
+      case 'custom': return;
+    }
+    this.load();
   }
 
-  loadDashboard(): void {
-    this.analyticsService.getDashboard().subscribe({
-      next: (data) => {
-        this.dashboard = data;
+  onCustomChange(): void {
+    this.preset = 'custom';
+    if (this.from && this.to && this.from <= this.to) this.load();
+  }
+
+  load(): void {
+    this.loading = true; // keep the previous render visible (dimmed) while refetching
+    this.error = '';
+    this.analytics.getOverview(this.from, this.to).subscribe({
+      next: (d) => {
+        this.data = d;
+        this.build(d);
         this.loading = false;
       },
-      error: () => this.loading = false
-    });
-  }
-
-  loadSales(): void {
-    const to = new Date();
-    const from = new Date();
-    from.setDate(from.getDate() - parseInt(this.salesRange));
-    this.analyticsService.getSales(toDateKey(from), toDateKey(to)).subscribe({
-      next: (data) => {
-        this.salesData = data;
-        this.maxSales = Math.max(...data.map(d => d.totalSales), 1);
-        this.maxSalesCount = Math.max(...data.map(d => d.orderCount), 1);
+      error: (err) => {
+        this.loading = false;
+        this.error = err.error?.message || 'Could not load analytics.';
       }
     });
   }
 
-  loadTopItems(): void {
-    this.analyticsService.getTopItems(this.topItemsCount, parseInt(this.topItemsDays)).subscribe({
-      next: (data) => {
-        this.topItems = data;
-        this.maxTopItemQty = Math.max(...data.map(d => d.totalQuantity), 1);
-      }
-    });
-  }
+  private build(d: AnalyticsOverview): void {
+    const short = (s: string) => parseDateKey(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    const long = (s: string) => parseDateKey(s).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    this.compareLabel = `vs ${short(d.previousFrom)} – ${short(d.previousTo)}`;
 
-  loadPeakHours(): void {
-    this.analyticsService.getPeakHours(parseInt(this.peakHoursDays)).subscribe({
-      next: (data) => {
-        this.peakHours = data;
-        this.maxPeakOrders = Math.max(...data.map(d => d.orderCount), 1);
-      }
-    });
-  }
+    this.lineLabels = d.daily.map(p => short(p.date));
+    this.lineTooltipLabels = d.daily.map(p => `${long(p.date)}${p.date === this.today ? ' · so far' : ''} (vs ${short(p.prevDate!)})`);
+    this.lineSeries = [
+      { name: `${short(d.from)} – ${short(d.to)}`, values: d.daily.map(p => p.revenue), role: 'primary' },
+      { name: 'Previous period', values: d.daily.map(p => p.prevRevenue ?? 0), role: 'compare' }
+    ];
+    this.revenueSpark = d.daily.map(p => p.revenue);
+    this.ordersSpark = d.daily.map(p => p.orders);
+    this.aovSpark = d.daily.map(p => (p.orders ? p.revenue / p.orders : 0));
 
-  loadRecentOrders(): void {
-    const to = new Date();
-    const from = new Date();
-    from.setDate(from.getDate() - 7);
-    this.orderService.getOrderHistory(toDateKey(from), toDateKey(to)).subscribe({
-      next: (orders) => {
-        this.allRecentOrders = orders;
-        this.ordersPage = 1;
-        this.recentOrders = this.allRecentOrders.slice(0, this.ordersPageSize);
-        this.computeStatusDistribution(orders);
-      }
-    });
-  }
+    // Show only the hours the restaurant is actually busy (at least 10am–11pm), not 24 empty columns
+    const active = d.hourly.filter(h => h.orders > 0).map(h => h.hour);
+    const firstHour = Math.min(10, ...active), lastHour = Math.max(22, ...active);
+    const hours = Array.from({ length: lastHour - firstHour + 1 }, (_, i) => firstHour + i);
+    this.heatCols = hours.map(h => hourLabel(h));
+    this.heatColNames = hours.map(h => `${hourLabel(h)}–${hourLabel(h + 1)}`);
+    this.heatValues = Array.from({ length: 7 }, (_, wd) =>
+      hours.map(h => d.heatmap.find(c => c.weekday === wd && c.hour === h)?.orders ?? 0));
+    this.hourValues = hours.map(h => d.hourly.find(x => x.hour === h)?.orders ?? 0);
 
-  get ordersTotalPages(): number {
-    return Math.ceil(this.allRecentOrders.length / this.ordersPageSize);
-  }
+    this.categoryRows = d.categories.map(c => ({ label: c.name, value: c.revenue, display: `${inrCompact(c.revenue)} · ${c.sharePct}%`, sub: `${num(c.quantity)} sold` }));
+    this.tableRows = d.tables.map(t => ({ label: t.table, value: t.revenue, display: inrCompact(t.revenue), sub: `${t.orders} orders · avg ${inr(t.avgOrderValue)}` }));
+    this.dueRows = d.duesAging.map(b => ({ label: b.label, value: b.amount, display: b.count ? `${inr(b.amount)} · ${b.count}` : '—' }));
 
-  get ordersPageNumbers(): number[] {
-    const pages: number[] = [];
-    const start = Math.max(1, this.ordersPage - 2);
-    const end = Math.min(this.ordersTotalPages, this.ordersPage + 2);
-    for (let i = start; i <= end; i++) pages.push(i);
-    return pages;
-  }
+    const totalOrders = d.sources.qrOrders + d.sources.staffOrders;
+    this.qrPct = totalOrders ? Math.round(d.sources.qrOrders / totalOrders * 100) : 0;
 
-  goToOrdersPage(page: number): void {
-    if (page < 1 || page > this.ordersTotalPages) return;
-    this.ordersPage = page;
-    const start = (page - 1) * this.ordersPageSize;
-    this.recentOrders = this.allRecentOrders.slice(start, start + this.ordersPageSize);
-  }
-
-  loadUnsettledDues(): void {
-    this.dueService.getDues().subscribe({
-      next: (dues) => this.unsettledDues = dues
-    });
-  }
-
-  computeStatusDistribution(orders: OrderResponse[]): void {
-    const counts: Record<string, number> = {};
-    orders.forEach(o => {
-      counts[o.status] = (counts[o.status] || 0) + 1;
-    });
-    const colorMap: Record<string, string> = {
-      'Completed': '#27ae60',
-      'Served': '#3498db',
-      'Ready': '#2ecc71',
-      'Preparing': '#f39c12',
-      'Accepted': '#9b59b6',
-      'Pending': '#e67e22',
-      'Cancelled': '#e74c3c'
+    this.tables = {
+      trend: { columns: ['Date', 'Revenue', 'Orders', 'Previous date', 'Previous revenue'],
+        rows: d.daily.map(p => [long(p.date), inr(p.revenue), p.orders, short(p.prevDate!), inr(p.prevRevenue)]) },
+      heat: { columns: ['Day', ...this.heatCols], rows: this.heatValues.map((r, wd) => [WEEKDAYS[wd], ...r]) },
+      hourly: { columns: ['Hour', 'Orders', 'Revenue'], rows: d.hourly.filter(h => h.orders).map(h => [`${hourLabel(h.hour)}–${hourLabel(h.hour + 1)}`, h.orders, inr(h.revenue)]) },
+      categories: { columns: ['Category', 'Revenue', 'Share', 'Items sold'], rows: d.categories.map(c => [c.name, inr(c.revenue), `${c.sharePct}%`, c.quantity]) },
+      tablesPerf: { columns: ['Table', 'Revenue', 'Orders', 'Avg order'], rows: d.tables.map(t => [t.table, inr(t.revenue), t.orders, inr(t.avgOrderValue)]) },
+      dues: { columns: ['Age', 'Bills', 'Amount due'], rows: d.duesAging.map(b => [b.label, b.count, inr(b.amount)]) }
     };
-    this.statusDistribution = Object.entries(counts).map(([status, count]) => ({
-      status,
-      count,
-      color: colorMap[status] || '#95a5a6'
-    }));
   }
 
-  // Chart helpers
-  getSalesBarHeight(value: number): number {
-    return this.maxSales > 0 ? (value / this.maxSales) * 100 : 0;
+  /** "▲ 0.8%" with good/bad tone; lower is better for times. */
+  deltaText(pct: number | null | undefined): string {
+    if (pct === null || pct === undefined) return '';
+    return `${pct > 0 ? '▲' : pct < 0 ? '▼' : '•'} ${Math.abs(pct)}%`;
   }
 
-  getOrderBarHeight(value: number): number {
-    return this.maxSalesCount > 0 ? (value / this.maxSalesCount) * 100 : 0;
+  deltaTone(pct: number | null | undefined, upIsGood: boolean): string {
+    if (pct === null || pct === undefined || Math.abs(pct) < 0.5) return '';
+    return (pct > 0) === upIsGood ? 'good' : 'bad';
   }
 
-  getTopItemWidth(qty: number): number {
-    return this.maxTopItemQty > 0 ? (qty / this.maxTopItemQty) * 100 : 0;
-  }
-
-  getPeakBarHeight(count: number): number {
-    return this.maxPeakOrders > 0 ? (count / this.maxPeakOrders) * 100 : 0;
-  }
-
-  formatHour(h: number): string {
-    if (h === 0) return '12am';
-    if (h < 12) return h + 'am';
-    if (h === 12) return '12pm';
-    return (h - 12) + 'pm';
-  }
-
-  formatDate(dateStr: string): string {
-    const d = parseDateKey(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
-  formatCurrency(val: number): string {
-    if (val >= 100000) return '₹' + (val / 100000).toFixed(1) + 'L';
-    if (val >= 1000) return '₹' + (val / 1000).toFixed(1) + 'K';
-    return '₹' + val.toFixed(0);
-  }
-
-  getStatusTotal(): number {
-    return this.statusDistribution.reduce((sum, s) => sum + s.count, 0);
-  }
-
-  getStatusPercent(count: number): number {
-    const total = this.getStatusTotal();
-    return total > 0 ? (count / total) * 100 : 0;
-  }
-
-  // Donut chart SVG path helper
-  getDonutSegments(): { path: string; color: string; status: string; percent: number }[] {
-    const segments: { path: string; color: string; status: string; percent: number }[] = [];
-    const total = this.getStatusTotal();
-    if (total === 0) return segments;
-
-    let cumulative = 0;
-    const cx = 50, cy = 50, r = 40;
-
-    this.statusDistribution.forEach(s => {
-      const percent = s.count / total;
-      const startAngle = cumulative * 2 * Math.PI - Math.PI / 2;
-      cumulative += percent;
-      const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
-
-      const largeArc = percent > 0.5 ? 1 : 0;
-      const x1 = cx + r * Math.cos(startAngle);
-      const y1 = cy + r * Math.sin(startAngle);
-      const x2 = cx + r * Math.cos(endAngle);
-      const y2 = cy + r * Math.sin(endAngle);
-
-      const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-      segments.push({ path, color: s.color, status: s.status, percent: percent * 100 });
-    });
-
-    return segments;
-  }
-
-  getItemsPreview(items: any[]): string {
-    const names = items.slice(0, 2).map(i => i.itemName);
-    return names.join(', ') + (items.length > 2 ? '...' : '');
-  }
-
-  getTotalUnsettledDue(): number {
-    return this.unsettledDues.reduce((sum, d) => sum + d.dueAmount, 0);
+  /** Signed change for item rows; null when the item didn't sell before. */
+  change(pct: number | null | undefined): string {
+    if (pct === null || pct === undefined) return 'New';
+    return `${pct > 0 ? '▲' : pct < 0 ? '▼' : '•'} ${Math.abs(pct)}%`;
   }
 }

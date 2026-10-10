@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import {
   ApiResponse, WebsiteContent, UpdateWebsiteContent,
   SubdomainSuggestionsResponse, CheckSubdomainResponse,
-  SubdomainResponse, ClaimSubdomainRequest
+  SubdomainResponse, ClaimSubdomainRequest, WebsiteStatus, CustomDomainStatus
 } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
@@ -54,6 +54,21 @@ export class WebsiteService {
     return this.http.post<SubdomainResponse>(`${this.subdomainUrl}/claim`, body);
   }
 
+  /** Website status from facts (DNS outcome, address resolves, site responds). refresh skips the ~15s cache. */
+  getWebsiteStatus(refresh = false): Observable<WebsiteStatus> {
+    return this.http.get<WebsiteStatus>(`${this.subdomainUrl}/status`, { params: { refresh } });
+  }
+
+  /** Choose the subdomain and publish the website in one step. */
+  publishWebsite(subdomain: string): Observable<WebsiteStatus> {
+    return this.http.post<WebsiteStatus>(`${this.subdomainUrl}/publish`, { subdomain });
+  }
+
+  /** Re-run the DNS step after a failure. */
+  retryDns(): Observable<WebsiteStatus> {
+    return this.http.post<WebsiteStatus>(`${this.subdomainUrl}/retry-dns`, {});
+  }
+
   /** Release the current subdomain. */
   releaseSubdomain(): Observable<SubdomainResponse> {
     return this.http.delete<SubdomainResponse>(`${this.subdomainUrl}/release`);
@@ -62,6 +77,25 @@ export class WebsiteService {
   /** Get the current tenant's subdomain info. */
   getCurrentSubdomain(): Observable<SubdomainResponse> {
     return this.http.get<SubdomainResponse>(`${this.subdomainUrl}/current`);
+  }
+
+  /** Resolve a restaurant website host (name.tabverse.in or a verified own domain) to its tenantId (public). */
+  resolveHost(host: string): Observable<{ tenantId: string; host: string }> {
+    return this.http.get<{ tenantId: string; host: string }>(`${this.apiUrl}/resolve-host/${encodeURIComponent(host)}`);
+  }
+
+  // ── Bring-your-own domain ──
+
+  getCustomDomainStatus(refresh = false): Observable<CustomDomainStatus> {
+    return this.http.get<CustomDomainStatus>(`${environment.apiUrl}/custom-domain/status`, { params: { refresh } });
+  }
+
+  connectCustomDomain(domain: string): Observable<CustomDomainStatus> {
+    return this.http.put<CustomDomainStatus>(`${environment.apiUrl}/custom-domain`, { domain });
+  }
+
+  removeCustomDomain(): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${environment.apiUrl}/custom-domain`);
   }
 
   /** Resolve a subdomain to a tenantId (public). */

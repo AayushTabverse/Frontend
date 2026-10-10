@@ -3,21 +3,14 @@ import { ActivatedRouteSnapshot, CanActivateFn, CanMatchFn, Router } from '@angu
 import { AuthService } from '../services/auth.service';
 import { SubscriptionService } from '../services/subscription.service';
 import { Permission } from '../shared/permissions';
+import { isTenantHost } from '../shared/site-host';
 import { map, catchError, of } from 'rxjs';
 
-/** Returns true if the current hostname has a tenant subdomain. */
-function hasSubdomain(): boolean {
-  const parts = window.location.hostname.split('.');
-  const isLocalDev = parts.length === 2 && parts[1] === 'localhost';
-  const isProd = parts.length >= 3 && !['www', 'app'].includes(parts[0]);
-  return (isLocalDev || isProd) && parts[0] !== 'localhost';
-}
+/** canMatch guard — route only matches on a restaurant website host (subdomain or own domain). */
+export const subdomainMatch: CanMatchFn = () => isTenantHost();
 
-/** canMatch guard — route only matches when on a subdomain. */
-export const subdomainMatch: CanMatchFn = () => hasSubdomain();
-
-/** canMatch guard — route only matches when NOT on a subdomain. */
-export const mainDomainMatch: CanMatchFn = () => !hasSubdomain();
+/** canMatch guard — route only matches on the main Tabverse host. */
+export const mainDomainMatch: CanMatchFn = () => !isTenantHost();
 
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);

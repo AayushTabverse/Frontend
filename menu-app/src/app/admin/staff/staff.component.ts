@@ -3,15 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { StaffResponse } from '../../models/api.models';
-import { AppRole, ROLE_LABELS, manageableRoles } from '../../shared/permissions';
+import { StaffImportRow, StaffResponse } from '../../models/api.models';
+import { AppRole, ROLE_LABELS, manageableRoles, roleDisplayName } from '../../shared/permissions';
 import { StaffAttendanceComponent } from './attendance/staff-attendance.component';
 import { StaffPayrollComponent } from './payroll/staff-payroll.component';
+import { StaffService } from '../../services/staff.service';
+import { ExcelImportComponent, ExcelImportConfig } from '../../shared/components/excel-import/excel-import.component';
 
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, StaffAttendanceComponent, StaffPayrollComponent],
+  imports: [CommonModule, FormsModule, RouterModule, StaffAttendanceComponent, StaffPayrollComponent, ExcelImportComponent],
   templateUrl: './staff.component.html',
   styleUrls: ['./staff.component.scss']
 })
@@ -41,8 +43,28 @@ export class StaffComponent implements OnInit {
   successMessage = '';
   staffSubmitted = false;
 
+  showImport = false;
+  readonly importConfig: ExcelImportConfig<StaffImportRow> = {
+    title: 'Import staff from Excel',
+    noun: ['staff member', 'staff members'],
+    templateFileName: 'tabverse-staff-template.xlsx',
+    downloadTemplate: () => this.staffService.downloadImportTemplate(),
+    runImport: (file, updateExisting, apply) => this.staffService.importStaff(file, updateExisting, apply),
+    updateExistingLabel: 'Update staff who are already on the team (matched by email, or by name for payroll-only staff)',
+    updateExistingHint: 'Updates name, phone, job title and salary. Roles and passwords are never changed by an import.',
+    columns: [
+      { header: 'Name', value: r => r.fullName, kind: 'strong' },
+      { header: 'Role', value: r => r.role ? roleDisplayName(r.role) : '' },
+      { header: 'Email', value: r => r.email ?? (r.role === 'Helper' ? 'No app login' : ''), kind: 'muted' },
+      { header: 'Job title', value: r => r.jobTitle },
+      { header: 'Salary', value: r => r.monthlySalary, kind: 'money' }
+    ],
+    warning: 'The sheet contains login passwords. Delete the file after uploading and ask staff to change their password.'
+  };
+
   constructor(
-    private authService: AuthService
+    private authService: AuthService,
+    private staffService: StaffService
   ) {}
 
   ngOnInit(): void {

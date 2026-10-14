@@ -46,6 +46,7 @@
         <a *ngIf="content.galleryImages?.length" (click)="scrollTo('gallery')" [class.active]="activeSection === 'gallery'">Gallery</a>
         <a *ngIf="content.testimonials?.length" (click)="scrollTo('testimonials')" [class.active]="activeSection === 'testimonials'">Reviews</a>
         <a (click)="scrollTo('hours')" [class.active]="activeSection === 'hours'">Hours</a>
+        <a *ngIf="bookingEnabled" (click)="scrollTo('reserve')" [class.active]="activeSection === 'reserve'">Reserve</a>
         <a (click)="scrollTo('contact')" [class.active]="activeSection === 'contact'">Contact</a>
       </div>
       <button class="tw-hamburger" (click)="mobileMenuOpen = !mobileMenuOpen">
@@ -73,7 +74,10 @@
           {{ content.heroCtaText }}
           <span class="tw-btn-arrow">→</span>
         </button>
-        <button class="tw-btn tw-btn-outline" (click)="scrollTo('about')">
+        <button class="tw-btn tw-btn-outline" *ngIf="bookingEnabled" (click)="scrollTo('reserve')">
+          Reserve a Table
+        </button>
+        <button class="tw-btn tw-btn-outline" *ngIf="!bookingEnabled" (click)="scrollTo('about')">
           Our Story
         </button>
       </div>
@@ -263,11 +267,79 @@
           <div class="tw-hours-cta">
             <span class="tw-cta-icon">📞</span>
             <h3>Make a Reservation</h3>
+            <p *ngIf="bookingEnabled"><a class="tw-cta-link" (click)="scrollTo('reserve')">Book a table online →</a></p>
             <p *ngIf="content.phone">Call us at <strong>{{ content.phone }}</strong></p>
             <p *ngIf="content.email">Or email <strong>{{ content.email }}</strong></p>
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ═══════ TABLE BOOKING ═══════ -->
+  <section id="reserve" class="tw-section tw-reserve" *ngIf="bookingEnabled">
+    <div class="tw-container">
+      <div class="tw-section-header">
+        <span class="tw-section-tag">Book Your Table</span>
+        <h2 class="tw-section-title">Reserve a Table</h2>
+        <div class="tw-section-divider">
+          <span></span>
+          <span class="tw-divider-icon">✦</span>
+          <span></span>
+        </div>
+      </div>
+
+      <form class="tw-reserve-form" (ngSubmit)="requestBooking()" novalidate>
+        <div class="tw-field">
+          <label for="rv-name">Name</label>
+          <input id="rv-name" name="name" [(ngModel)]="booking.name" maxlength="100" autocomplete="name"
+                 [class.invalid]="bookingSubmitted && !booking.name.trim()" />
+          <span class="tw-field-error" *ngIf="bookingSubmitted && !booking.name.trim()">Please enter your name</span>
+        </div>
+        <div class="tw-field">
+          <label for="rv-mobile">Mobile (WhatsApp)</label>
+          <input id="rv-mobile" name="mobile" type="tel" inputmode="tel" [(ngModel)]="booking.mobile" maxlength="15"
+                 autocomplete="tel" (keypress)="onlyNumbers($event)" [class.invalid]="bookingSubmitted && bookingMobileInvalid" />
+          <span class="tw-field-error" *ngIf="bookingSubmitted && bookingMobileInvalid">Please enter a valid mobile number</span>
+        </div>
+        <div class="tw-field tw-field-wide">
+          <label>Guests</label>
+          <div class="tw-chips">
+            <button type="button" *ngFor="let n of bookingSizes" class="tw-chip"
+                    [class.selected]="booking.partySize === n" (click)="booking.partySize = n">{{ n === 8 ? '8+' : n }}</button>
+          </div>
+          <input *ngIf="booking.partySize >= 8" name="partySize" type="number" class="tw-party-input" [(ngModel)]="booking.partySize"
+                 min="8" max="30" aria-label="Number of guests" />
+        </div>
+        <div class="tw-field">
+          <label for="rv-date">Date</label>
+          <input id="rv-date" name="date" type="date" [(ngModel)]="booking.date" [min]="bookingMinDate" [max]="bookingMaxDate"
+                 [class.invalid]="bookingSubmitted && !booking.date" />
+        </div>
+        <div class="tw-field">
+          <label for="rv-time">Time</label>
+          <input id="rv-time" name="time" type="time" step="900" [(ngModel)]="booking.time"
+                 [class.invalid]="bookingSubmitted && (!booking.time || bookingTooSoon)" />
+          <span class="tw-field-error" *ngIf="bookingSubmitted && bookingTooSoon">Please pick a time at least 30 minutes from now</span>
+        </div>
+        <div class="tw-field">
+          <label for="rv-email">Email (optional)</label>
+          <input id="rv-email" name="email" type="email" [(ngModel)]="booking.email" maxlength="200" autocomplete="email" />
+        </div>
+        <div class="tw-field">
+          <label for="rv-notes">Special requests (optional)</label>
+          <input id="rv-notes" name="notes" [(ngModel)]="booking.notes" maxlength="500" placeholder="Birthday, high chair…" />
+        </div>
+
+        <div class="tw-reserve-error" *ngIf="bookingError">{{ bookingError }}</div>
+
+        <div class="tw-reserve-footer">
+          <button type="submit" class="tw-btn tw-btn-primary" [disabled]="bookingSending">
+            {{ bookingSending ? 'Sending…' : 'Request Booking' }}
+          </button>
+          <p>We'll confirm on WhatsApp. You'll get a link to check or cancel your booking.</p>
+        </div>
+      </form>
     </div>
   </section>
 

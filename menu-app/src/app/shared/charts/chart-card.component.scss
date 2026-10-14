@@ -1,17 +1,29 @@
+@use 'ui';
 @use './viz' as viz;
 @include viz.host;
 :host { height: 100%; }
 
-.card { height: 100%; box-sizing: border-box; background: var(--viz-surface); border: 1px solid var(--viz-ring);
-  border-radius: 14px; padding: 18px 20px; min-width: 0; }
+.card { @include ui.card(18px 20px); height: 100%; box-sizing: border-box; min-width: 0; }
 header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
 .titles { min-width: 0; }
-h3 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--viz-ink); }
-p { margin: 3px 0 0; font-size: 0.8rem; color: var(--viz-muted); }
-.switch { display: inline-flex; border: 1px solid var(--viz-ring); border-radius: 8px; overflow: hidden; flex: none; }
-.switch button { border: none; background: transparent; color: var(--viz-ink-2); font-size: 0.75rem; font-weight: 600; padding: 5px 10px; cursor: pointer; }
-.switch button.on { background: var(--viz-grid); color: var(--viz-ink); }
-.table-wrap { max-height: 340px; overflow: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-th { text-align: left; color: var(--viz-muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--viz-grid); position: sticky; top: 0; background: var(--viz-surface); }
-td { padding: 6px 8px; border-bottom: 1px solid var(--viz-grid); color: var(--viz-ink); font-variant-numeric: tabular-nums; }
+h3 { @include ui.section-title; margin: 0; }
+p { margin: 3px 0 0; font-size: 0.8rem; color: var(--ui-text-2); }
+
+/* Chart / Table segmented switch */
+.switch { @include ui.tabs; flex: none; padding: 3px; gap: 2px; border-radius: 10px; }
+.switch button {
+  @include ui.tab;
+  height: 26px; padding: 0 10px; border-radius: 7px; font-size: 0.75rem;
+  &.on { background: var(--ui-surface-solid); color: var(--ui-text); box-shadow: 0 1px 3px rgba(26, 26, 46, 0.12); }
+}
+
+/* Accessible table twin */
+.table-wrap { @include ui.inset-panel(0); max-height: 340px; overflow: auto; }
+table {
+  @include ui.table;
+  font-size: 0.82rem;
+  th { position: sticky; top: 0; z-index: 1; padding: 8px 12px;
+       background: linear-gradient(var(--ui-surface-muted), var(--ui-surface-muted)), var(--ui-surface-solid); }
+  td { padding: 8px 12px; font-variant-numeric: tabular-nums; }
+  th:not(:first-child), td:not(:first-child) { text-align: right; }
+}

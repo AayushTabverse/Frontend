@@ -1,0 +1,186 @@
+@use 'ui';
+
+/* Reservations — layout from styles.scss, building blocks from styles/_ui.scss */
+
+.page-header { @include ui.page-header; }
+.header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.btn-primary { @include ui.btn-primary; }
+.btn-secondary { @include ui.btn-secondary; }
+.btn-danger { @include ui.btn-danger; }
+.btn-outline { @include ui.btn-secondary; }
+.btn-link { @include ui.btn-ghost; @include ui.btn-sm; text-decoration: underline; }
+.btn-whatsapp {
+  @include ui.btn-base;
+  @include ui.btn-sm;
+  background: #25d366;
+  color: #fff;
+  &:hover:not(:disabled) { background: #1fb457; }
+}
+.muted { color: var(--ui-text-3); }
+.small { font-size: 0.75rem; }
+
+// ── Alerts ──
+.alert {
+  @include ui.alert(info);
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  &.success { @include ui.tone(success); }
+  &.error { @include ui.tone(danger); }
+  .alert-actions { display: flex; align-items: center; gap: 8px; }
+}
+
+.loading-state, .empty-state { @include ui.empty-state; }
+.empty-state .empty-icon { font-size: 2.4rem; margin-bottom: 8px; }
+.empty-state p { margin: 0 0 14px; }
+
+// ── Requests ──
+.requests {
+  margin-bottom: 22px;
+  h2 {
+    @include ui.section-title;
+    .count { @include ui.badge(accent); padding: 1px 7px; }
+  }
+}
+
+// ── Week nav ──
+.week-nav {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+  .week-buttons { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  input[type=date] { @include ui.input; width: auto; height: 38px; }
+  .show-closed {
+    font-size: 0.85rem; color: var(--ui-text-2); display: flex; align-items: center; gap: 6px; cursor: pointer;
+    input { accent-color: var(--ui-accent); }
+  }
+}
+.day { margin-bottom: 8px; }
+.day-title {
+  @include ui.section-title;
+  font-size: 0.95rem; margin: 18px 0 10px;
+  small { font-weight: 500; color: var(--ui-text-3); }
+}
+
+// ── Reservation cards ──
+.res-card {
+  @include ui.card(14px 16px 14px 20px);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 84px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+
+  // Status stripe
+  &::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ui-accent); }
+  &.request::before { background: var(--ui-warning); }
+  &.soon::before { background: var(--ui-success); }
+  &.late::before { background: var(--ui-danger); }
+  &.closed { opacity: 0.6; &::before { background: var(--ui-border-strong); } }
+}
+
+.res-time {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  .time { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: var(--ui-text); white-space: nowrap; }
+  .date { font-size: 0.7rem; color: var(--ui-text-3); }
+}
+.res-main { min-width: 0; }
+.res-title {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  .name { font-weight: 700; font-size: 1.02rem; color: var(--ui-text); }
+  .party { font-size: 0.85rem; font-weight: 600; color: var(--ui-text-2); }
+}
+.res-meta {
+  display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; font-size: 0.8rem; color: var(--ui-text-2);
+  .merged-tag { @include ui.badge(violet); padding: 1px 6px; font-size: 0.62rem; text-transform: uppercase; margin-left: 4px; }
+}
+.res-notes { margin-top: 4px; font-size: 0.8rem; color: var(--ui-text-2); }
+.badge {
+  @include ui.badge(neutral);
+  &.status-confirmed { @include ui.tone(accent); }
+  &.status-late, &.status-noshow { @include ui.tone(danger); }
+  &.status-seated, &.status-completed { @include ui.tone(success); }
+  &.status-cancelled, &.status-rejected { @include ui.tone(neutral); }
+  &.source-web { @include ui.tone(info); }
+}
+
+.res-actions {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; max-width: 380px;
+  .btn-primary, .btn-secondary, .btn-danger, .btn-outline { @include ui.btn-sm; }
+}
+.btn-accept, .btn-seat { @include ui.btn-success; @include ui.btn-sm; }
+.btn-ghost {
+  @include ui.btn-secondary;
+  @include ui.btn-sm;
+  &.danger { color: var(--ui-danger-text); }
+}
+
+// ── Modals ──
+.modal-overlay { @include ui.modal-overlay; }
+.modal {
+  @include ui.modal(520px);
+  .sub { margin: -6px 0 14px; font-size: 0.85rem; color: var(--ui-text-2); }
+}
+.modal-actions { @include ui.modal-actions; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group {
+  @include ui.field;
+  position: relative;
+  label { @include ui.label; .req { color: var(--ui-accent); } }
+  input:not([type=checkbox]):not([type=radio]) { @include ui.input; }
+  .field-error { @include ui.field-error; }
+}
+.suggestions {
+  @include ui.glass(10px);
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 5; margin-top: 4px; overflow: hidden;
+  button {
+    display: block; width: 100%; text-align: left; padding: 9px 12px; border: none; background: none;
+    cursor: pointer; color: var(--ui-text); font: inherit; font-size: 0.85rem;
+    &:hover { background: var(--ui-hover); }
+  }
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; &.reasons { margin-bottom: 8px; } }
+.chip { @include ui.chip; }
+.form-group .chip-input { width: 72px; }
+
+.table-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.table-chip {
+  position: relative; padding: 8px 12px;
+  border: 1.5px solid var(--ui-border-strong); border-radius: var(--ui-radius); background: var(--ui-surface-solid);
+  color: var(--ui-text); cursor: pointer; font: inherit; font-weight: 700;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  &:hover { background: var(--ui-hover); }
+  small { font-weight: 500; color: var(--ui-text-3); margin-left: 2px; }
+  &.selected { border-color: var(--ui-success); background: var(--ui-success-soft); color: var(--ui-success-text); }
+  .primary-tag {
+    position: absolute; top: -9px; right: -6px; padding: 1px 6px; border-radius: 6px;
+    font-size: 0.6rem; font-weight: 700; background: var(--ui-accent); color: #fff;
+  }
+}
+.hint {
+  @include ui.field-hint;
+  display: block; margin-top: 6px;
+  .warn { color: var(--ui-warning-text); font-weight: 600; }
+}
+
+// ── Settings modal ──
+.toggle-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; cursor: pointer;
+  padding-bottom: 14px; border-bottom: 1px solid var(--ui-border);
+  span { display: flex; flex-direction: column; gap: 4px; }
+  small { @include ui.field-hint; }
+  input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; accent-color: var(--ui-accent); }
+}
+.setting-block {
+  padding-top: 14px; display: flex; flex-direction: column; gap: 6px;
+  small { @include ui.field-hint; }
+  .chip-row { margin-top: 4px; }
+}
+
+@media (max-width: 700px) {
+  .res-card { grid-template-columns: 64px 1fr; }
+  .res-actions { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+}

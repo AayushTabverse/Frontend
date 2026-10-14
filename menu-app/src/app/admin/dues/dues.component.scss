@@ -1,67 +1,62 @@
-// ── Dues Stats ──
+@use 'ui';
+
+/* Udhaar / Dues — layout from styles.scss, building blocks from styles/_ui.scss */
+
+.page-header { @include ui.page-header; }
+
+// ── Toast ──
+.toast {
+  @include ui.alert(info);
+  margin-bottom: 12px;
+  font-weight: 500;
+  &.success { @include ui.tone(success); }
+  &.error { @include ui.tone(danger); }
+}
+
+// ── Stats ──
 .dues-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .stat-card {
-  background: var(--bg-card, white);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  border: 1px solid var(--border-color, #eee);
-
-  .stat-value {
-    display: block;
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: #e94560;
-    margin-bottom: 4px;
-  }
-
-  .stat-label {
-    font-size: 0.85rem;
-    color: var(--text-secondary, #888);
-    font-weight: 500;
-  }
+  @include ui.stat;
+  .stat-value { @include ui.stat-value; }
+  .stat-label { @include ui.stat-label; }
+  &:first-child .stat-value { color: var(--ui-danger-text); }
 }
 
 // ── Search ──
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 16px;
 
-  .search-input {
-    flex: 1;
-    padding: 10px 16px;
-    border: 1px solid var(--border-color, #ddd);
-    border-radius: 10px;
-    font-size: 0.95rem;
-    background: var(--bg-card, white);
-    color: var(--text-primary, #333);
-    &:focus { border-color: #e94560; outline: none; box-shadow: 0 0 0 3px rgba(233,69,96,0.1); }
-    &::placeholder { color: #aaa; }
-  }
+  .search-input { @include ui.input; flex: 1; }
 
   .show-settled {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 0.85rem;
-    color: var(--text-secondary, #666);
+    font-weight: 600;
+    color: var(--ui-text-2);
     white-space: nowrap;
     cursor: pointer;
 
-    input[type="checkbox"] { cursor: pointer; }
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--ui-accent);
+      cursor: pointer;
+    }
   }
 }
 
-// ── Dues List ──
+// ── Dues list ──
 .dues-list {
   display: flex;
   flex-direction: column;
@@ -69,56 +64,32 @@
 }
 
 .due-card {
-  background: var(--bg-card, white);
-  border-radius: 12px;
-  padding: 18px 20px;
-  border: 1px solid var(--border-color, #eee);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-  transition: box-shadow 0.2s;
+  @include ui.card(18px 20px 18px 24px);
+  position: relative;
+  overflow: hidden;
 
-  &:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-
-  &.settled {
-    opacity: 0.6;
-    border-left: 4px solid #27ae60;
-  }
-
-  &:not(.settled) {
-    border-left: 4px solid #e94560;
-  }
+  // Status stripe
+  &::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ui-danger); }
+  &.settled { opacity: 0.65; }
+  &.settled::before { background: var(--ui-success); }
 }
 
 .due-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
 
   .due-customer {
-    strong {
-      font-size: 1.05rem;
-      color: var(--text-primary, #222);
-    }
-
-    .due-mobile {
-      margin-left: 10px;
-      font-size: 0.8rem;
-      color: var(--text-secondary, #888);
-    }
+    strong { font-size: 1.02rem; font-weight: 700; color: var(--ui-text); }
+    .due-mobile { margin-left: 10px; font-size: 0.8rem; color: var(--ui-text-2); }
   }
 
   .due-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    background: #fff3cd;
-    color: #856404;
-
-    &.settled {
-      background: #d4edda;
-      color: #155724;
-    }
+    @include ui.badge(warning);
+    &.settled { @include ui.tone(success); }
   }
 }
 
@@ -126,81 +97,42 @@
   .due-detail-row {
     display: flex;
     justify-content: space-between;
-    padding: 4px 0;
+    gap: 12px;
+    padding: 6px 0;
     font-size: 0.85rem;
-    color: var(--text-secondary, #666);
-    border-bottom: 1px solid var(--border-color, #f0f0f0);
+    color: var(--ui-text-2);
+    border-bottom: 1px solid var(--ui-border);
 
+    > :last-child { color: var(--ui-text); text-align: right; font-variant-numeric: tabular-nums; }
     &:last-child { border-bottom: none; }
 
     &.due-amount-row {
-      color: #e94560;
       font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--ui-danger-text);
+      > :last-child { color: var(--ui-danger-text); }
     }
   }
 }
 
 .due-settle-section {
   margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border-color, #ddd);
+  padding-top: 14px;
+  border-top: 1px dashed var(--ui-border-strong);
 
   .settle-row {
     display: flex;
     gap: 10px;
     align-items: center;
 
-    .settle-input {
-      width: 140px;
-      padding: 9px 14px;
-      border: 1px solid var(--border-color, #ddd);
-      border-radius: 8px;
-      font-size: 0.9rem;
-      background: var(--bg-input, white);
-      color: var(--text-primary, #333);
-      &:focus { border-color: #e94560; outline: none; }
-    }
-
-    .settle-btn {
-      padding: 9px 18px;
-      background: linear-gradient(135deg, #27ae60, #219a52);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      &:hover:not(:disabled) { box-shadow: 0 3px 10px rgba(39,174,96,0.3); }
-      &:disabled { opacity: 0.5; cursor: not-allowed; }
-    }
+    .settle-input { @include ui.input; width: 160px; }
+    .settle-btn { @include ui.btn-success; }
   }
 }
 
-// ── Empty State ──
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary, #aaa);
-  font-size: 1.1rem;
-}
-
-// ── Toast ──
-.toast {
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-weight: 500;
-
-  &.success { background: #d4edda; color: #155724; }
-  &.error { background: #f8d7da; color: #721c24; }
-}
-
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-secondary, #aaa);
-}
+// ── States ──
+.loading, .empty-state { @include ui.empty-state; }
+.empty-state p { margin: 0; font-size: 1rem; }
 
 @media (max-width: 768px) {
   .search-bar {
@@ -210,6 +142,7 @@
 
   .due-settle-section .settle-row {
     flex-direction: column;
+    align-items: stretch;
     .settle-input { width: 100%; }
     .settle-btn { width: 100%; }
   }

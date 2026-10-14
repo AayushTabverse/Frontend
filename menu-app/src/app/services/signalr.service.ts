@@ -15,6 +15,13 @@ export class SignalRService implements OnDestroy {
   private waiterCalledSubject = new Subject<{ tableId: string; tableNumber: string }>();
   private waiterCallDismissedSubject = new Subject<{ tableId: string; tableNumber: string }>();
   private tableClearedSubject = new Subject<{ tableId: string; tableNumber: string }>();
+  private waitlistUpdatedSubject = new Subject<void>();
+  private waitlistEntryUpdatedSubject = new Subject<string>();
+  private waitlistQueueChangedSubject = new Subject<void>();
+  private tablesChangedSubject = new Subject<void>();
+  private reservationsUpdatedSubject = new Subject<void>();
+  private reservationRequestedSubject = new Subject<{ id: string; customerName: string; partySize: number; reservedFor: string }>();
+  private reservationUpdatedSubject = new Subject<string>();
 
   newOrder$ = this.newOrderSubject.asObservable();
   statusUpdate$ = this.statusUpdateSubject.asObservable();
@@ -22,6 +29,16 @@ export class SignalRService implements OnDestroy {
   waiterCalled$ = this.waiterCalledSubject.asObservable();
   waiterCallDismissed$ = this.waiterCallDismissedSubject.asObservable();
   tableCleared$ = this.tableClearedSubject.asObservable();
+  waitlistUpdated$ = this.waitlistUpdatedSubject.asObservable();
+  waitlistEntryUpdated$ = this.waitlistEntryUpdatedSubject.asObservable();
+  waitlistQueueChanged$ = this.waitlistQueueChangedSubject.asObservable();
+  /** Tables merged, un-merged, transferred or reserved. */
+  tablesChanged$ = this.tablesChangedSubject.asObservable();
+  reservationsUpdated$ = this.reservationsUpdatedSubject.asObservable();
+  /** New booking request from the restaurant website. */
+  reservationRequested$ = this.reservationRequestedSubject.asObservable();
+  /** Customer booking page: this reservation changed. */
+  reservationUpdated$ = this.reservationUpdatedSubject.asObservable();
 
   constructor(private authService: AuthService) {}
 
@@ -65,6 +82,34 @@ export class SignalRService implements OnDestroy {
       this.tableClearedSubject.next({ tableId, tableNumber });
     });
 
+    this.hubConnection.on('WaitlistUpdated', () => {
+      this.waitlistUpdatedSubject.next();
+    });
+
+    this.hubConnection.on('WaitlistEntryUpdated', (entryId: string) => {
+      this.waitlistEntryUpdatedSubject.next(entryId);
+    });
+
+    this.hubConnection.on('WaitlistQueueChanged', () => {
+      this.waitlistQueueChangedSubject.next();
+    });
+
+    this.hubConnection.on('TablesChanged', () => {
+      this.tablesChangedSubject.next();
+    });
+
+    this.hubConnection.on('ReservationsUpdated', () => {
+      this.reservationsUpdatedSubject.next();
+    });
+
+    this.hubConnection.on('ReservationRequested', (data: { id: string; customerName: string; partySize: number; reservedFor: string }) => {
+      this.reservationRequestedSubject.next(data);
+    });
+
+    this.hubConnection.on('ReservationUpdated', (id: string) => {
+      this.reservationUpdatedSubject.next(id);
+    });
+
     try {
       await this.hubConnection.start();
       console.log('SignalR Connected');
@@ -77,6 +122,21 @@ export class SignalRService implements OnDestroy {
   async trackOrder(orderId: string): Promise<void> {
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
       await this.hubConnection.invoke('TrackOrder', orderId);
+    }
+  }
+
+  /** Customer status page: follow one waitlist entry and its restaurant's queue. */
+  async followWaitlistEntry(entryId: string, tenantId: string): Promise<void> {
+    if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+      await this.hubConnection.invoke('JoinWaitlistEntry', entryId);
+      await this.hubConnection.invoke('JoinWaitlistQueue', tenantId);
+    }
+  }
+
+  /** Customer booking page: follow one reservation. */
+  async followReservation(reservationId: string): Promise<void> {
+    if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+      await this.hubConnection.invoke('JoinReservation', reservationId);
     }
   }
 

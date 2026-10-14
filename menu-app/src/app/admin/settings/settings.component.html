@@ -71,10 +71,35 @@
       <div class="form-section">
         <h2>💳 UPI Payment QR Code</h2>
         <div class="form-group">
-          <label>UPI QR Code Image</label>
+          <label>UPI ID</label>
+          <input type="text" [(ngModel)]="settings.upiId" placeholder="yourshop&#64;okicici" maxlength="100"
+                 autocomplete="off" autocapitalize="off" spellcheck="false" [class.invalid]="upiIdInvalid" />
+          <span class="field-error" *ngIf="upiIdInvalid">Enter a valid UPI ID, like yourshop&#64;okicici</span>
+          <p class="field-hint">
+            With a UPI ID, every bill prints its own QR with the bill amount filled in. Customers just scan and pay, no typing.
+            You'll find it in your UPI / merchant app under your QR code.
+          </p>
+          <p class="field-hint detected" *ngIf="upiDetectedMessage">✅ {{ upiDetectedMessage }}</p>
+        </div>
+        <div class="form-group">
+          <label>Name shown when paying (optional)</label>
+          <input type="text" [(ngModel)]="settings.upiPayeeName" [placeholder]="settings.name || 'Restaurant name'" maxlength="100" />
+        </div>
+        <div class="form-group" *ngIf="settings.upiId && !upiIdInvalid">
+          <button type="button" class="btn-test-qr" (click)="showUpiTestQr()" [disabled]="upiTestLoading">
+            {{ upiTestLoading ? 'Generating…' : '🔍 Show a ₹1 test QR' }}
+          </button>
+          <div class="qr-preview" *ngIf="upiTestQrUrl">
+            <img [src]="upiTestQrUrl" alt="Test UPI QR for ₹1" />
+            <span>Scan with any UPI app: it should show ₹1 to {{ settings.upiPayeeName || settings.name }}</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>UPI QR Code Image {{ settings.upiId ? '(fallback)' : '' }}</label>
           <input type="file" accept="image/*" (change)="onFileSelected($event, 'qr')" />
           <span *ngIf="uploading['qr']">Uploading...</span>
-          <p class="field-hint">Upload your UPI QR code image. This will appear on printed bills.</p>
+          <p class="field-hint" *ngIf="!settings.upiId">Upload your UPI QR code image. It appears on printed bills, and customers type the amount themselves. We'll try to read your UPI ID from it.</p>
+          <p class="field-hint" *ngIf="settings.upiId">Only used if the bill QR can't be generated (for example, no internet while printing).</p>
         </div>
         <div class="qr-preview" *ngIf="settings.upiQrCodeUrl">
           <img [src]="settings.upiQrCodeUrl" alt="UPI QR Code" />

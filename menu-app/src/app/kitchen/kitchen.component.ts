@@ -54,6 +54,7 @@ export class KitchenComponent implements OnInit, OnDestroy {
           this.loadOrders();
         }),
         this.signalR.statusUpdate$.subscribe(() => this.loadOrders()),
+        this.signalR.tablesChanged$.subscribe(() => this.loadOrders()),
         this.signalR.kitchenAlert$.subscribe(() => this.playAlert())
       );
     }

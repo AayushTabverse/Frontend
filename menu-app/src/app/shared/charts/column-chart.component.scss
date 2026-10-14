@@ -3,17 +3,17 @@
 @include viz.tooltip;
 
 .cols { display: flex; gap: 8px; padding-top: 18px; }
-.y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--viz-muted);
+.y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--ui-text-2);
   text-align: right; min-width: 34px; font-variant-numeric: tabular-nums; transform: translateY(6px); }
-.plot { position: relative; flex: 1; display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--viz-axis); }
-.gridline { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--viz-grid); }
+.plot { position: relative; flex: 1; display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--ui-border-strong); }
+.gridline { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--ui-border); }
 .col { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; outline: none; min-width: 0; }
-.col:focus-visible .bar { outline: 2px solid var(--viz-ink); outline-offset: 1px; }
+.col:focus-visible .bar { outline: 2px solid var(--ui-text); outline-offset: 1px; }
 .bar { width: 100%; max-width: 24px; background: var(--viz-series-1); border-radius: 4px 4px 0 0; min-height: 0; transition: opacity 0.15s; }
 .bar.dim { opacity: 0.45; }
-.peak-label { position: absolute; transform: translateY(-4px); font-size: 11px; font-weight: 700; color: var(--viz-ink); white-space: nowrap; }
+.peak-label { position: absolute; transform: translateY(-4px); font-size: 11px; font-weight: 700; color: var(--ui-text); white-space: nowrap; }
 .viz-tooltip { bottom: 100%; left: 50%; transform: translate(-10%, -6px); }
 .viz-tooltip.right { transform: translate(-90%, -6px); }
-.x-labels { display: flex; gap: 2px; margin-left: 42px; font-size: 10.5px; color: var(--viz-muted); }
+.x-labels { display: flex; gap: 2px; margin-left: 42px; font-size: 10.5px; color: var(--ui-text-2); }
 .x-labels span { flex: 1; text-align: center; white-space: nowrap; min-width: 0; overflow: visible; }
 .x-labels span.hidden { visibility: hidden; }

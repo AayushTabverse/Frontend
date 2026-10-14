@@ -71,4 +71,23 @@ export class TableService {
       map(res => res.data!)
     );
   }
+
+  /** Attach tables to a main table. Running orders on them move to the main table's bill. */
+  mergeTables(mainTableId: string, tableIds: string[]): Observable<TableResponse> {
+    return this.http.post<ApiResponse<TableResponse>>(`${this.apiUrl}/${mainTableId}/merge`, { tableIds }).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  /** On a merged table: detach it. On a main table: detach all its merged tables. */
+  unmerge(tableId: string): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${tableId}/unmerge`, {}).pipe(map(() => void 0));
+  }
+
+  /** Move the party (orders, waitlist hold, merged tables) to a free table. */
+  transfer(fromTableId: string, toTableId: string): Observable<TableResponse> {
+    return this.http.post<ApiResponse<TableResponse>>(`${this.apiUrl}/${fromTableId}/transfer`, { toTableId }).pipe(
+      map(res => res.data!)
+    );
+  }
 }

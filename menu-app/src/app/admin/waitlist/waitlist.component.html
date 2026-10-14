@@ -1,0 +1,359 @@
+<div class="page-header">
+  <h1>⏳ Waitlist</h1>
+  <div class="header-actions">
+    <button class="btn-outline" (click)="openSettings()">📱 Check-in QR & settings</button>
+    <button class="btn-primary" (click)="openAdd()">+ Add Party</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row" *ngIf="stats">
+  <div class="stat">
+    <span class="stat-value">{{ stats.waiting }}</span>
+    <span class="stat-label">parties waiting</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">{{ stats.peopleWaiting }}</span>
+    <span class="stat-label">people waiting</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">{{ freeTables.length }}</span>
+    <span class="stat-label">free tables</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">{{ stats.averageWaitMinutesToday ?? '–' }}<small *ngIf="stats.averageWaitMinutesToday != null"> min</small></span>
+    <span class="stat-label">avg wait today</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">{{ stats.seatedToday }}</span>
+    <span class="stat-label">seated today</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">{{ stats.estimatedWaitForNewParty === 0 ? 'Now' : '~' + stats.estimatedWaitForNewParty }}<small *ngIf="stats.estimatedWaitForNewParty > 0"> min</small></span>
+    <span class="stat-label">wait for a new party</span>
+  </div>
+</div>
+
+<!-- Messages -->
+<div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+<div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+<!-- Send queue confirmation after adding -->
+<div class="alert info" *ngIf="justAdded">
+  <span>Let {{ justAdded.customerName }} know they're in the queue?</span>
+  <div class="alert-actions">
+    <button class="btn-whatsapp" (click)="sendQueueConfirmation(justAdded)">💬 Send on WhatsApp</button>
+    <button class="btn-link" (click)="justAdded = null">Skip</button>
+  </div>
+</div>
+
+<!-- Table just freed -->
+<div class="alert freed" *ngIf="freedAlert">
+  <span>
+    🟢 <strong>Table {{ freedAlert.tableNumber }}</strong> ({{ freedAlert.capacity }} seats) is free.
+    <ng-container *ngIf="freedAlert.bestMatch">
+      Next: <strong>#{{ freedAlert.bestMatch.tokenNumber }} {{ freedAlert.bestMatch.customerName }}</strong>
+      (party of {{ freedAlert.bestMatch.partySize }})
+    </ng-container>
+  </span>
+  <div class="alert-actions">
+    <button class="btn-primary small" *ngIf="freedAlert.bestMatch" (click)="seatFromAlert()">Seat them</button>
+    <button class="btn-link" (click)="freedAlert = null">Dismiss</button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button [class.active]="tab === 'waiting'" (click)="tab = 'waiting'">
+    Waiting <span class="count">{{ waitingEntries.length }}</span>
+  </button>
+  <button [class.active]="tab === 'seated'" (click)="tab = 'seated'">
+    Seated <span class="count">{{ seatedEntries.length }}</span>
+  </button>
+  <button [class.active]="tab === 'closed'" (click)="tab = 'closed'">
+    Today's history <span class="count">{{ closedEntries.length }}</span>
+  </button>
+  <button [class.active]="tab === 'insights'" (click)="showInsights()">📈 Insights</button>
+</div>
+
+<div class="loading-state" *ngIf="loading">Loading waitlist...</div>
+
+<div class="empty-state" *ngIf="!loading && tab !== 'insights' && visibleEntries.length === 0">
+  <ng-container [ngSwitch]="tab">
+    <ng-container *ngSwitchCase="'waiting'">
+      <div class="empty-icon">🪑</div>
+      <p>No one is waiting right now.</p>
+      <button class="btn-primary" (click)="openAdd()">+ Add Party</button>
+    </ng-container>
+    <p *ngSwitchCase="'seated'">No waitlist parties are seated right now.</p>
+    <p *ngSwitchDefault>Nothing here yet today.</p>
+  </ng-container>
+</div>
+
+<!-- Entries -->
+<div class="entry-list" *ngIf="!loading && tab !== 'insights' && visibleEntries.length > 0">
+  <div class="entry-card" *ngFor="let e of visibleEntries"
+       [class.notified]="e.status === 'Notified'"
+       [class.overdue]="(e.status === 'Waiting' || e.status === 'Notified') && isOverdue(e)">
+
+    <div class="entry-token">
+      <span class="token" *ngIf="e.source !== 'Reservation'">#{{ e.tokenNumber }}</span>
+      <span class="token" *ngIf="e.source === 'Reservation'" title="Reservation">📅</span>
+      <span class="position" *ngIf="tab === 'waiting'">{{ position(e) }} in line</span>
+    </div>
+
+    <div class="entry-main">
+      <div class="entry-title">
+        <span class="name">{{ e.customerName }}</span>
+        <span class="party">👥 {{ e.partySize }}</span>
+        <span class="badge" [ngClass]="'status-' + e.status.toLowerCase()">{{ statusLabel(e) }}</span>
+        <span class="badge source-self" *ngIf="e.source === 'SelfCheckIn'" title="Joined by scanning the entrance QR">📱 Self check-in</span>
+        <span class="badge source-res" *ngIf="e.source === 'Reservation'">📅 Reservation</span>
+      </div>
+      <div class="entry-meta">
+        <span *ngIf="e.customerMobile">📱 {{ e.customerMobile }}</span>
+        <span>⏱️ {{ tab === 'waiting' ? 'Waiting' : 'Waited' }} {{ waitedLabel(e) }}<ng-container *ngIf="e.quotedWaitMinutes"> / quoted {{ e.quotedWaitMinutes }} min</ng-container></span>
+        <span *ngIf="e.status === 'Waiting' && e.estimatedWaitMinutes != null" class="estimate">
+          ⌛ {{ e.estimatedWaitMinutes === 0 ? 'Table available now' : 'Est. ~' + e.estimatedWaitMinutes + ' min more' }}
+        </span>
+        <span *ngIf="e.tables.length > 0" class="tables">
+          🪑 {{ tableNames(e) }}
+          <span class="merged-tag" *ngIf="e.tables.length > 1">merged</span>
+        </span>
+      </div>
+      <div class="entry-notes" *ngIf="e.notes">📝 {{ e.notes }}</div>
+      <div class="entry-hint" *ngIf="tab === 'waiting' && suggestionLabel(e)">💡 {{ suggestionLabel(e) }}</div>
+    </div>
+
+    <!-- Waiting / called -->
+    <div class="entry-actions" *ngIf="e.status === 'Waiting' || e.status === 'Notified'">
+      <button class="btn-seat" (click)="openSeat(e)" [disabled]="freeTables.length === 0"
+              [title]="freeTables.length === 0 ? 'No free tables right now' : 'Pick table(s)'">✅ Seat</button>
+      <button class="btn-whatsapp" *ngIf="e.customerMobile" (click)="sendTableReady(e)" title="Send 'table ready' on WhatsApp">💬 Table ready</button>
+      <a class="btn-call" *ngIf="e.customerMobile" [href]="callLink(e)" (click)="markCalled(e)">📞 Call</a>
+      <button class="btn-ghost" *ngIf="!e.customerMobile && e.status === 'Waiting'" (click)="markCalled(e)">📣 Mark called</button>
+      <div class="more-actions">
+        <button class="btn-ghost" (click)="openEdit(e)">✏️ Edit</button>
+        <button class="btn-ghost" *ngIf="e.status === 'Notified'" (click)="noShow(e)">🚫 No-show</button>
+        <button class="btn-ghost danger" (click)="cancel(e)">✕ Remove</button>
+      </div>
+    </div>
+
+    <!-- Seated -->
+    <div class="entry-actions" *ngIf="e.status === 'Seated'">
+      <span class="seated-note">Tables free up automatically when the bill is cleared.</span>
+      <button class="btn-ghost" (click)="release(e)">🔓 Free tables</button>
+    </div>
+  </div>
+</div>
+
+<!-- Insights -->
+<div class="insights" *ngIf="tab === 'insights'">
+  <div class="range-picker">
+    <button *ngFor="let d of analyticsRanges" [class.active]="analyticsDays === d" (click)="setAnalyticsRange(d)">Last {{ d }} days</button>
+  </div>
+
+  <div class="loading-state" *ngIf="analyticsLoading && !analytics">Loading insights...</div>
+
+  <ng-container *ngIf="analytics as a">
+    <div class="empty-state" *ngIf="a.totalParties === 0">
+      <p>No waitlist activity in this period yet.</p>
+    </div>
+
+    <ng-container *ngIf="a.totalParties > 0">
+      <div class="stats-row">
+        <div class="stat"><span class="stat-value">{{ a.totalParties }}</span><span class="stat-label">parties ({{ a.totalGuests }} guests)</span></div>
+        <div class="stat"><span class="stat-value">{{ a.seated }}</span><span class="stat-label">seated</span></div>
+        <div class="stat"><span class="stat-value">{{ a.averageWaitMinutes ?? '–' }}<small *ngIf="a.averageWaitMinutes != null"> min</small></span><span class="stat-label">avg wait (median {{ a.medianWaitMinutes ?? '–' }})</span></div>
+        <div class="stat"><span class="stat-value">{{ a.walkAwayRate }}<small>%</small></span><span class="stat-label">walked away ({{ a.cancelled }})</span></div>
+        <div class="stat"><span class="stat-value">{{ a.noShowRate }}<small>%</small></span><span class="stat-label">no-show after call ({{ a.noShows }})</span></div>
+        <div class="stat"><span class="stat-value">{{ a.selfCheckIns }}</span><span class="stat-label">self check-ins</span></div>
+      </div>
+
+      <div class="insight-grid">
+        <section class="insight-card">
+          <h3>When people arrive</h3>
+          <p class="insight-sub" *ngIf="a.busiestHour != null">Busiest around <strong>{{ hourLabel(a.busiestHour) }}</strong>. Plan extra floor staff then.</p>
+          <div class="bars">
+            <div class="bar-row" *ngFor="let h of a.byHour">
+              <span class="bar-label">{{ hourLabel(h.hour) }}</span>
+              <div class="bar-track"><div class="bar" [style.width.%]="100 * h.parties / maxHourParties"></div></div>
+              <span class="bar-value">{{ h.parties }}<small *ngIf="h.averageWaitMinutes != null"> · {{ h.averageWaitMinutes }}m</small></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="insight-card">
+          <h3>By party size</h3>
+          <table class="insight-table">
+            <thead><tr><th>People</th><th>Parties</th><th>Seated</th><th>Avg wait</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let p of a.byPartySize">
+                <td>{{ p.label }}</td><td>{{ p.parties }}</td><td>{{ p.seated }}</td>
+                <td>{{ p.averageWaitMinutes != null ? p.averageWaitMinutes + ' min' : '–' }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="insight-sub">Long waits for big groups? Plan which tables you'll merge before the rush.</p>
+        </section>
+
+        <section class="insight-card wide" *ngIf="a.byDay.length > 1">
+          <h3>Day by day</h3>
+          <div class="day-chart">
+            <div class="day-col" *ngFor="let d of a.byDay" [title]="d.date + ': ' + d.parties + ' parties, ' + d.seated + ' seated'">
+              <div class="day-bar-wrap"><div class="day-bar" [style.height.%]="100 * d.parties / maxDayParties"></div></div>
+              <span class="day-label">{{ d.date | date:'d MMM' }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>
+
+<!-- Check-in QR & settings -->
+<div class="modal-overlay" *ngIf="showSettings" (click)="showSettings = false">
+  <div class="modal settings-modal" (click)="$event.stopPropagation()">
+    <h2>📱 Check-in QR & settings</h2>
+
+    <div class="loading-state" *ngIf="!settings">Loading...</div>
+
+    <ng-container *ngIf="settings">
+      <label class="toggle-row">
+        <span>
+          <strong>Let customers join by scanning a QR</strong>
+          <small>Put the QR at the entrance. Customers enter their name, mobile and party size, then get a live status page.</small>
+        </span>
+        <input type="checkbox" [checked]="settings.selfCheckInEnabled" [disabled]="settingsSaving"
+               (change)="saveSettings({ selfCheckInEnabled: $any($event.target).checked })" />
+      </label>
+
+      <div class="qr-block" [class.disabled]="!settings.selfCheckInEnabled">
+        <div class="qr-frame">
+          <div class="spinner" *ngIf="qrLoading"></div>
+          <img *ngIf="qrImageUrl" [src]="qrImageUrl" alt="Waitlist check-in QR" />
+        </div>
+        <div class="qr-actions">
+          <button class="btn-outline" (click)="printQr()" [disabled]="!qrImageUrl">🖨️ Print</button>
+          <button class="btn-outline" (click)="downloadQr()" [disabled]="!qrImageUrl">⬇️ Download</button>
+          <button class="btn-outline" (click)="copyCheckInLink()">🔗 Copy link</button>
+          <a class="btn-link" [href]="checkInLink" target="_blank" rel="noopener">Open check-in page ↗</a>
+        </div>
+        <small class="qr-note" *ngIf="!settings.selfCheckInEnabled">Turn on QR check-in above for this QR to work.</small>
+      </div>
+
+      <div class="setting-block">
+        <strong>Auto no-show</strong>
+        <small>If a called party doesn't arrive in time, mark them as a no-show automatically so the line keeps moving.</small>
+        <div class="chip-row">
+          <button type="button" *ngFor="let m of noShowOptions" class="chip"
+                  [class.selected]="settings.noShowMinutes === m" [disabled]="settingsSaving"
+                  (click)="saveSettings({ noShowMinutes: m })">{{ m === 0 ? 'Off' : m + ' min' }}</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="showSettings = false">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Party -->
+<div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h2>{{ editingId ? 'Edit Party' : 'Add to Waitlist' }}</h2>
+
+    <div class="form-group mobile-group">
+      <label>Mobile</label>
+      <input type="tel" [(ngModel)]="form.customerMobile" (input)="onMobileInput()" (keypress)="onlyNumbers($event)"
+             placeholder="10-digit mobile (for WhatsApp)" maxlength="15" autocomplete="off"
+             [class.invalid]="submitted && mobileInvalid" />
+      <span class="field-error" *ngIf="submitted && mobileInvalid">Enter a valid mobile number</span>
+      <div class="suggestions" *ngIf="customerSuggestions.length > 0">
+        <button type="button" *ngFor="let c of customerSuggestions" (click)="pickCustomer(c)">
+          <strong>{{ c.customerName }}</strong> · {{ c.customerMobile }}
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Name <span class="req">*</span></label>
+      <input [(ngModel)]="form.customerName" placeholder="Customer name" maxlength="100"
+             [class.invalid]="submitted && !form.customerName.trim()" />
+      <span class="field-error" *ngIf="submitted && !form.customerName.trim()">Name is required</span>
+    </div>
+
+    <div class="form-group">
+      <label>People <span class="req">*</span></label>
+      <div class="chip-row">
+        <button type="button" *ngFor="let n of partySizes" class="chip"
+                [class.selected]="form.partySize === n" (click)="form.partySize = n">{{ n }}</button>
+        <input type="number" class="chip-input" [(ngModel)]="form.partySize" min="1" max="100"
+               (keypress)="onlyNumbers($event)" aria-label="Number of people" />
+      </div>
+      <span class="field-error" *ngIf="submitted && (!form.partySize || form.partySize < 1)">At least 1 person</span>
+    </div>
+
+    <div class="form-group">
+      <label>Quoted wait (optional)</label>
+      <div class="chip-row">
+        <button type="button" *ngFor="let m of waitOptions" class="chip"
+                [class.selected]="form.quotedWaitMinutes === m"
+                (click)="form.quotedWaitMinutes = form.quotedWaitMinutes === m ? undefined : m">{{ m }}m</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <input [(ngModel)]="form.notes" placeholder="e.g. high chair, outdoor seating" maxlength="300" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeForm()">Cancel</button>
+      <button class="btn-primary" (click)="save()" [disabled]="saving">
+        {{ saving ? 'Saving...' : editingId ? 'Save' : 'Add to Waitlist' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Seat Party (single or merged tables) -->
+<div class="modal-overlay" *ngIf="seatingEntry" (click)="closeSeat()">
+  <div class="modal seat-modal" (click)="$event.stopPropagation()">
+    <h2>Seat #{{ seatingEntry.tokenNumber }} {{ seatingEntry.customerName }}</h2>
+    <p class="seat-sub">Party of {{ seatingEntry.partySize }}. Select one table, or several to merge them.</p>
+
+    <div class="seat-tables" *ngIf="freeTablesFor(seatingEntry).length > 0; else noFree">
+      <button type="button" class="seat-table" *ngFor="let t of freeTablesFor(seatingEntry)"
+              [class.selected]="selectedTableIds.includes(t.id)"
+              [class.too-small]="t.capacity < seatingEntry.partySize"
+              (click)="toggleTable(t)">
+        <span class="seat-table-number">{{ t.tableNumber }}</span>
+        <span class="seat-table-cap">{{ t.capacity }} seats</span>
+        <span class="seat-table-label" *ngIf="t.label">{{ t.label }}</span>
+        <span class="seat-table-res" *ngIf="t.reservationTime">📅 {{ t.reservationTime | date:'h:mm a' }}</span>
+        <span class="primary-tag" *ngIf="isPrimary(t) && selectedTableIds.length > 1">orders here</span>
+      </button>
+    </div>
+    <ng-template #noFree>
+      <p class="no-free">No free tables right now. Tables with running orders or held for another party aren't shown.</p>
+    </ng-template>
+
+    <div class="seat-summary" *ngIf="selectedTableIds.length > 0" [class.short]="seatsShort">
+      <span>
+        <strong>{{ selectedTableNames }}</strong>
+        <span *ngIf="selectedTableIds.length > 1"> (merged)</span>
+        · {{ selectedSeats }} seats for {{ seatingEntry.partySize }}
+      </span>
+      <span *ngIf="seatsShort" class="short-note">⚠️ {{ seatingEntry.partySize - selectedSeats }} short. Add another table to merge</span>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeSeat()">Cancel</button>
+      <button class="btn-primary" (click)="confirmSeat()" [disabled]="seating || selectedTableIds.length === 0">
+        {{ seating ? 'Seating...' : seatsShort ? 'Seat anyway' : 'Seat party' }}
+      </button>
+    </div>
+  </div>
+</div>

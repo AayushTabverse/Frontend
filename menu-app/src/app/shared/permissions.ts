@@ -18,6 +18,8 @@ export const PERMISSIONS = {
   reviews: OWNER,
   menu: MANAGEMENT,
   tables: MANAGEMENT,
+  waitlist: MANAGEMENT,
+  reservations: MANAGEMENT,
   staff: MANAGEMENT,
   takeOrder: FLOOR,
   inventory: MANAGEMENT,
@@ -94,30 +96,43 @@ export function roleDisplayName(role: string, jobTitle?: string | null): string 
   return role;
 }
 
+/** Sidebar sections, in display order. */
+export const NAV_GROUPS = ['Overview', 'Floor', 'Sales', 'Menu & Stock', 'Grow', 'Manage'] as const;
+export type NavGroup = typeof NAV_GROUPS[number];
+
+/** Icon names map to Lucide icons in shared/components/sidebar. */
+export type NavIcon =
+  | 'dashboard' | 'analytics' | 'takeOrder' | 'tables' | 'waitlist' | 'reservations'
+  | 'bills' | 'udhaar' | 'menu' | 'inventory' | 'website' | 'aiMarketing' | 'reviews'
+  | 'staff' | 'settings' | 'billing';
+
 export interface NavItem {
   path: string;
-  icon: string;
+  icon: NavIcon;
   label: string;
+  group: NavGroup;
   permission: Permission;
   premium?: boolean;
 }
 
-/** Sidebar entries, in display order. Filtered by role (and plan, for premium ones). */
+/** Sidebar entries, in display order within each group. Filtered by role (and plan, for premium ones). */
 export const NAV_ITEMS: NavItem[] = [
-  { path: '/admin/dashboard', icon: '📊', label: 'Dashboard', permission: 'dashboard' },
-  { path: '/admin/analytics', icon: '📈', label: 'Analytics', permission: 'analytics' },
-  { path: '/admin/ai-marketing', icon: '🤖', label: 'AI Marketing', permission: 'aiMarketing', premium: true },
-  { path: '/admin/reviews', icon: '⭐', label: 'Reviews', permission: 'reviews', premium: true },
-  { path: '/admin/menu', icon: '📋', label: 'Menu', permission: 'menu' },
-  { path: '/admin/tables', icon: '🪑', label: 'Tables', permission: 'tables' },
-  { path: '/admin/staff', icon: '👥', label: 'Staff', permission: 'staff' },
-  { path: '/waiter', icon: '🛎️', label: 'Take Order', permission: 'takeOrder' },
-  { path: '/admin/inventory', icon: '📦', label: 'Inventory', permission: 'inventory', premium: true },
-  { path: '/admin/website', icon: '🌐', label: 'Website', permission: 'website' },
-  { path: '/admin/settings', icon: '⚙️', label: 'Settings', permission: 'settings' },
-  { path: '/admin/bills', icon: '🧾', label: 'Bills', permission: 'bills' },
-  { path: '/admin/dues', icon: '📒', label: 'Udhaar', permission: 'dues' },
-  { path: '/admin/subscription', icon: '💳', label: 'Billing', permission: 'subscription' }
+  { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard', group: 'Overview', permission: 'dashboard' },
+  { path: '/admin/analytics', icon: 'analytics', label: 'Analytics', group: 'Overview', permission: 'analytics' },
+  { path: '/waiter', icon: 'takeOrder', label: 'Take Order', group: 'Floor', permission: 'takeOrder' },
+  { path: '/admin/tables', icon: 'tables', label: 'Tables', group: 'Floor', permission: 'tables' },
+  { path: '/admin/waitlist', icon: 'waitlist', label: 'Waitlist', group: 'Floor', permission: 'waitlist' },
+  { path: '/admin/reservations', icon: 'reservations', label: 'Reservations', group: 'Floor', permission: 'reservations' },
+  { path: '/admin/bills', icon: 'bills', label: 'Bills', group: 'Sales', permission: 'bills' },
+  { path: '/admin/dues', icon: 'udhaar', label: 'Udhaar', group: 'Sales', permission: 'dues' },
+  { path: '/admin/menu', icon: 'menu', label: 'Menu', group: 'Menu & Stock', permission: 'menu' },
+  { path: '/admin/inventory', icon: 'inventory', label: 'Inventory', group: 'Menu & Stock', permission: 'inventory', premium: true },
+  { path: '/admin/website', icon: 'website', label: 'Website', group: 'Grow', permission: 'website' },
+  { path: '/admin/ai-marketing', icon: 'aiMarketing', label: 'AI Marketing', group: 'Grow', permission: 'aiMarketing', premium: true },
+  { path: '/admin/reviews', icon: 'reviews', label: 'Reviews', group: 'Grow', permission: 'reviews', premium: true },
+  { path: '/admin/staff', icon: 'staff', label: 'Staff', group: 'Manage', permission: 'staff' },
+  { path: '/admin/settings', icon: 'settings', label: 'Settings', group: 'Manage', permission: 'settings' },
+  { path: '/admin/subscription', icon: 'billing', label: 'Billing', group: 'Manage', permission: 'subscription' }
 ];
 
 export function navItemsFor(role: string | null | undefined, hasPremium: boolean): NavItem[] {

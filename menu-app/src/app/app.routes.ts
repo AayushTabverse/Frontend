@@ -43,6 +43,19 @@ export const routes: Routes = [
     loadComponent: () => import('./customer/ar-view/ar-view.component').then(m => m.ArViewComponent)
   },
 
+  {
+    path: 'waitlist/join/:tenantId',
+    loadComponent: () => import('./customer/waitlist-join/waitlist-join.component').then(m => m.WaitlistJoinComponent)
+  },
+  {
+    path: 'reservation/:id',
+    loadComponent: () => import('./customer/reservation-status/reservation-status.component').then(m => m.ReservationStatusComponent)
+  },
+  {
+    path: 'waitlist/status/:entryId',
+    loadComponent: () => import('./customer/waitlist-status/waitlist-status.component').then(m => m.WaitlistStatusComponent)
+  },
+
   // ── Tenant Public Website (subdomain or path-based) ──
   {
     path: 'website/:tenantId',
@@ -92,6 +105,18 @@ export const routes: Routes = [
         loadComponent: () => import('./admin/tables/tables.component').then(m => m.TablesComponent),
         canActivate: [permissionGuard],
         data: { permission: 'tables' }
+      },
+      {
+        path: 'waitlist',
+        loadComponent: () => import('./admin/waitlist/waitlist.component').then(m => m.WaitlistComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'waitlist' }
+      },
+      {
+        path: 'reservations',
+        loadComponent: () => import('./admin/reservations/reservations.component').then(m => m.ReservationsComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'reservations' }
       },
       {
         path: 'website',

@@ -55,6 +55,90 @@ body.dark-mode {
   box-sizing: border-box;
 }
 
+// ── Admin UI design tokens (glass) ──
+// Used through the mixins in src/styles/_ui.scss. Light values here, dark below.
+:root {
+  --ui-font: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  // Surfaces
+  --ui-surface: rgba(255, 255, 255, 0.78);          // cards: frosted, no blur (cheap to render)
+  --ui-surface-strong: rgba(255, 255, 255, 0.92);   // modals, menus, sticky bars (with blur)
+  --ui-surface-solid: #ffffff;                      // inputs, fallbacks
+  --ui-surface-muted: rgba(26, 26, 46, 0.035);      // table headers, inner panels
+  --ui-hover: rgba(26, 26, 46, 0.045);
+  --ui-border: rgba(26, 26, 46, 0.08);
+  --ui-border-strong: rgba(26, 26, 46, 0.14);
+  --ui-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --ui-shadow: 0 1px 2px rgba(26, 26, 46, 0.04), 0 8px 24px rgba(26, 26, 46, 0.06);
+  --ui-shadow-lg: 0 24px 60px rgba(26, 26, 46, 0.18), 0 2px 6px rgba(26, 26, 46, 0.06);
+  --ui-backdrop: rgba(15, 15, 30, 0.32);
+
+  // Text
+  --ui-text: #1f2937;
+  --ui-text-2: #4b5563;
+  --ui-text-3: #9ca3af;
+
+  // Brand & status
+  --ui-accent: #e94560;
+  --ui-accent-hover: #d63851;
+  --ui-accent-soft: rgba(233, 69, 96, 0.10);
+  --ui-accent-text: #c42e4b;
+  --ui-brand: #1a1a2e;
+  --ui-success: #16a34a;
+  --ui-success-soft: rgba(22, 163, 74, 0.11);
+  --ui-success-text: #15803d;
+  --ui-warning: #d97706;
+  --ui-warning-soft: rgba(217, 119, 6, 0.12);
+  --ui-warning-text: #b45309;
+  --ui-danger: #dc2626;
+  --ui-danger-soft: rgba(220, 38, 38, 0.10);
+  --ui-danger-text: #b91c1c;
+  --ui-info: #2563eb;
+  --ui-info-soft: rgba(37, 99, 235, 0.10);
+  --ui-info-text: #1d4ed8;
+  --ui-violet-soft: rgba(139, 92, 246, 0.12);
+  --ui-violet-text: #7c3aed;
+  --ui-neutral-soft: rgba(26, 26, 46, 0.06);
+
+  // Shape
+  --ui-radius-lg: 16px;
+  --ui-radius: 12px;
+  --ui-radius-sm: 8px;
+  --ui-focus: 0 0 0 3px rgba(233, 69, 96, 0.22);
+}
+
+body.dark-mode {
+  --ui-surface: rgba(30, 30, 50, 0.62);
+  --ui-surface-strong: rgba(24, 24, 40, 0.92);
+  --ui-surface-solid: #1c1c2e;
+  --ui-surface-muted: rgba(255, 255, 255, 0.035);
+  --ui-hover: rgba(255, 255, 255, 0.05);
+  --ui-border: rgba(255, 255, 255, 0.08);
+  --ui-border-strong: rgba(255, 255, 255, 0.16);
+  --ui-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --ui-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --ui-shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --ui-backdrop: rgba(0, 0, 0, 0.5);
+
+  --ui-text: #e5e7eb;
+  --ui-text-2: #a1a1aa;
+  --ui-text-3: #71717a;
+
+  --ui-accent-soft: rgba(233, 69, 96, 0.18);
+  --ui-accent-text: #ff8fa3;
+  --ui-success-soft: rgba(34, 197, 94, 0.16);
+  --ui-success-text: #4ade80;
+  --ui-warning-soft: rgba(245, 158, 11, 0.16);
+  --ui-warning-text: #fbbf24;
+  --ui-danger-soft: rgba(239, 68, 68, 0.16);
+  --ui-danger-text: #f87171;
+  --ui-info-soft: rgba(59, 130, 246, 0.16);
+  --ui-info-text: #60a5fa;
+  --ui-violet-soft: rgba(139, 92, 246, 0.2);
+  --ui-violet-text: #a78bfa;
+  --ui-neutral-soft: rgba(255, 255, 255, 0.07);
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -87,36 +171,6 @@ button {
   &:hover { background: rgba(255,255,255,0.25); }
 }
 
-// ── Sidebar Tooltips (collapsed state) ──
-.admin-layout .sidebar.collapsed {
-  a, .logout-btn {
-    position: relative;
-
-    &:hover::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      left: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      margin-left: 6px;
-      background: #333;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      white-space: nowrap;
-      z-index: 200;
-      pointer-events: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-  }
-}
-
-// ── Sidebar Backdrop (mobile overlay) ──
-.sidebar-backdrop {
-  display: none;
-}
-
 // ── Mobile Menu Button (hamburger) ──
 .mobile-menu-btn {
   display: none;
@@ -137,29 +191,6 @@ button {
 
 /* Mobile-first responsive */
 @media (max-width: 768px) {
-  .admin-layout .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    width: 220px;
-    z-index: 1000 !important;
-
-    .sidebar-toggle { display: none; }
-    .brand-text, .nav-text { display: inline !important; }
-
-    &.mobile-open {
-      transform: translateX(0);
-    }
-  }
-
-  .sidebar-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    animation: fadeBackdrop 0.2s ease;
-  }
-
   .mobile-menu-btn {
     display: flex;
   }
@@ -186,130 +217,56 @@ button {
   to { opacity: 1; }
 }
 
-// ── Collapsible Admin Sidebar (shared) ──
+// ── Admin panel layout (glass sidebar: shared/components/sidebar) ──
+// Content margin = sidebar width (248px) or rail (76px) + 12px gaps on both sides.
 .admin-layout {
+  position: relative;
+  isolation: isolate;
   display: flex;
   min-height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.admin-layout .sidebar {
-  width: 220px;
-  background: var(--bg-sidebar, #1a1a2e);
-  display: flex;
-  flex-direction: column;
+// Soft brand-tinted backdrop that the glass sidebar frosts over (fixed, so it doesn't scroll)
+.admin-layout::before {
+  content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  z-index: 100;
-  transition: width 0.3s ease;
-  overflow: hidden;
-
-  .sidebar-toggle {
-    padding: 10px;
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.7);
-    cursor: pointer;
-    font-size: 1.2rem;
-    text-align: right;
-    transition: all 0.2s;
-    &:hover { color: white; }
-  }
-
-  .brand {
-    padding: 14px 20px;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: white;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-
-    .sidebar-logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-  }
-
-  a {
-    padding: 12px 20px;
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-    white-space: nowrap;
-
-    &:hover, &.active {
-      background: rgba(255,255,255,0.1);
-      color: white;
-    }
-
-    &.active {
-      border-left: 3px solid var(--accent, #e94560);
-    }
-  }
-
-  .logout-btn {
-    margin-top: auto;
-    padding: 12px 20px;
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.5);
-    cursor: pointer;
-    text-align: left;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    &:hover { color: var(--accent, #e94560); }
-  }
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(233, 69, 96, 0.13), transparent 38%),
+    radial-gradient(circle at 18% 92%, rgba(99, 102, 241, 0.11), transparent 40%),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.07), transparent 35%),
+    var(--bg-primary, #f5f5f5);
 }
-
-.admin-layout .sidebar.collapsed {
-  width: 60px;
-
-  .brand {
-    padding: 14px 10px;
-    font-size: 1.2rem;
-    justify-content: center;
-    .brand-text { display: none; }
-    .sidebar-logo { width: 28px; height: 28px; }
-  }
-
-  a {
-    padding: 12px 0;
-    text-align: center;
-    font-size: 1.1rem;
-    .nav-text { display: none; }
-  }
-
-  .logout-btn {
-    padding: 12px 0;
-    text-align: center;
-    font-size: 1.1rem;
-    .nav-text { display: none; }
-  }
-
-  .sidebar-toggle {
-    text-align: center;
-  }
+body.dark-mode .admin-layout::before {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(233, 69, 96, 0.16), transparent 40%),
+    radial-gradient(circle at 18% 95%, rgba(99, 102, 241, 0.16), transparent 42%),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.08), transparent 35%),
+    #0e0e18;
 }
 
 .admin-layout .content {
   flex: 1;
-  margin-left: 220px;
-  padding: 24px;
-  background: var(--bg-primary, #f5f5f5);
-  transition: margin-left 0.3s ease;
+  min-width: 0;
+  margin-left: 272px;
+  padding: 24px 24px 24px 12px;
+  background: transparent;
+  transition: margin-left 0.25s ease;
 }
 
 .admin-layout .content.sidebar-collapsed {
-  margin-left: 60px;
+  margin-left: 100px;
+}
+
+@media (max-width: 768px) {
+  .admin-layout .content,
+  .admin-layout .content.sidebar-collapsed {
+    margin-left: 0;
+    padding: 12px 12px 20px;
+  }
 }
 
 .admin-layout .page-header {

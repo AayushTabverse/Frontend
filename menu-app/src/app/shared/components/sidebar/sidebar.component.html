@@ -1,0 +1,69 @@
+<div class="sb-backdrop" *ngIf="mobileOpen" (click)="closeMobile()"></div>
+
+<aside class="sb" [class.collapsed]="collapsed" [class.mobile-open]="mobileOpen" aria-label="Main navigation">
+  <!-- Brand -->
+  <div class="sb-brand">
+    <img *ngIf="logoUrl" [src]="logoUrl" alt="" class="sb-logo" />
+    <div *ngIf="!logoUrl" class="sb-logo sb-logo-initials" aria-hidden="true">{{ initials }}</div>
+    <div class="sb-brand-text">
+      <span class="sb-name" [title]="restaurantName">{{ restaurantName || 'TabVerse' }}</span>
+      <span class="sb-role">{{ roleLabel }}</span>
+    </div>
+    <button class="sb-close" (click)="closeMobile()" aria-label="Close menu">
+      <lucide-icon [img]="icons.X" [size]="18"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sb-nav">
+    <div class="sb-section" *ngFor="let section of sections">
+      <div class="sb-section-label">{{ section.group }}</div>
+      <a *ngFor="let item of section.items"
+         class="sb-link"
+         [routerLink]="item.path"
+         routerLinkActive="active"
+         [attr.aria-label]="collapsed ? item.label : null"
+         (click)="closeMobile()"
+         (mouseenter)="showTooltip($event, item.label)"
+         (mouseleave)="hideTooltip()">
+        <span class="sb-icon">
+          <lucide-icon [img]="iconFor(item)" [size]="18" [strokeWidth]="1.9"></lucide-icon>
+          <span class="sb-dot" *ngIf="collapsed && badges[item.path]"></span>
+        </span>
+        <span class="sb-label">{{ item.label }}</span>
+        <span class="sb-badge" *ngIf="badges[item.path]">{{ badges[item.path] }}</span>
+        <span class="sb-pro" *ngIf="item.premium && !badges[item.path]">PRO</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Account -->
+  <div class="sb-footer">
+    <div class="sb-account">
+      <div class="sb-avatar" aria-hidden="true">{{ userInitials }}</div>
+      <div class="sb-account-text">
+        <span class="sb-user" [title]="userName">{{ userName }}</span>
+        <span class="sb-user-role">{{ roleLabel }}</span>
+      </div>
+      <div class="sb-account-actions">
+        <button class="sb-icon-btn" (click)="themeService.toggle()"
+                [attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+                (mouseenter)="showTooltip($event, themeService.isDark() ? 'Light mode' : 'Dark mode')" (mouseleave)="hideTooltip()">
+          <lucide-icon [img]="themeService.isDark() ? icons.Sun : icons.Moon" [size]="17"></lucide-icon>
+        </button>
+        <button class="sb-icon-btn sb-logout" (click)="logout()" aria-label="Log out"
+                (mouseenter)="showTooltip($event, 'Log out')" (mouseleave)="hideTooltip()">
+          <lucide-icon [img]="icons.LogOut" [size]="17"></lucide-icon>
+        </button>
+        <button class="sb-icon-btn sb-collapse" (click)="toggleCollapsed()"
+                [attr.aria-label]="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                [attr.title]="collapsed ? null : 'Collapse sidebar'"
+                (mouseenter)="showTooltip($event, 'Expand sidebar')" (mouseleave)="hideTooltip()">
+          <lucide-icon [img]="collapsed ? icons.ChevronsRight : icons.ChevronsLeft" [size]="17"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="sb-tooltip" *ngIf="tooltip && collapsed" [style.top.px]="tooltip.top">{{ tooltip.text }}</div>

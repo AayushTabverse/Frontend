@@ -1,14 +1,6 @@
 <!-- Admin layout with sidebar -->
 <div class="admin-layout" *ngIf="usesSidebar; else noSidebar">
-  <div class="sidebar-backdrop" *ngIf="mobileSidebarOpen" (click)="mobileSidebarOpen = false"></div>
-  <nav class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
-    <button class="sidebar-toggle" (click)="sidebarCollapsed = !sidebarCollapsed">
-      {{ sidebarCollapsed ? '☰' : '✕' }}
-    </button>
-    <div class="brand">🍽️ <span class="brand-text">{{ panelTitle }}</span></div>
-    <a *ngFor="let item of navItems" [routerLink]="item.path" routerLinkActive="active" [attr.data-tooltip]="item.label" (click)="mobileSidebarOpen = false">{{ item.icon }} <span class="nav-text">{{ item.label }}</span></a>
-    <button class="logout-btn" data-tooltip="Logout" (click)="logout()">🚪 <span class="nav-text">Logout</span></button>
-  </nav>
+  <app-sidebar [(collapsed)]="sidebarCollapsed" [(mobileOpen)]="mobileSidebarOpen"></app-sidebar>
 
   <main class="content" [class.sidebar-collapsed]="sidebarCollapsed">
     <ng-container *ngTemplateOutlet="waiterContent"></ng-container>
@@ -23,13 +15,10 @@
 <div class="waiter-dashboard">
   <!-- Admin mobile header with hamburger -->
   <div class="page-header admin-order-header" *ngIf="usesSidebar">
-    <button class="mobile-menu-btn" (click)="mobileSidebarOpen = !mobileSidebarOpen">☰</button>
-    <h1>🛎️ Take Order</h1>
-    <div class="header-actions">
-      <button class="dark-mode-toggle" (click)="themeService.toggle()">
-        {{ themeService.isDark() ? '☀️ Light' : '🌙 Dark' }}
-      </button>
-    </div>
+    <button class="mobile-menu-btn" (click)="mobileSidebarOpen = true" aria-label="Open menu">
+      <lucide-icon [img]="MenuIcon" [size]="20"></lucide-icon>
+    </button>
+    <h1>Take Order</h1>
   </div>
 
   <!-- ── Top Bar ── -->
@@ -244,17 +233,34 @@
         <div class="table-card" *ngFor="let t of getVisibleTables()"
              [class.inactive]="!t.isActive"
              [class.occupied]="t.isOccupied"
+             [class.held]="!t.isOccupied && !!t.waitlistEntryId"
+             [class.merged]="!!t.mergedIntoTableId"
+             [class.reserved]="!t.isOccupied && !t.waitlistEntryId && !!t.reservationTime"
              [class.calling]="t.isCallingWaiter"
              [class.unassigned]="!seesAllTables && !showAllTables && assignedTableIds.length > 0 && !assignedTableIds.includes(t.id)"
              (click)="t.isActive && selectTable(t)">
           <div class="calling-badge" *ngIf="t.isCallingWaiter">🔔 Calling!</div>
           <div class="table-number">{{ t.tableNumber }}</div>
           <div class="table-label">{{ t.label || 'Table' }}</div>
-          <div class="table-capacity">🪑 {{ t.capacity }} seats</div>
+          <div class="table-capacity">🪑 {{ t.capacity }} seats<span *ngIf="t.mergedTableNumbers?.length"> ({{ t.combinedCapacity }} merged)</span></div>
+          <div class="table-merge" *ngIf="t.mergedTableNumbers?.length">🔗 + {{ t.mergedTableNumbers?.join(', ') }}</div>
+          <div class="table-waitlist" *ngIf="t.waitlistCustomerName && !t.mergedIntoTableId">
+            👥 {{ t.waitlistCustomerName }} ({{ t.waitlistPartySize }})
+          </div>
+          <div class="table-reservation" *ngIf="t.reservationTime && !t.isOccupied && !t.waitlistEntryId">
+            📅 {{ t.reservationTime | date:'h:mm a' }} · {{ t.reservationCustomerName }} ({{ t.reservationPartySize }})
+          </div>
           <div class="table-status"
                [class.active]="t.isActive && !t.isOccupied"
-               [class.occupied]="t.isOccupied">
-            {{ !t.isActive ? 'Inactive' : t.isOccupied ? 'Occupied (' + t.activeOrderCount + ' order' + (t.activeOrderCount > 1 ? 's' : '') + ')' : 'Free' }}
+               [class.occupied]="t.isOccupied"
+               [class.held]="!t.isOccupied && (!!t.waitlistEntryId || !!t.mergedIntoTableId)"
+               [class.reserved]="!t.isOccupied && !t.waitlistEntryId && !t.mergedIntoTableId && !!t.reservationTime">
+            {{ !t.isActive ? 'Inactive'
+               : t.mergedIntoTableId ? '🔗 Merged with ' + t.mergedIntoTableNumber
+               : t.isOccupied ? 'Occupied (' + t.activeOrderCount + ' order' + (t.activeOrderCount > 1 ? 's' : '') + ')'
+               : t.waitlistEntryId ? 'Seated · no order yet'
+               : t.reservationTime ? 'Reserved'
+               : 'Free' }}
           </div>
           <button class="dismiss-call-btn" *ngIf="t.isCallingWaiter"
                   (click)="dismissCall(t, $event)">✓ Dismiss</button>
@@ -272,7 +278,70 @@
               {{ tableSession.activeOrderCount }} active order{{ tableSession.activeOrderCount > 1 ? 's' : '' }}
             </span>
           </h2>
-          <span class="table-meta">{{ selectedTable.label }} · {{ selectedTable.capacity }} seats</span>
+          <span class="table-meta">{{ selectedTable.label }} · {{ selectedTable.combinedCapacity || selectedTable.capacity }} seats</span>
+          <div class="table-actions-bar">
+            <button class="table-action-btn" (click)="openTableAction('merge')" title="Join tables for a bigger party">🔗 Merge</button>
+            <button class="table-action-btn" (click)="openTableAction('transfer')" [disabled]="!canTransfer"
+                    [title]="canTransfer ? 'Move this party to another table' : 'Nothing to move yet'">⇄ Transfer</button>
+            <button class="table-action-btn" *ngIf="selectedTable.mergedTableNumbers?.length" (click)="unmergeAll()">✂️ Un-merge</button>
+          </div>
+        </div>
+        <div class="table-context" *ngIf="selectedTable.mergedTableNumbers?.length || selectedTable.waitlistCustomerName || selectedTable.reservationTime">
+          <span *ngIf="selectedTable.mergedTableNumbers?.length">🔗 Merged with {{ selectedTable.mergedTableNumbers?.join(', ') }} · one bill</span>
+          <span *ngIf="selectedTable.waitlistCustomerName">👥 {{ selectedTable.waitlistCustomerName }} ({{ selectedTable.waitlistPartySize }})</span>
+          <span *ngIf="selectedTable.reservationTime && !selectedTable.waitlistEntryId" class="ctx-reserved">
+            📅 Reserved {{ selectedTable.reservationTime | date:'h:mm a' }} for {{ selectedTable.reservationCustomerName }} ({{ selectedTable.reservationPartySize }})
+          </span>
+        </div>
+
+        <!-- Merge / transfer dialog -->
+        <div class="modal-overlay" *ngIf="tableAction" (click)="closeTableAction()">
+          <div class="table-action-modal" (click)="$event.stopPropagation()">
+            <ng-container *ngIf="tableAction === 'merge'">
+              <h3>🔗 Merge into Table {{ selectedTable.tableNumber }}</h3>
+              <p class="ta-sub">Pick tables to join. Everyone orders on one bill: Table {{ selectedTable.tableNumber }}'s.</p>
+              <div class="ta-grid" *ngIf="mergeCandidates.length; else noMerge">
+                <button *ngFor="let t of mergeCandidates" class="ta-table"
+                        [class.selected]="mergeSelection.includes(t.id)" (click)="toggleMergeTable(t.id)">
+                  <strong>{{ t.tableNumber }}</strong>
+                  <small>{{ t.capacity }} seats</small>
+                  <small class="ta-warn" *ngIf="t.isOccupied">{{ t.activeOrderCount }} running order{{ t.activeOrderCount > 1 ? 's' : '' }}</small>
+                  <small class="ta-res" *ngIf="t.reservationTime">📅 {{ t.reservationTime | date:'h:mm a' }}</small>
+                </button>
+              </div>
+              <ng-template #noMerge><p class="ta-sub">No tables available to merge.</p></ng-template>
+              <p class="ta-summary" *ngIf="mergeSelection.length">
+                {{ mergeSeats }} seats in total.
+                <span *ngIf="mergeMovesOrders" class="ta-warn">Running orders on the selected tables move to Table {{ selectedTable.tableNumber }}'s bill.</span>
+              </p>
+              <div class="ta-actions">
+                <button class="ta-cancel" (click)="closeTableAction()">Cancel</button>
+                <button class="ta-confirm" (click)="confirmMerge()" [disabled]="!mergeSelection.length || tableActionSaving">
+                  {{ tableActionSaving ? 'Merging...' : 'Merge tables' }}
+                </button>
+              </div>
+            </ng-container>
+
+            <ng-container *ngIf="tableAction === 'transfer'">
+              <h3>⇄ Move Table {{ selectedTable.tableNumber }} to…</h3>
+              <p class="ta-sub">Running orders<span *ngIf="selectedTable.mergedTableNumbers?.length">, merged tables</span> and the bill move to the new table.</p>
+              <div class="ta-grid" *ngIf="transferCandidates.length; else noFreeTable">
+                <button *ngFor="let t of transferCandidates" class="ta-table"
+                        [class.selected]="transferTargetId === t.id" (click)="transferTargetId = t.id">
+                  <strong>{{ t.tableNumber }}</strong>
+                  <small>{{ t.capacity }} seats</small>
+                  <small class="ta-res" *ngIf="t.reservationTime">📅 {{ t.reservationTime | date:'h:mm a' }}</small>
+                </button>
+              </div>
+              <ng-template #noFreeTable><p class="ta-sub">No free tables right now.</p></ng-template>
+              <div class="ta-actions">
+                <button class="ta-cancel" (click)="closeTableAction()">Cancel</button>
+                <button class="ta-confirm" (click)="confirmTransfer()" [disabled]="!transferTargetId || tableActionSaving">
+                  {{ tableActionSaving ? 'Moving...' : 'Move here' }}
+                </button>
+              </div>
+            </ng-container>
+          </div>
         </div>
 
         <!-- Table Navigation Strip -->
@@ -283,6 +352,7 @@
                     class="table-nav-chip"
                     [class.active]="t.id === selectedTable.id"
                     [class.occupied]="t.isOccupied && t.id !== selectedTable.id"
+                    [class.merged-chip]="!!t.mergedIntoTableId"
                     [class.calling]="t.isCallingWaiter"
                     [class.inactive]="!t.isActive"
                     [disabled]="!t.isActive"

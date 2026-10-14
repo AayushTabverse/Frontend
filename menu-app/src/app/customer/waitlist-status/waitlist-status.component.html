@@ -1,0 +1,73 @@
+<div class="wl-page">
+  <div class="wl-card" *ngIf="loading"><div class="spinner"></div></div>
+
+  <div class="wl-card" *ngIf="!loading && notFound">
+    <div class="big-icon">🤔</div>
+    <h2>We couldn't find your spot</h2>
+    <p class="muted">Please check with the staff at the entrance.</p>
+  </div>
+
+  <ng-container *ngIf="!loading && status">
+    <header class="wl-header">
+      <img *ngIf="status.logoUrl" [src]="status.logoUrl" alt="" class="logo" />
+      <h1>{{ status.restaurantName }}</h1>
+    </header>
+
+    <div class="wl-card" [ngClass]="'state-' + status.status.toLowerCase()">
+      <div class="token-label">Your token</div>
+      <div class="token">#{{ status.tokenNumber }}</div>
+      <div class="party">{{ status.customerName }} · {{ status.partySize }} {{ status.partySize === 1 ? 'person' : 'people' }}</div>
+
+      <!-- Waiting -->
+      <ng-container *ngIf="status.status === 'Waiting'">
+        <div class="headline">{{ positionLabel }}</div>
+        <div class="wait">⏱️ {{ waitLabel }}</div>
+        <p class="muted">Feel free to wait nearby. We'll message you on WhatsApp when your table is ready. This page updates on its own.</p>
+      </ng-container>
+
+      <!-- Called -->
+      <ng-container *ngIf="status.status === 'Notified'">
+        <div class="ready-icon">🎉</div>
+        <div class="headline">Your table is ready!</div>
+        <p>Please come to the entrance and show token <strong>#{{ status.tokenNumber }}</strong>.</p>
+      </ng-container>
+
+      <!-- Seated -->
+      <ng-container *ngIf="status.status === 'Seated'">
+        <div class="ready-icon">🍽️</div>
+        <div class="headline">Enjoy your meal!</div>
+        <p *ngIf="status.tableNumbers.length">You're at table {{ status.tableNumbers.join(' + ') }}.</p>
+      </ng-container>
+
+      <ng-container *ngIf="status.status === 'Completed'">
+        <div class="ready-icon">🙏</div>
+        <div class="headline">Thanks for visiting!</div>
+      </ng-container>
+
+      <ng-container *ngIf="status.status === 'Cancelled'">
+        <div class="headline muted-headline">You've left the waitlist</div>
+        <p class="muted">Changed your mind? Ask the staff at the entrance to add you again.</p>
+      </ng-container>
+
+      <ng-container *ngIf="status.status === 'NoShow'">
+        <div class="headline muted-headline">Your spot has expired</div>
+        <p class="muted">We called you but couldn't find you. Please speak to the staff at the entrance.</p>
+      </ng-container>
+
+      <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <ng-container *ngIf="isOpen">
+        <button class="btn-leave" *ngIf="!confirmLeave" (click)="confirmLeave = true">I'm not coming anymore</button>
+        <div class="confirm" *ngIf="confirmLeave">
+          <p>Leave the waitlist? Your spot will go to the next party.</p>
+          <div class="confirm-actions">
+            <button class="btn-stay" (click)="confirmLeave = false">Stay in line</button>
+            <button class="btn-confirm-leave" (click)="leave()" [disabled]="leaving">{{ leaving ? 'Leaving…' : 'Leave' }}</button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <p class="powered">Powered by <strong>TabVerse</strong></p>
+  </ng-container>
+</div>

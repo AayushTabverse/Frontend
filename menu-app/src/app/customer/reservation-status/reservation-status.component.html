@@ -1,0 +1,60 @@
+<div class="rs-page">
+  <div class="rs-card" *ngIf="loading"><div class="spinner"></div></div>
+
+  <div class="rs-card" *ngIf="!loading && notFound">
+    <div class="big-icon">🤔</div>
+    <h2>We couldn't find this booking</h2>
+    <p class="muted">Please check the link, or call the restaurant.</p>
+  </div>
+
+  <ng-container *ngIf="!loading && booking as b">
+    <header class="rs-header">
+      <img *ngIf="b.logoUrl" [src]="b.logoUrl" alt="" class="logo" />
+      <h1>{{ b.restaurantName }}</h1>
+    </header>
+
+    <div class="rs-card" [ngClass]="'state-' + b.status.toLowerCase()">
+      <div class="state-icon">
+        {{ b.status === 'Pending' ? '⏳' : b.status === 'Confirmed' ? '✅' : b.status === 'Seated' || b.status === 'Completed' ? '🍽️' : '✖️' }}
+      </div>
+      <div class="headline">
+        <ng-container [ngSwitch]="b.status">
+          <span *ngSwitchCase="'Pending'">Request sent</span>
+          <span *ngSwitchCase="'Confirmed'">Your table is booked!</span>
+          <span *ngSwitchCase="'Seated'">Enjoy your meal!</span>
+          <span *ngSwitchCase="'Completed'">Thanks for visiting!</span>
+          <span *ngSwitchCase="'Rejected'">Sorry, we can't take this booking</span>
+          <span *ngSwitchCase="'Cancelled'">Booking cancelled</span>
+          <span *ngSwitchCase="'NoShow'">This booking has expired</span>
+        </ng-container>
+      </div>
+      <p class="muted" *ngIf="b.status === 'Pending'">The restaurant will confirm shortly. This page updates by itself, and they may also message you on WhatsApp.</p>
+
+      <div class="details">
+        <div><span class="label">Date</span><span>{{ b.reservedFor | date:'EEEE, d MMMM' }}</span></div>
+        <div><span class="label">Time</span><span>{{ b.reservedFor | date:'h:mm a' }}</span></div>
+        <div><span class="label">Guests</span><span>{{ b.partySize }}</span></div>
+        <div><span class="label">Name</span><span>{{ b.customerName }}</span></div>
+      </div>
+
+      <div class="message" *ngIf="b.responseMessage">💬 {{ b.responseMessage }}</div>
+
+      <a class="btn-call" *ngIf="b.restaurantPhone" [href]="'tel:' + b.restaurantPhone">📞 Call {{ b.restaurantName }}</a>
+
+      <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <ng-container *ngIf="b.canCancel">
+        <button class="btn-cancel" *ngIf="!confirmCancel" (click)="confirmCancel = true">Cancel booking</button>
+        <div class="confirm" *ngIf="confirmCancel">
+          <p>Cancel your {{ b.status === 'Pending' ? 'request' : 'booking' }}?</p>
+          <div class="confirm-actions">
+            <button class="btn-keep" (click)="confirmCancel = false">Keep it</button>
+            <button class="btn-confirm-cancel" (click)="cancel()" [disabled]="cancelling">{{ cancelling ? 'Cancelling…' : 'Yes, cancel' }}</button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <p class="powered">Powered by <strong>TabVerse</strong></p>
+  </ng-container>
+</div>

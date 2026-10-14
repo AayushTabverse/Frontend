@@ -1,0 +1,72 @@
+<div class="wl-page">
+  <div class="wl-card" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="wl-card" *ngIf="!loading && notFound">
+    <div class="big-icon">🤔</div>
+    <h1>Restaurant not found</h1>
+    <p class="muted">Please ask the staff at the entrance to add you to the waitlist.</p>
+  </div>
+
+  <ng-container *ngIf="!loading && info">
+    <header class="wl-header">
+      <img *ngIf="info.logoUrl" [src]="info.logoUrl" alt="" class="logo" />
+      <h1>{{ info.restaurantName }}</h1>
+      <p class="muted">Join the waitlist</p>
+    </header>
+
+    <div class="wl-card" *ngIf="!info.selfCheckInEnabled">
+      <div class="big-icon">🙋</div>
+      <h2>Please check in with our staff</h2>
+      <p class="muted">Online check-in isn't available right now. Our host at the entrance will add you to the list.</p>
+    </div>
+
+    <div class="wl-card" *ngIf="info.selfCheckInEnabled">
+      <div class="queue-info">
+        <div>
+          <span class="queue-value">{{ info.partiesWaiting }}</span>
+          <span class="queue-label">{{ info.partiesWaiting === 1 ? 'party' : 'parties' }} ahead</span>
+        </div>
+        <div>
+          <span class="queue-value">{{ info.estimatedWaitMinutes === 0 ? 'Now' : '~' + info.estimatedWaitMinutes + 'm' }}</span>
+          <span class="queue-label">expected wait</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="wl-name">Your name</label>
+        <input id="wl-name" [(ngModel)]="name" placeholder="Name" maxlength="100" autocomplete="name"
+               [class.invalid]="submitted && !name.trim()" />
+        <span class="error" *ngIf="submitted && !name.trim()">Please enter your name</span>
+      </div>
+
+      <div class="field">
+        <label for="wl-mobile">Mobile (WhatsApp)</label>
+        <input id="wl-mobile" type="tel" [(ngModel)]="mobile" placeholder="10-digit mobile" maxlength="15"
+               autocomplete="tel" inputmode="tel" (keypress)="onlyNumbers($event)"
+               [class.invalid]="submitted && mobileInvalid" />
+        <span class="error" *ngIf="submitted && mobileInvalid">Please enter a valid mobile number</span>
+        <span class="hint">We'll message you when your table is ready.</span>
+      </div>
+
+      <div class="field">
+        <label>How many people?</label>
+        <div class="chips">
+          <button type="button" *ngFor="let n of partySizes" class="chip"
+                  [class.selected]="partySize === n" (click)="partySize = n">{{ n === 8 ? '8+' : n }}</button>
+        </div>
+        <input *ngIf="partySize >= 8" type="number" class="party-input" [(ngModel)]="partySize" min="8" max="30"
+               aria-label="Number of people" />
+      </div>
+
+      <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <button class="btn-join" (click)="join()" [disabled]="joining">
+        {{ joining ? 'Joining…' : 'Join waitlist' }}
+      </button>
+    </div>
+
+    <p class="powered">Powered by <strong>TabVerse</strong></p>
+  </ng-container>
+</div>

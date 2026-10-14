@@ -1,0 +1,281 @@
+<div class="page-header">
+  <h1>📅 Reservations</h1>
+  <div class="header-actions">
+    <button class="btn-outline" (click)="openSettings()">🌐 Online booking</button>
+    <button class="btn-primary" (click)="openNew()">+ New Reservation</button>
+  </div>
+</div>
+
+<div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+<div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+<!-- Tell the customer -->
+<div class="alert info" *ngIf="notifyPrompt">
+  <span *ngIf="notifyPrompt.kind === 'confirmed'">Send {{ notifyPrompt.reservation.customerName }} the confirmation?</span>
+  <span *ngIf="notifyPrompt.kind === 'rejected'">Let {{ notifyPrompt.reservation.customerName }} know?</span>
+  <div class="alert-actions">
+    <button class="btn-whatsapp" (click)="sendWhatsApp(notifyPrompt.reservation, notifyPrompt.kind)">💬 Send on WhatsApp</button>
+    <button class="btn-link" (click)="notifyPrompt = null">Skip</button>
+  </div>
+</div>
+
+<div class="loading-state" *ngIf="loading">Loading reservations...</div>
+
+<ng-container *ngIf="!loading">
+  <!-- Website requests -->
+  <section class="requests" *ngIf="pending.length > 0">
+    <h2>🌐 Booking requests <span class="count">{{ pending.length }}</span></h2>
+    <div class="res-card request" *ngFor="let r of pending">
+      <div class="res-time">
+        <span class="time">{{ r.reservedFor | date:'h:mm a' }}</span>
+        <span class="date">{{ r.reservedFor | date:'EEE d MMM' }}</span>
+      </div>
+      <div class="res-main">
+        <div class="res-title">
+          <span class="name">{{ r.customerName }}</span>
+          <span class="party">👥 {{ r.partySize }}</span>
+        </div>
+        <div class="res-meta">
+          <span>📱 {{ r.customerMobile }}</span>
+          <span *ngIf="r.customerEmail">✉️ {{ r.customerEmail }}</span>
+          <span>Requested {{ r.createdAt | date:'d MMM, h:mm a' }}</span>
+        </div>
+        <div class="res-notes" *ngIf="r.notes">📝 {{ r.notes }}</div>
+      </div>
+      <div class="res-actions">
+        <button class="btn-accept" (click)="openAccept(r)">✓ Accept</button>
+        <button class="btn-ghost danger" (click)="openReject(r)">✕ Decline</button>
+        <a class="btn-ghost" [href]="callLink(r)">📞 Call</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Week view -->
+  <div class="week-nav">
+    <div class="week-buttons">
+      <button class="btn-ghost" (click)="shiftWindow(-windowDays)" aria-label="Previous week">‹</button>
+      <button class="btn-ghost" (click)="goToday()">Today</button>
+      <button class="btn-ghost" (click)="shiftWindow(windowDays)" aria-label="Next week">›</button>
+      <input type="date" [(ngModel)]="startDate" (change)="onStartDateChange()" aria-label="Start date" />
+    </div>
+    <label class="show-closed">
+      <input type="checkbox" [(ngModel)]="showClosed" /> Show cancelled & past
+    </label>
+  </div>
+
+  <div class="empty-state" *ngIf="!hasAnyInWindow">
+    <div class="empty-icon">📅</div>
+    <p>No reservations this week.</p>
+    <button class="btn-primary" (click)="openNew()">+ New Reservation</button>
+  </div>
+
+  <ng-container *ngIf="hasAnyInWindow">
+    <section class="day" *ngFor="let g of dayGroups">
+      <ng-container *ngIf="g.reservations.length > 0">
+        <h3 class="day-title">{{ g.label }} <small *ngIf="g.guests">· {{ g.reservations.length }} bookings · {{ g.guests }} guests</small></h3>
+
+        <div class="res-card" *ngFor="let r of g.reservations"
+             [class.late]="isLate(r)" [class.soon]="isSoon(r)" [class.closed]="!['Confirmed','Seated'].includes(r.status)">
+          <div class="res-time">
+            <span class="time">{{ r.reservedFor | date:'h:mm a' }}</span>
+            <span class="date">{{ r.durationMinutes }} min</span>
+          </div>
+          <div class="res-main">
+            <div class="res-title">
+              <span class="name">{{ r.customerName }}</span>
+              <span class="party">👥 {{ r.partySize }}</span>
+              <span class="badge" [ngClass]="'status-' + (isLate(r) ? 'late' : r.status.toLowerCase())">{{ statusLabel(r) }}</span>
+              <span class="badge source-web" *ngIf="r.source === 'Website'">🌐 Website</span>
+            </div>
+            <div class="res-meta">
+              <span>📱 {{ r.customerMobile }}</span>
+              <span *ngIf="r.tables.length">🪑 {{ tableNames(r) }}<span class="merged-tag" *ngIf="r.tables.length > 1">merged</span></span>
+              <span *ngIf="!r.tables.length && r.status === 'Confirmed'" class="muted">No table assigned</span>
+            </div>
+            <div class="res-notes" *ngIf="r.notes">📝 {{ r.notes }}</div>
+            <div class="res-notes" *ngIf="r.responseMessage">💬 {{ r.responseMessage }}</div>
+          </div>
+
+          <div class="res-actions" *ngIf="r.status === 'Confirmed'">
+            <button class="btn-seat" (click)="openSeat(r)">✅ Arrived, seat</button>
+            <button class="btn-whatsapp" (click)="sendWhatsApp(r, 'reminder')" title="Send a reminder">💬</button>
+            <a class="btn-ghost" [href]="callLink(r)" title="Call">📞</a>
+            <button class="btn-ghost" (click)="openEdit(r)">✏️ Edit</button>
+            <button class="btn-ghost" *ngIf="isLate(r)" (click)="noShow(r)">🚫 No-show</button>
+            <button class="btn-ghost danger" (click)="cancel(r)">✕ Cancel</button>
+          </div>
+          <div class="res-actions" *ngIf="r.status === 'Seated'">
+            <span class="muted small">Tables free up when the bill is cleared.</span>
+          </div>
+        </div>
+      </ng-container>
+    </section>
+  </ng-container>
+</ng-container>
+
+<!-- New / edit reservation -->
+<div class="modal-overlay" *ngIf="showForm" (click)="showForm = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h2>{{ editingId ? 'Edit Reservation' : 'New Reservation' }}</h2>
+
+    <div class="form-row">
+      <div class="form-group mobile-group">
+        <label>Mobile <span class="req">*</span></label>
+        <input type="tel" [(ngModel)]="form.customerMobile" (input)="onMobileInput()" (keypress)="onlyNumbers($event)"
+               placeholder="10-digit mobile" maxlength="15" autocomplete="off" [class.invalid]="submitted && mobileInvalid" />
+        <span class="field-error" *ngIf="submitted && mobileInvalid">Enter a valid mobile number</span>
+        <div class="suggestions" *ngIf="customerSuggestions.length">
+          <button type="button" *ngFor="let c of customerSuggestions" (click)="pickCustomer(c)">
+            <strong>{{ c.customerName }}</strong> · {{ c.customerMobile }}
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Name <span class="req">*</span></label>
+        <input [(ngModel)]="form.customerName" placeholder="Customer name" maxlength="100"
+               [class.invalid]="submitted && !form.customerName.trim()" />
+        <span class="field-error" *ngIf="submitted && !form.customerName.trim()">Name is required</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>People <span class="req">*</span></label>
+      <div class="chip-row">
+        <button type="button" *ngFor="let n of partySizes" class="chip" [class.selected]="form.partySize === n" (click)="form.partySize = n">{{ n }}</button>
+        <input type="number" class="chip-input" [(ngModel)]="form.partySize" min="1" max="100" aria-label="Number of people" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date <span class="req">*</span></label>
+        <input type="date" [(ngModel)]="form.date" [class.invalid]="submitted && !form.date" />
+      </div>
+      <div class="form-group">
+        <label>Time <span class="req">*</span></label>
+        <input type="time" [(ngModel)]="form.time" step="900" [class.invalid]="submitted && !form.time" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Table blocked for</label>
+      <div class="chip-row">
+        <button type="button" *ngFor="let d of durations" class="chip" [class.selected]="form.durationMinutes === d" (click)="form.durationMinutes = d">
+          {{ d < 60 ? d + 'm' : (d / 60) + 'h' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tables (optional, pick several to merge)</label>
+      <div class="table-chips">
+        <button type="button" *ngFor="let t of formTables" class="table-chip"
+                [class.selected]="form.tableIds.includes(t.id)" (click)="toggleFormTable(t.id)">
+          {{ t.tableNumber }} <small>{{ t.capacity }}</small>
+        </button>
+      </div>
+      <small class="hint" *ngIf="form.tableIds.length">{{ formSeats }} seats
+        <span class="warn" *ngIf="formSeats < form.partySize"> · fewer than {{ form.partySize }} people</span></small>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Email (optional)</label>
+        <input type="email" [(ngModel)]="form.customerEmail" placeholder="name@example.com" maxlength="200" />
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <input [(ngModel)]="form.notes" placeholder="Birthday, window seat…" maxlength="500" />
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="showForm = false">Cancel</button>
+      <button class="btn-primary" (click)="save()" [disabled]="saving">{{ saving ? 'Saving...' : editingId ? 'Save' : 'Book table' }}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Accept request / seat arrived party -->
+<div class="modal-overlay" *ngIf="pickerMode && pickerReservation" (click)="closePicker()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h2 *ngIf="pickerMode === 'accept'">Accept {{ pickerReservation.customerName }}'s request</h2>
+    <h2 *ngIf="pickerMode === 'seat'">Seat {{ pickerReservation.customerName }}</h2>
+    <p class="sub">
+      {{ formatWhen(pickerReservation) }} · {{ pickerReservation.partySize }} people.
+      <ng-container *ngIf="pickerMode === 'accept'">Assign tables now or later (optional; pick several to merge).</ng-container>
+      <ng-container *ngIf="pickerMode === 'seat'">Pick the free table(s) they're sitting at. Several tables are merged into the first.</ng-container>
+    </p>
+
+    <div class="table-chips" *ngIf="pickerTables.length; else noTables">
+      <button type="button" *ngFor="let t of pickerTables" class="table-chip"
+              [class.selected]="pickerTableIds.includes(t.id)" (click)="togglePickerTable(t.id)">
+        {{ t.tableNumber }} <small>{{ t.capacity }}</small>
+        <span class="primary-tag" *ngIf="pickerMode === 'seat' && pickerTableIds[0] === t.id && pickerTableIds.length > 1">main</span>
+      </button>
+    </div>
+    <ng-template #noTables><p class="muted">No free tables right now.</p></ng-template>
+    <small class="hint" *ngIf="pickerTableIds.length">{{ pickerSeats }} seats
+      <span class="warn" *ngIf="pickerSeats < pickerReservation.partySize"> · fewer than {{ pickerReservation.partySize }} people</span></small>
+
+    <div class="form-group" *ngIf="pickerMode === 'accept'">
+      <label>Message to customer (optional)</label>
+      <input [(ngModel)]="pickerMessage" placeholder="e.g. We've saved you a window table!" maxlength="300" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closePicker()">Cancel</button>
+      <button class="btn-primary" (click)="confirmPicker()" [disabled]="pickerSaving || (pickerMode === 'seat' && !pickerTableIds.length)">
+        {{ pickerSaving ? 'Saving...' : pickerMode === 'accept' ? 'Confirm booking' : 'Seat party' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Decline -->
+<div class="modal-overlay" *ngIf="rejecting" (click)="rejecting = null">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h2>Decline {{ rejecting.customerName }}'s request</h2>
+    <p class="sub">{{ formatWhen(rejecting) }} · {{ rejecting.partySize }} people</p>
+    <div class="form-group">
+      <label>Reason (shown to the customer)</label>
+      <div class="chip-row reasons">
+        <button type="button" *ngFor="let reason of rejectReasons" class="chip" [class.selected]="rejectReason === reason" (click)="rejectReason = reason">{{ reason }}</button>
+      </div>
+      <input [(ngModel)]="rejectReason" maxlength="300" placeholder="Reason" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="rejecting = null">Back</button>
+      <button class="btn-danger" (click)="confirmReject()">Decline request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="modal-overlay" *ngIf="showSettings" (click)="showSettings = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h2>🌐 Online booking</h2>
+    <div class="loading-state" *ngIf="!settings">Loading...</div>
+    <ng-container *ngIf="settings">
+      <label class="toggle-row">
+        <span>
+          <strong>Take booking requests on your website</strong>
+          <small>A "Reserve a table" form appears on your restaurant website. Requests show up here for you to accept or decline.</small>
+        </span>
+        <input type="checkbox" [checked]="settings.onlineReservationsEnabled" [disabled]="settingsSaving"
+               (change)="saveSettings({ onlineReservationsEnabled: $any($event.target).checked })" />
+      </label>
+      <div class="setting-block">
+        <strong>Release no-shows after</strong>
+        <small>If a confirmed party hasn't arrived this long after their time, mark them as a no-show automatically.</small>
+        <div class="chip-row">
+          <button type="button" *ngFor="let m of graceOptions" class="chip" [class.selected]="settings.graceMinutes === m"
+                  [disabled]="settingsSaving" (click)="saveSettings({ graceMinutes: m })">{{ m === 0 ? 'Off' : m + ' min' }}</button>
+        </div>
+      </div>
+    </ng-container>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="showSettings = false">Close</button>
+    </div>
+  </div>
+</div>

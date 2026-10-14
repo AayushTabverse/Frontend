@@ -1,28 +1,20 @@
-.orders-panel {
-  font-family: 'Segoe UI', sans-serif;
-}
+@use 'ui';
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  h1 { margin: 0; font-size: 1.5rem; color: #1a1a2e; }
-}
+/* Live orders — layout from styles.scss, building blocks from styles/_ui.scss */
+
+.page-header { @include ui.page-header; }
 
 .order-counts {
   display: flex;
-  gap: 12px;
-
+  gap: 8px;
+  flex-wrap: wrap;
   .count {
+    @include ui.badge(neutral);
     padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-
-    &.pending { background: #fff3cd; color: #856404; }
-    &.preparing { background: #fde8c9; color: #7e4a00; }
-    &.ready { background: #d4edda; color: #155724; }
+    font-size: 0.82rem;
+    &.pending { @include ui.tone(warning); }
+    &.preparing { @include ui.tone(accent); }
+    &.ready { @include ui.tone(success); }
   }
 }
 
@@ -33,11 +25,9 @@
 }
 
 .order-card {
-  background: white;
-  border-radius: 10px;
-  border-left: 4px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  padding: 16px;
+  @include ui.card(16px);
+  // Status stripe; colour comes from getStatusColor() via [style.border-left-color]
+  border-left: 4px solid var(--ui-border-strong);
 
   .order-header {
     display: flex;
@@ -45,34 +35,24 @@
     gap: 8px;
     margin-bottom: 12px;
 
-    strong { font-size: 0.95rem; }
+    strong { font-size: 0.95rem; color: var(--ui-text); }
+    .table-badge { @include ui.badge(neutral); }
 
-    .table-badge {
-      background: #f0f0f0;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-    }
-
+    // Background is the status colour bound inline from the component
     .status {
+      @include ui.badge(neutral);
       margin-left: auto;
-      color: white;
-      padding: 2px 10px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
+      color: #fff;
     }
   }
 
   .order-items {
     .order-item-row {
-      padding: 6px 0;
-      font-size: 0.9rem;
-      display: flex;
+      @include ui.list-row;
       justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #f8f8f8;
       gap: 8px;
+      padding: 7px 0;
+      font-size: 0.9rem;
 
       .item-info {
         display: flex;
@@ -80,8 +60,7 @@
         gap: 2px;
         flex: 1;
         min-width: 0;
-
-        .notes { color: #666; font-size: 0.8rem; }
+        .notes { color: var(--ui-text-2); font-size: 0.8rem; }
       }
 
       .item-actions {
@@ -90,31 +69,15 @@
         gap: 8px;
         flex-shrink: 0;
 
-        .item-price {
-          font-size: 0.82rem;
-          color: #555;
-          font-weight: 500;
-        }
+        .item-price { font-size: 0.82rem; color: var(--ui-text-2); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
 
         .cancel-item-btn {
+          @include ui.btn-danger;
           width: 24px;
           height: 24px;
-          border: none;
+          padding: 0;
           border-radius: 50%;
-          background: #fee2e2;
-          color: #dc2626;
           font-size: 0.7rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-          line-height: 1;
-
-          &:hover {
-            background: #dc2626;
-            color: white;
-          }
         }
 
         .cancel-confirm {
@@ -123,46 +86,21 @@
           gap: 6px;
           animation: fadeIn 0.15s ease;
 
-          .cancel-msg {
-            font-size: 0.75rem;
-            color: #dc2626;
-            white-space: nowrap;
-          }
-
+          .cancel-msg { font-size: 0.75rem; color: var(--ui-danger-text); white-space: nowrap; }
           .cancel-yes {
-            padding: 2px 10px;
-            border: none;
-            border-radius: 4px;
-            background: #dc2626;
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-
-            &:hover { background: #b91c1c; }
-            &:disabled { opacity: 0.6; cursor: not-allowed; }
+            @include ui.btn-base;
+            height: 26px; padding: 0 10px; font-size: 0.75rem; border-radius: 6px;
+            background: var(--ui-danger);
+            color: #fff;
+            &:hover:not(:disabled) { filter: brightness(0.92); }
           }
-
           .cancel-no {
-            padding: 2px 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            background: white;
-            color: #374151;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-
-            &:hover { background: #f3f4f6; }
+            @include ui.btn-secondary;
+            height: 26px; padding: 0 10px; font-size: 0.75rem; border-radius: 6px;
           }
         }
       }
     }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateX(6px); }
-    to { opacity: 1; transform: translateX(0); }
   }
 
   .order-footer {
@@ -170,40 +108,24 @@
     align-items: center;
     gap: 12px;
     margin-top: 12px;
-    padding-top: 8px;
-    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+    border-top: 1px solid var(--ui-border);
 
-    .total { font-weight: 700; }
-    .time { font-size: 0.8rem; color: #999; }
-
-    .advance-btn {
-      margin-left: auto;
-      padding: 6px 14px;
-      background: #1a1a2e;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-
-      &:hover { background: #16213e; }
-    }
+    .total { font-weight: 700; color: var(--ui-text); font-variant-numeric: tabular-nums; }
+    .time { font-size: 0.8rem; color: var(--ui-text-3); }
+    .advance-btn { @include ui.btn-dark; @include ui.btn-sm; margin-left: auto; }
   }
 }
 
-.empty-state, .loading-state {
-  text-align: center;
-  padding: 40px;
-  color: #999;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to { opacity: 1; transform: translateX(0); }
 }
+
+.empty-state, .loading-state { @include ui.empty-state; }
+.empty-state p { margin: 0; }
 
 @media (max-width: 768px) {
-  .orders-grid { grid-template-columns: 1fr !important; }
+  .orders-grid { grid-template-columns: 1fr; }
   .order-card .order-header { flex-wrap: wrap; gap: 6px; }
-  .status-controls { flex-direction: column; gap: 6px; select, button { width: 100%; } }
-}
-
-@media (max-width: 480px) {
-  .tab-content { padding: 12px; }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -9,7 +9,6 @@ import { AuthService } from '../services/auth.service';
 import { SignalRService } from '../services/signalr.service';
 import { ThemeService } from '../services/theme.service';
 import { SettingsService } from '../services/settings.service';
-import { SubscriptionService } from '../services/subscription.service';
 import {
   TableResponse, MenuCategory, MenuItem,
   CreateOrderRequest, CreateOrderItemRequest,
@@ -19,8 +18,9 @@ import {
 import { DueService } from '../services/due.service';
 import { CustomerService, CustomerSearchResult } from '../services/customer.service';
 import { Subscription, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { NavItem, navItemsFor } from '../shared/permissions';
+import { debounceTime, distinctUntilChanged, switchMap, timeout } from 'rxjs/operators';
+import { LucideAngularModule, Menu } from 'lucide-angular';
+import { SidebarComponent } from '../shared/components/sidebar/sidebar.component';
 
 interface WaiterCartItem {
   menuItem: MenuItem;
@@ -38,7 +38,7 @@ interface MergedBillItem {
 @Component({
   selector: 'app-waiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule, SidebarComponent],
   templateUrl: './waiter-dashboard.component.html',
   styleUrl: './waiter-dashboard.component.scss'
 })
@@ -74,6 +74,8 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   clearing = false;
   restaurantName = '';
   upiQrCodeUrl = '';
+  /** When set, each bill prints a UPI QR with its amount filled in (else the uploaded static QR). */
+  upiId = '';
   printerWidth = 'standard';
   directPrint = false;
   cgstPercent = 2.5;
@@ -104,12 +106,9 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   canFilterByWaiter = false;
   canSettleBill = false;
   canQuickAdd = false;
-  navItems: NavItem[] = [];
-  panelTitle = 'Admin';
-  sidebarCollapsed = false;
+  sidebarCollapsed = SidebarComponent.savedCollapsed();
   mobileSidebarOpen = false;
-  hasPremium = true;
-  private subService = inject(SubscriptionService);
+  readonly MenuIcon = Menu;
 
   // Table assignment
   showAllTables = false;
@@ -122,6 +121,12 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   private subs: Subscription[] = [];
 
   @ViewChild('tableNavScroll') tableNavScroll?: ElementRef<HTMLDivElement>;
+
+  // Merge / transfer
+  tableAction: 'merge' | 'transfer' | null = null;
+  mergeSelection: string[] = [];
+  transferTargetId = '';
+  tableActionSaving = false;
 
   // Quick-add item
   showQuickAdd = false;
@@ -154,10 +159,6 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.subService.getStatus().subscribe(s => {
-      this.hasPremium = s.isTrialActive || s.plan === 'Premium';
-      this.navItems = navItemsFor(this.authService.getRole(), this.hasPremium);
-    });
     this.authService.currentUser$.subscribe(user => {
       this.userName = user?.fullName || 'Staff';
       this.userId = user?.userId || '';
@@ -167,8 +168,6 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.canFilterByWaiter = this.authService.can('filterTablesByWaiter');
     this.canSettleBill = this.authService.can('settleBill');
     this.canQuickAdd = this.authService.can('quickAddMenuItem');
-    this.navItems = navItemsFor(this.authService.getRole(), this.hasPremium);
-    this.panelTitle = this.authService.isAdmin() ? 'Admin' : (this.authService.getRole() ?? 'Admin');
     this.loadTables();
     this.loadOrders();
     this.loadRestaurantName();
@@ -251,12 +250,27 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   loadTables(): void {
     this.loading = true;
     this.tableService.getTables().subscribe({
-      next: (tables) => { this.tables = tables; this.loading = false; },
+      next: (tables) => {
+        this.tables = tables;
+        this.loading = false;
+        // Keep the open table's merge/reservation info current
+        if (this.selectedTable) {
+          const fresh = tables.find(t => t.id === this.selectedTable!.id);
+          if (fresh?.mergedIntoTableId) {
+            // It was merged into another table while open → follow the bill
+            const main = tables.find(t => t.id === fresh.mergedIntoTableId);
+            if (main) this.switchTable(main);
+          } else if (fresh) {
+            this.selectedTable = fresh;
+          }
+        }
+      },
       error: () => this.loading = false
     });
   }
 
   selectTable(table: TableResponse): void {
+    table = this.mainTableOf(table);
     this.selectedTable = table;
     this.cart = [];
     this.specialInstructions = '';
@@ -267,6 +281,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   }
 
   switchTable(table: TableResponse): void {
+    table = this.mainTableOf(table);
     if (this.selectedTable?.id === table.id) return;
     this.selectedTable = table;
     this.cart = [];
@@ -281,6 +296,123 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     if (this.categories.length === 0) {
       this.loadMenu();
     }
+  }
+
+  /** A merged table opens its main table, which holds the bill. */
+  private mainTableOf(table: TableResponse): TableResponse {
+    return (table.mergedIntoTableId && this.tables.find(t => t.id === table.mergedIntoTableId)) || table;
+  }
+
+  // ── Merge & transfer ──
+
+  /** Tables that can be merged into the open table (running orders on them move to this bill). */
+  get mergeCandidates(): TableResponse[] {
+    const sel = this.selectedTable;
+    if (!sel) return [];
+    return this.tables.filter(t =>
+      t.id !== sel.id && t.isActive && !t.mergedIntoTableId && !t.mergedTableNumbers?.length
+      && (!t.waitlistEntryId || t.waitlistEntryId === sel.waitlistEntryId));
+  }
+
+  /** Free tables the open table's party can move to. */
+  get transferCandidates(): TableResponse[] {
+    const sel = this.selectedTable;
+    if (!sel) return [];
+    return this.tables.filter(t =>
+      t.id !== sel.id && t.isActive && !t.isOccupied && !t.mergedIntoTableId && !t.mergedTableNumbers?.length && !t.waitlistEntryId);
+  }
+
+  get canTransfer(): boolean {
+    const sel = this.selectedTable;
+    return !!sel && ((this.tableSession?.activeOrderCount ?? 0) > 0 || !!sel.waitlistEntryId || !!sel.mergedTableNumbers?.length);
+  }
+
+  get mergeSeats(): number {
+    const extra = this.tables.filter(t => this.mergeSelection.includes(t.id)).reduce((sum, t) => sum + t.capacity, 0);
+    return (this.selectedTable?.combinedCapacity ?? this.selectedTable?.capacity ?? 0) + extra;
+  }
+
+  get mergeMovesOrders(): boolean {
+    return this.tables.some(t => this.mergeSelection.includes(t.id) && t.isOccupied);
+  }
+
+  openTableAction(action: 'merge' | 'transfer'): void {
+    this.tableAction = action;
+    this.mergeSelection = [];
+    this.transferTargetId = '';
+  }
+
+  closeTableAction(): void {
+    this.tableAction = null;
+  }
+
+  toggleMergeTable(id: string): void {
+    const i = this.mergeSelection.indexOf(id);
+    if (i >= 0) this.mergeSelection.splice(i, 1);
+    else this.mergeSelection.push(id);
+  }
+
+  confirmMerge(): void {
+    const sel = this.selectedTable;
+    if (!sel || this.mergeSelection.length === 0) return;
+    this.tableActionSaving = true;
+    this.tableService.mergeTables(sel.id, this.mergeSelection).subscribe({
+      next: (main) => {
+        this.tableActionSaving = false;
+        this.tableAction = null;
+        this.selectedTable = main;
+        this.flashSuccess(`Merged ${main.mergedTableNumbers?.join(', ')} into Table ${main.tableNumber}`);
+        this.loadTables();
+        this.loadTableSession(main.id);
+      },
+      error: (err) => {
+        this.tableActionSaving = false;
+        this.flashError(err.error?.message || 'Could not merge tables.');
+      }
+    });
+  }
+
+  unmergeAll(): void {
+    const sel = this.selectedTable;
+    if (!sel?.mergedTableNumbers?.length) return;
+    if (!confirm(`Un-merge ${sel.mergedTableNumbers.join(', ')} from Table ${sel.tableNumber}? The bill stays on ${sel.tableNumber}.`)) return;
+    this.tableService.unmerge(sel.id).subscribe({
+      next: () => { this.flashSuccess('Tables un-merged'); this.loadTables(); },
+      error: (err) => this.flashError(err.error?.message || 'Could not un-merge.')
+    });
+  }
+
+  confirmTransfer(): void {
+    const sel = this.selectedTable;
+    const target = this.tables.find(t => t.id === this.transferTargetId);
+    if (!sel || !target) return;
+    this.tableActionSaving = true;
+    this.tableService.transfer(sel.id, target.id).subscribe({
+      next: (moved) => {
+        this.tableActionSaving = false;
+        this.tableAction = null;
+        this.flashSuccess(`Moved Table ${sel.tableNumber} → ${moved.tableNumber}`);
+        this.tables = this.tables.map(t => t.id === moved.id ? moved : t);
+        this.switchTable(moved);
+        this.loadTables();
+      },
+      error: (err) => {
+        this.tableActionSaving = false;
+        this.flashError(err.error?.message || 'Could not transfer the table.');
+      }
+    });
+  }
+
+  private flashSuccess(message: string): void {
+    this.errorMessage = '';
+    this.successMessage = message;
+    setTimeout(() => this.successMessage = '', 4000);
+  }
+
+  private flashError(message: string): void {
+    this.successMessage = '';
+    this.errorMessage = message;
+    setTimeout(() => this.errorMessage = '', 5000);
   }
 
   scrollTableNav(direction: 'left' | 'right'): void {
@@ -502,6 +634,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
       next: (s) => {
         this.restaurantName = s.name || 'Restaurant';
         this.upiQrCodeUrl = s.upiQrCodeUrl || '';
+        this.upiId = s.upiId || '';
         this.printerWidth = s.printerWidth || 'standard';
         this.directPrint = s.directPrint || false;
         this.cgstPercent = s.cgstPercent ?? 2.5;
@@ -517,8 +650,9 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     if (!this.selectedTable || !this.tableSession) return;
     this.billSummary = this.tableSession;
     this.mergedBillItems = this.computeMergedItems(this.tableSession);
-    this.billCustomerName = '';
-    this.billCustomerMobile = '';
+    // Pre-fill the customer seated here from the waitlist, if any
+    this.billCustomerName = this.selectedTable.waitlistCustomerName || '';
+    this.billCustomerMobile = this.selectedTable.waitlistCustomerMobile || '';
     this.billDiscountAmount = this.tableSession.grandDiscount || 0;
     this.billPaidAmount = 0;
     this.billPaymentMode = 'full';
@@ -681,8 +815,38 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     return Math.max(0, finalTotal - (this.billPaidAmount || 0));
   }
 
-  /** Generate a print-friendly bill and trigger print/download */
+  /** Amount the customer pays now: the whole bill, or the part paid today when the rest goes on udhaar. */
+  private billAmountToPay(): number {
+    return this.billPaymentMode === 'full' ? this.getBillFinalTotal() : (this.billPaidAmount || 0);
+  }
+
+  /**
+   * Print the bill. With a UPI ID set, first fetches a QR for this bill's amount
+   * (falls back to the uploaded static QR if that fails, e.g. offline).
+   */
   printBill(): void {
+    if (!this.billSummary) return;
+    const amount = this.billAmountToPay();
+    if (!this.upiId) {
+      this.renderBill(this.upiQrCodeUrl, 0);
+      return;
+    }
+
+    const note = `${this.restaurantName} T${this.billSummary.tableNumber}`;
+    this.settingsService.getUpiQrBlob(amount, note).pipe(timeout(4000)).subscribe({
+      next: (blob) => {
+        // Data URL so the QR survives in the print window / iframe
+        const reader = new FileReader();
+        reader.onload = () => this.renderBill(reader.result as string, amount);
+        reader.onerror = () => this.renderBill(this.upiQrCodeUrl, 0);
+        reader.readAsDataURL(blob);
+      },
+      error: () => this.renderBill(this.upiQrCodeUrl, 0)
+    });
+  }
+
+  /** Build the print-friendly bill and print it. upiAmount > 0 means the QR has that amount filled in. */
+  private renderBill(upiQrSrc: string, upiAmount: number): void {
     if (!this.billSummary) return;
 
     const items = this.mergedBillItems;
@@ -704,11 +868,12 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
       `<tr><td>${i.itemName}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">₹${i.unitPrice.toFixed(0)}</td><td style="text-align:right">₹${i.totalPrice.toFixed(0)}</td></tr>`
     ).join('');
 
-    const upiSection = this.upiQrCodeUrl ? `
+    const upiSection = upiQrSrc ? `
       <div class="upi-section">
         <div class="upi-divider"></div>
-        <p class="upi-label">Scan to Pay via UPI</p>
-        <img src="${this.upiQrCodeUrl}" alt="UPI QR" class="upi-qr" />
+        <p class="upi-label">${upiAmount > 0 ? 'Scan to Pay ₹' + upiAmount.toFixed(0) + ' via UPI' : 'Scan to Pay via UPI'}</p>
+        <img src="${upiQrSrc}" alt="UPI QR" class="upi-qr" />
+        ${upiAmount > 0 ? `<p class="upi-sub">Amount is filled in automatically</p>` : ''}
       </div>` : '';
 
     const html = `
@@ -729,6 +894,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
         .upi-section { text-align: center; margin-top: ${isThermal ? '8px' : '16px'}; padding-top: ${isThermal ? '6px' : '12px'}; }
         .upi-divider { border-top: 1px dashed #ccc; margin-bottom: ${isThermal ? '6px' : '10px'}; }
         .upi-label { font-size: ${isThermal ? '9px' : '11px'}; font-weight: 700; color: #555; margin-bottom: ${isThermal ? '4px' : '8px'}; text-transform: uppercase; letter-spacing: 0.5px; }
+        .upi-sub { font-size: ${isThermal ? '8px' : '10px'}; color: #888; margin-top: ${isThermal ? '2px' : '4px'}; }
         .upi-qr { width: ${isThermal ? '120px' : '160px'}; height: ${isThermal ? '120px' : '160px'}; object-fit: contain; }
         .footer { text-align: center; margin-top: ${isThermal ? '8px' : '20px'}; padding-top: ${isThermal ? '6px' : '12px'}; border-top: 1px dashed #ccc; font-size: ${isThermal ? '8px' : '12px'}; color: #999; }
         .footer .brand-name { font-weight: 700; background: linear-gradient(90deg, #e94560, #0f3460); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -852,6 +1018,13 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
         }),
         this.signalR.waiterCallDismissed$.subscribe(() => {
           this.loadTables();
+        }),
+        this.signalR.waitlistUpdated$.subscribe(() => {
+          this.loadTables();
+        }),
+        this.signalR.tablesChanged$.subscribe(() => {
+          this.loadTables();
+          if (this.selectedTable) this.loadTableSession(this.selectedTable.id);
         }),
         this.signalR.tableCleared$.subscribe((data) => {
           this.loadTables();

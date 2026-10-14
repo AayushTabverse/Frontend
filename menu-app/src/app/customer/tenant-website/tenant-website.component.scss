@@ -1368,3 +1368,38 @@
   .tw-section-title { font-size: 1.8rem; }
   .tw-btn { padding: 14px 28px; font-size: 0.9rem; }
 }
+
+// ═══════ TABLE BOOKING ═══════
+.tw-reserve-form {
+  max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px;
+  background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+.tw-field {
+  display: flex; flex-direction: column; gap: 6px;
+  &.tw-field-wide { grid-column: 1 / -1; }
+  label { font-weight: 600; font-size: 0.9rem; color: #333; }
+  input {
+    padding: 12px 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; font-family: inherit; color: #222; background: #fff;
+    &:focus { outline: none; border-color: var(--tw-primary); }
+    &.invalid { border-color: #dc3545; }
+  }
+}
+.tw-field-error { color: #dc3545; font-size: 0.8rem; }
+.tw-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.tw-chip {
+  min-width: 48px; padding: 10px 12px; border-radius: 10px; border: 1px solid #ddd; background: #fff; cursor: pointer;
+  font-weight: 700; font-size: 1rem; color: #333;
+  &.selected { background: var(--tw-primary); border-color: var(--tw-primary); color: #fff; }
+}
+.tw-field .tw-party-input { width: 110px; margin-top: 4px; }
+.tw-reserve-error { grid-column: 1 / -1; background: #f8d7da; color: #721c24; padding: 10px 14px; border-radius: 10px; font-size: 0.9rem; }
+.tw-reserve-footer {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  p { margin: 0; color: #777; font-size: 0.85rem; flex: 1; min-width: 200px; }
+  .tw-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+.tw-cta-link { cursor: pointer; text-decoration: underline; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .tw-reserve-form { grid-template-columns: 1fr; padding: 20px 16px; }
+}

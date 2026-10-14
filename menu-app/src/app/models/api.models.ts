@@ -259,12 +259,186 @@ export interface TableResponse {
   qrData?: string;
   assignedWaiterIds?: string[];
   assignedWaiterNames?: string[];
+  // Set while a waitlist party is seated here
+  waitlistEntryId?: string;
+  waitlistCustomerName?: string;
+  waitlistCustomerMobile?: string;
+  waitlistPartySize?: number;
+  isPrimaryWaitlistTable?: boolean;
+  mergedWithTableNumbers?: string[];
+  /** Set when merged into another table (the main table holds the bill). */
+  mergedIntoTableId?: string;
+  mergedIntoTableNumber?: string;
+  /** On a main table: tables merged into it. */
+  mergedTableNumbers?: string[];
+  /** Seats including merged tables. */
+  combinedCapacity: number;
+  /** Confirmed booking starting within the hour (or running late). */
+  reservationId?: string;
+  reservationCustomerName?: string;
+  reservationPartySize?: number;
+  reservationTime?: string;
 }
 
 export interface WaiterAssignmentResponse {
   waiterId: string;
   waiterName: string;
   assignedTableIds: string[];
+}
+
+// ── Waitlist ──
+export type WaitlistStatus = 'Waiting' | 'Notified' | 'Seated' | 'Completed' | 'Cancelled' | 'NoShow';
+
+export interface WaitlistTableInfo {
+  tableId: string;
+  tableNumber: string;
+  capacity: number;
+  isPrimary: boolean;
+}
+
+export interface WaitlistEntryResponse {
+  id: string;
+  tokenNumber: number;
+  customerName: string;
+  customerMobile?: string;
+  partySize: number;
+  notes?: string;
+  quotedWaitMinutes?: number;
+  status: WaitlistStatus;
+  source: 'Staff' | 'SelfCheckIn' | 'Reservation';
+  /** Estimated minutes until a table, for parties still waiting. */
+  estimatedWaitMinutes?: number;
+  createdAt: string;
+  notifiedAt?: string;
+  seatedAt?: string;
+  closedAt?: string;
+  tables: WaitlistTableInfo[];
+}
+
+export interface WaitlistEntryRequest {
+  customerName: string;
+  customerMobile?: string;
+  partySize: number;
+  notes?: string;
+  quotedWaitMinutes?: number;
+}
+
+export interface WaitlistStatsResponse {
+  waiting: number;
+  peopleWaiting: number;
+  seatedToday: number;
+  cancelledToday: number;
+  noShowToday: number;
+  averageWaitMinutesToday?: number;
+  estimatedWaitForNewParty: number;
+}
+
+export interface WaitlistSettings {
+  selfCheckInEnabled: boolean;
+  noShowMinutes: number;
+}
+
+export interface WaitlistAnalytics {
+  from: string;
+  to: string;
+  totalParties: number;
+  totalGuests: number;
+  seated: number;
+  cancelled: number;
+  noShows: number;
+  selfCheckIns: number;
+  averageWaitMinutes?: number;
+  medianWaitMinutes?: number;
+  noShowRate: number;
+  walkAwayRate: number;
+  busiestHour?: number;
+  byHour: { hour: number; parties: number; averageWaitMinutes?: number }[];
+  byPartySize: { label: string; parties: number; seated: number; averageWaitMinutes?: number }[];
+  byDay: { date: string; parties: number; seated: number; averageWaitMinutes?: number }[];
+}
+
+export interface PublicWaitlistInfo {
+  restaurantName: string;
+  logoUrl?: string;
+  selfCheckInEnabled: boolean;
+  partiesWaiting: number;
+  estimatedWaitMinutes: number;
+}
+
+export interface PublicWaitlistStatus {
+  id: string;
+  tenantId: string;
+  restaurantName: string;
+  logoUrl?: string;
+  tokenNumber: number;
+  customerName: string;
+  partySize: number;
+  status: WaitlistStatus;
+  position?: number;
+  estimatedWaitMinutes?: number;
+  createdAt: string;
+  notifiedAt?: string;
+  tableNumbers: string[];
+}
+
+// ── Reservations ──
+export type ReservationStatus = 'Pending' | 'Confirmed' | 'Rejected' | 'Cancelled' | 'Seated' | 'Completed' | 'NoShow';
+
+export interface ReservationResponse {
+  id: string;
+  customerName: string;
+  customerMobile: string;
+  customerEmail?: string;
+  partySize: number;
+  reservedFor: string;
+  durationMinutes: number;
+  notes?: string;
+  status: ReservationStatus;
+  source: 'Staff' | 'Website';
+  responseMessage?: string;
+  createdAt: string;
+  respondedAt?: string;
+  seatedAt?: string;
+  closedAt?: string;
+  tables: { tableId: string; tableNumber: string; capacity: number }[];
+}
+
+export interface ReservationRequest {
+  customerName: string;
+  customerMobile: string;
+  customerEmail?: string;
+  partySize: number;
+  /** ISO 8601 (UTC). */
+  reservedFor: string;
+  durationMinutes: number;
+  notes?: string;
+  tableIds?: string[];
+}
+
+export interface ReservationSettings {
+  onlineReservationsEnabled: boolean;
+  graceMinutes: number;
+}
+
+export interface PublicReservationInfo {
+  restaurantName: string;
+  logoUrl?: string;
+  onlineReservationsEnabled: boolean;
+  phone?: string;
+}
+
+export interface PublicReservationStatus {
+  id: string;
+  tenantId: string;
+  restaurantName: string;
+  logoUrl?: string;
+  restaurantPhone?: string;
+  customerName: string;
+  partySize: number;
+  reservedFor: string;
+  status: ReservationStatus;
+  responseMessage?: string;
+  canCancel: boolean;
 }
 
 // ── Analytics ──
@@ -312,6 +486,9 @@ export interface BusinessSettings {
   googleMapsUrl?: string;
   currencyCode?: string;
   upiQrCodeUrl?: string;
+  /** UPI ID (VPA). When set, bills print a QR with the bill amount filled in. */
+  upiId?: string;
+  upiPayeeName?: string;
   printerWidth?: string;
   directPrint?: boolean;
   cgstPercent?: number;

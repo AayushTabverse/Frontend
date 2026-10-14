@@ -1,633 +1,379 @@
+@use 'ui';
+
+/* Subscription — standalone route (outside .admin-layout), building blocks from styles/_ui.scss */
+
+// Page wrapper: same soft gradient as `.admin-layout::before` (styles.scss), since this route
+// does not render inside the admin layout.
 .subscription-page {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
-  background: var(--bg-primary, #f8fafc);
-  color: var(--text-primary, #1e293b);
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 0% 0%, rgba(233, 69, 96, 0.13), transparent 38%),
+      radial-gradient(circle at 18% 92%, rgba(99, 102, 241, 0.11), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.07), transparent 35%),
+      var(--bg-primary, #f5f5f5);
+  }
 }
 
+:host-context(body.dark-mode) .subscription-page::before {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(233, 69, 96, 0.16), transparent 40%),
+    radial-gradient(circle at 18% 95%, rgba(99, 102, 241, 0.16), transparent 42%),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.08), transparent 35%),
+    #0e0e18;
+}
+
+// ── Sticky header (floating → glass) ──
 .sub-header {
+  @include ui.glass(0);
+  border-width: 0 0 1px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background: var(--bg-card, #fff);
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  padding: 12px 32px;
   position: sticky;
   top: 0;
   z-index: 10;
 
-  .brand {
-    font-size: 1.4rem;
-    font-weight: 700;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .user-name {
-    font-weight: 500;
-    color: var(--text-secondary, #64748b);
-  }
+  .brand { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ui-text); }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .user-name { font-weight: 500; font-size: 0.875rem; color: var(--ui-text-2); }
 }
 
-.btn-outline {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-primary, #1e293b);
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s;
+// ── Buttons ──
+.btn-outline { @include ui.btn-secondary; }
+.btn-primary, .btn-change { @include ui.btn-primary; }
+.btn-cancel { @include ui.btn-danger; }
+.dark-toggle { @include ui.btn-icon; font-size: 1.1rem; }
 
-  &:hover {
-    background: var(--bg-hover, #f1f5f9);
-  }
-}
-
-.btn-primary {
-  padding: 0.75rem 1.5rem;
-  background: #6366f1;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #4f46e5;
-  }
-}
-
-.dark-toggle {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem;
-}
-
-// Loading
+// ── Loading ──
 .loading-state {
+  @include ui.empty-state;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  gap: 1rem;
+  gap: 12px;
+
+  p { margin: 0; }
 
   .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--border-color, #e2e8f0);
-    border-top: 4px solid #6366f1;
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--ui-border-strong);
+    border-top-color: var(--ui-accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .sub-content {
   max-width: 900px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 32px 24px;
 }
 
-// Banners
+// ── Banners ──
 .trial-banner, .expired-banner, .active-banner, .upgrade-banner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  @include ui.alert(info);
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: var(--ui-radius-lg);
+  margin-bottom: 24px;
+
+  .trial-icon, .expired-icon, .active-icon, .upgrade-icon { font-size: 1.8rem; line-height: 1; }
+  > div:nth-child(2) { flex: 1; min-width: 0; }
+  h3 { margin: 0; font-size: 1rem; font-weight: 700; color: inherit; }
+  p { margin: 4px 0 0; color: inherit; opacity: 0.9; }
+  .btn-primary { flex-shrink: 0; }
 }
+.expired-banner { @include ui.tone(danger); }
+.active-banner { @include ui.tone(success); }
+.upgrade-banner { @include ui.tone(warning); }
 
-.trial-banner {
-  background: linear-gradient(135deg, #dbeafe, #ede9fe);
-  border: 1px solid #93c5fd;
-
-  .trial-icon { font-size: 2rem; }
-  h3 { margin: 0; color: #3730a3; }
-  p { margin: 0.25rem 0 0; color: #4338ca; }
-}
-
-.expired-banner {
-  background: linear-gradient(135deg, #fef2f2, #fff7ed);
-  border: 1px solid #fca5a5;
-
-  .expired-icon { font-size: 2rem; }
-  h3 { margin: 0; color: #991b1b; }
-  p { margin: 0.25rem 0 0; color: #b91c1c; }
-}
-
-.active-banner {
-  background: linear-gradient(135deg, #dcfce7, #d1fae5);
-  border: 1px solid #86efac;
-
-  .active-icon { font-size: 2rem; }
-  h3 { margin: 0; color: #166534; }
-  p { margin: 0.25rem 0 0; color: #15803d; }
-}
-
-.upgrade-banner {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  border: 1px solid #fbbf24;
-
-  .upgrade-icon { font-size: 2rem; }
-  h3 { margin: 0; color: #92400e; }
-  p { margin: 0.25rem 0 0; color: #a16207; }
-}
-
-// Alerts
+// ── Alerts ──
 .alert {
-  padding: 0.875rem 1.25rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  @include ui.alert(info);
+  margin-bottom: 16px;
   font-weight: 500;
-
-  &.success {
-    background: #dcfce7;
-    border: 1px solid #86efac;
-    color: #166534;
-  }
-
-  &.error {
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #991b1b;
-  }
+  &.success { @include ui.tone(success); }
+  &.error { @include ui.tone(danger); }
 }
 
-// Plans Header
+// ── Plans header & cycle toggle ──
 .plans-header {
   text-align: center;
-  margin-bottom: 1.5rem;
-
-  h2 {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-  }
+  margin-bottom: 16px;
+  h2 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ui-text); }
 }
 
 .cycle-toggle-wrap {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 28px;
 }
 
 .cycle-toggle {
-  display: inline-flex;
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 10px;
-  overflow: hidden;
+  @include ui.tabs;
 
-  button {
-    padding: 0.625rem 1.5rem;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.9rem;
-    color: var(--text-secondary, #64748b);
-    transition: all 0.2s;
+  button { @include ui.tab; }
 
-    &.active {
-      background: #6366f1;
-      color: #fff;
-    }
-  }
-
-  .save-badge {
-    display: inline-block;
-    background: #fbbf24;
-    color: #000;
-    font-size: 0.7rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 4px;
-    margin-left: 0.3rem;
-    font-weight: 700;
-  }
+  .save-badge { @include ui.badge(success); padding: 1px 7px; }
 }
 
-// Plan Cards
+// ── Plan cards ──
 .plans-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 1.5rem;
+  gap: 16px;
 }
 
 .plan-card {
-  background: var(--bg-card, #fff);
-  border: 2px solid var(--border-color, #e2e8f0);
-  border-radius: 16px;
-  padding: 2rem;
+  @include ui.card(28px);
   position: relative;
-  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  &:hover { transform: translateY(-1px); box-shadow: var(--ui-shadow-lg), var(--ui-highlight); }
+
+  // Recommended / current plan: accent border, no heavy coloured block
+  &.premium, &.current {
+    border-color: var(--ui-accent);
+    box-shadow: 0 0 0 1px var(--ui-accent), var(--ui-shadow), var(--ui-highlight);
   }
 
-  &.premium {
-    border-color: #6366f1;
-    background: linear-gradient(to bottom, var(--bg-card, #fff), var(--bg-primary, #f8fafc));
-  }
-
-  &.current {
-    border-color: #22c55e;
-  }
+  .btn-subscribe { margin-top: auto; }
 }
 
 .plan-badge {
+  @include ui.badge(accent);
   position: absolute;
-  top: -12px;
+  top: -11px;
   right: 20px;
-  padding: 0.3rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: #22c55e;
-  color: #fff;
+  border: 1px solid var(--ui-accent);
+  background: var(--ui-surface-solid);
+  box-shadow: inset 0 0 0 100px var(--ui-accent-soft);
 
-  &.recommended {
-    background: #6366f1;
-    right: auto;
-    left: 20px;
-  }
+  &.recommended { right: auto; left: 20px; }
 }
 
 .plan-name {
-  font-size: 1.4rem;
+  margin: 0 0 8px;
+  font-size: 1.25rem;
   font-weight: 700;
-  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+  color: var(--ui-text);
 }
 
 .plan-price {
   display: flex;
   align-items: baseline;
-  gap: 0.15rem;
-  margin-bottom: 0.75rem;
+  gap: 2px;
+  margin-bottom: 10px;
 
-  .currency {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-secondary, #64748b);
-  }
-
-  .amount {
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1;
-  }
-
-  .period {
-    font-size: 0.95rem;
-    color: var(--text-secondary, #64748b);
-  }
+  .currency { font-size: 1.15rem; font-weight: 600; color: var(--ui-text-2); }
+  .amount { font-size: 2.4rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--ui-text); }
+  .period { font-size: 0.95rem; color: var(--ui-text-2); }
 }
 
 .plan-desc {
+  margin: 0 0 18px;
   font-size: 0.9rem;
-  color: var(--text-secondary, #64748b);
-  margin-bottom: 1.25rem;
+  color: var(--ui-text-2);
 }
 
 .feature-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 1.5rem;
+  margin: 0 0 22px;
 
   li {
-    padding: 0.4rem 0;
+    padding: 6px 0;
     font-size: 0.9rem;
-    color: var(--text-primary, #1e293b);
+    color: var(--ui-text);
+    border-bottom: 1px solid var(--ui-border);
+    &:last-child { border-bottom: none; }
 
-    &.premium-feature {
-      font-weight: 600;
-      color: #6366f1;
-    }
+    &.premium-feature { font-weight: 600; color: var(--ui-accent-text); }
   }
 }
 
 .btn-subscribe {
+  @include ui.btn-dark;
   width: 100%;
-  padding: 0.875rem;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: #1e293b;
-  color: #fff;
+  height: 44px;
+  font-size: 0.95rem;
 
-  &:hover:not(:disabled) {
-    background: #0f172a;
-    transform: translateY(-1px);
-  }
-
-  &.btn-premium {
-    background: #6366f1;
-
-    &:hover:not(:disabled) {
-      background: #4f46e5;
-    }
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  &.btn-premium { @include ui.btn-primary; width: 100%; height: 44px; font-size: 0.95rem; }
 }
 
-// ─── Current Subscription Card ───
-.current-subscription {
-  margin-bottom: 2rem;
-}
+// ── Current subscription card ──
+.current-subscription { margin-bottom: 24px; }
 
 .current-sub-card {
-  background: var(--bg-card, #fff);
-  border: 2px solid #22c55e;
-  border-radius: 16px;
+  @include ui.card(0);
   overflow: hidden;
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 1px var(--ui-accent), var(--ui-shadow), var(--ui-highlight);
 }
 
-.current-sub-header {
-  padding: 1.5rem 2rem 0;
-}
+.current-sub-header { padding: 24px 28px 0; }
 
 .current-sub-title {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-
-  h2 {
-    margin: 0;
-    font-size: 1.4rem;
-  }
+  gap: 10px;
+  h2 { margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--ui-text); }
 }
 
 .status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  @include ui.badge(neutral);
   text-transform: uppercase;
-
-  &.active {
-    background: #dcfce7;
-    color: #166534;
-  }
+  letter-spacing: 0.04em;
+  &.active { @include ui.tone(success); }
 }
 
-.current-sub-body {
-  padding: 1.25rem 2rem;
-}
+.current-sub-body { padding: 20px 28px; }
 
 .sub-detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .sub-detail {
+  @include ui.inset-panel(12px 14px);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 4px;
 
-  .detail-label {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--text-secondary, #64748b);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+  .detail-label { @include ui.eyebrow; }
 
   .detail-value {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    color: var(--text-primary, #1e293b);
-
-    &.plan-name-value {
-      color: #6366f1;
-      font-size: 1.25rem;
-    }
+    color: var(--ui-text);
+    &.plan-name-value { color: var(--ui-accent-text); font-size: 1.2rem; }
   }
 }
 
-.current-sub-features {
-  h4 {
-    margin: 0 0 0.75rem;
-    font-size: 0.95rem;
-    color: var(--text-secondary, #64748b);
-  }
+.current-sub-features h4 {
+  @include ui.eyebrow;
+  margin: 0 0 10px;
 }
 
 .features-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .feature-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.75rem;
-  background: var(--bg-primary, #f8fafc);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 20px;
-  font-size: 0.82rem;
+  @include ui.badge(neutral);
+  padding: 5px 11px;
+  font-size: 0.8rem;
   font-weight: 500;
-
-  &.premium-chip {
-    background: #eef2ff;
-    border-color: #a5b4fc;
-    color: #4338ca;
-  }
+  border: 1px solid var(--ui-border);
+  &.premium-chip { @include ui.tone(accent); border-color: transparent; }
 }
 
 .current-sub-actions {
   display: flex;
-  gap: 0.75rem;
-  padding: 1.25rem 2rem;
-  border-top: 1px solid var(--border-color, #e2e8f0);
-  background: var(--bg-primary, #f8fafc);
+  gap: 8px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-surface-muted);
 }
 
-.btn-change {
-  padding: 0.625rem 1.25rem;
-  background: #6366f1;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #4f46e5;
-  }
-}
-
-.btn-cancel {
-  padding: 0.625rem 1.25rem;
-  background: transparent;
-  color: #dc2626;
-  border: 1px solid #fca5a5;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #fef2f2;
-  }
-}
-
-// ─── Cancel Modal ───
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 1rem;
-}
+// ── Cancel modal ──
+.modal-overlay { @include ui.modal-overlay; }
 
 .modal-card {
-  background: var(--bg-card, #fff);
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 460px;
-  width: 100%;
-
-  h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1.3rem;
-  }
-
-  p {
-    color: var(--text-secondary, #64748b);
-    margin-bottom: 1.5rem;
-  }
+  @include ui.modal(460px);
+  h3 { margin-bottom: 6px; }
+  p { margin: 0 0 20px; color: var(--ui-text-2); }
 }
 
 .cancel-options {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  gap: 10px;
+  margin-bottom: 16px;
 
   button {
+    @include ui.inset-panel(14px 16px);
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 1rem 1.25rem;
-    border-radius: 10px;
-    border: 1px solid var(--border-color, #e2e8f0);
-    background: var(--bg-primary, #f8fafc);
-    cursor: pointer;
+    gap: 4px;
+    width: 100%;
+    font: inherit;
     text-align: left;
-    transition: all 0.2s;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
 
-    strong {
-      font-size: 0.95rem;
-      color: var(--text-primary, #1e293b);
-    }
+    strong { font-size: 0.95rem; color: var(--ui-text); }
+    small { font-size: 0.8rem; color: var(--ui-text-2); }
 
-    small {
-      font-size: 0.8rem;
-      color: var(--text-secondary, #64748b);
-    }
+    &:hover:not(:disabled) { border-color: var(--ui-accent); background: var(--ui-hover); }
+    &:focus-visible { outline: none; box-shadow: var(--ui-focus); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
 
-    &:hover:not(:disabled) {
-      border-color: #6366f1;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+  .btn-cancel-now {
+    border-color: var(--ui-danger-soft);
+    strong { color: var(--ui-danger-text); }
+    &:hover:not(:disabled) { border-color: var(--ui-danger); background: var(--ui-danger-soft); }
   }
 }
 
-.btn-cancel-now {
-  border-color: #fca5a5 !important;
+.modal-dismiss { width: 100%; }
 
-  &:hover:not(:disabled) {
-    background: #fef2f2 !important;
-    border-color: #dc2626 !important;
-  }
-}
-
-.modal-dismiss {
-  width: 100%;
-  text-align: center;
-}
-
-// ─── Change Plan Header ───
+// ── Change plan header ──
 .change-plan-header {
-  margin-bottom: 1.5rem;
-
-  h2 {
-    margin: 1rem 0 0.25rem;
-    font-size: 1.5rem;
-  }
-
-  p {
-    color: var(--text-secondary, #64748b);
-    margin: 0;
-  }
+  margin-bottom: 20px;
+  h2 { margin: 16px 0 4px; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ui-text); }
+  p { margin: 0; color: var(--ui-text-2); }
 }
 
-// Responsive
+// ── Responsive ──
 @media (max-width: 640px) {
   .sub-header {
-    padding: 1rem;
+    padding: 12px 16px;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 8px;
   }
 
-  .sub-content {
-    padding: 1.5rem 1rem;
-  }
+  .sub-content { padding: 20px 16px; }
 
   .trial-banner, .expired-banner, .active-banner, .upgrade-banner {
     flex-direction: column;
     text-align: center;
   }
 
-  .plans-grid {
-    grid-template-columns: 1fr;
-  }
+  .plans-grid { grid-template-columns: 1fr; }
 
-  .plan-price .amount {
-    font-size: 2rem;
-  }
+  .plan-price .amount { font-size: 2rem; }
 
   .current-sub-body, .current-sub-header, .current-sub-actions {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
+    padding-left: 18px;
+    padding-right: 18px;
   }
 
-  .current-sub-actions {
-    flex-direction: column;
-  }
+  .current-sub-actions { flex-direction: column; }
 
-  .sub-detail-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+  .sub-detail-grid { grid-template-columns: 1fr 1fr; }
 }

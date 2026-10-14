@@ -1,77 +1,68 @@
+@use 'ui';
+
 /*
- * Chart tokens (dataviz reference palette, validated for these surfaces with
- * validate_palette.js: light #ffffff, dark #1e1e1e). Charts reference roles, never raw hex.
- * Dark values are their own steps from the same ramps, not an automatic flip.
+ * Chart tokens. Neutral roles (text, axes, grid, surfaces) come from the admin --ui-* tokens,
+ * so they follow light/dark mode automatically. Only the data-series palette (validated with
+ * validate_palette.js on light/dark surfaces) keeps its own light and dark steps.
+ * Charts reference roles, never raw hex.
  */
 @mixin tokens {
-  --viz-surface: #ffffff;
-  --viz-ink: #1a1a2e;
-  --viz-ink-2: #52514e;
-  --viz-muted: #6c6a63;          // axis/label text, >= 4.5:1 on white
-  --viz-grid: #ecebe6;
-  --viz-axis: #c3c2b7;
+  // Neutral roles → design-system tokens
+  --viz-surface: var(--ui-surface-solid);   // halos / sticky headers (must be opaque)
+  --viz-ink: var(--ui-text);
+  --viz-ink-2: var(--ui-text-2);
+  --viz-muted: var(--ui-text-2);            // axis/label text (text-3 is too faint for labels)
+  --viz-faint: var(--ui-text-3);            // de-emphasised meta text
+  --viz-grid: var(--ui-border);
+  --viz-axis: var(--ui-border-strong);
+  --viz-ring: var(--ui-border);
+  --viz-zero: var(--ui-neutral-soft);       // heatmap "no orders" cell
+  --viz-good: var(--ui-success-text);       // delta text: good direction
+  --viz-bad: var(--ui-danger-text);         // delta text: bad direction
+
+  // Series palette (kept)
   --viz-series-1: #2a78d6;       // primary series (blue)
   --viz-series-1-wash: rgba(42, 120, 214, 0.10);
   --viz-series-2: #eb6834;       // second identity series (orange)
   --viz-compare: #8f8d85;        // comparison / de-emphasis gray, 3.3:1 (graphics minimum 3:1)
-  --viz-zero: #f0efec;           // heatmap "no orders" cell
   --viz-seq-1: #b7d3f6;          // sequential blue, light → dark
   --viz-seq-2: #6da7ec;
   --viz-seq-3: #2a78d6;
   --viz-seq-4: #184f95;
-  --viz-good: #006300;           // delta text: good direction
-  --viz-bad: #d03b3b;            // delta text: bad direction
-  --viz-tooltip-bg: #1a1a2e;
-  --viz-tooltip-ink: #ffffff;
-  --viz-ring: rgba(11, 11, 11, 0.08);
   // Status (reserved for state; always shown with an icon + label)
   --viz-status-good: #0ca30c;
   --viz-status-warning: #fab219;
   --viz-status-critical: #d03b3b;
 }
 
+/* Dark steps for the series palette only (tokens can't express these; neutrals follow --ui-*). */
 @mixin dark-tokens {
-  --viz-surface: #1e1e1e;
-  --viz-ink: #ffffff;
-  --viz-ink-2: #c3c2b7;
-  --viz-muted: #a3a199;
-  --viz-grid: #2c2c2a;
-  --viz-axis: #383835;
   --viz-series-1: #3987e5;
   --viz-series-1-wash: rgba(57, 135, 229, 0.14);
   --viz-series-2: #d95926;
   --viz-compare: #7d7b75;
-  --viz-zero: #2a2a28;
   --viz-seq-1: #104281;          // on dark, "more" gets lighter
   --viz-seq-2: #1c5cab;
   --viz-seq-3: #5598e7;
   --viz-seq-4: #9ec5f4;
-  --viz-good: #0ca30c;
-  --viz-bad: #e66767;
-  --viz-tooltip-bg: #f4f4f2;
-  --viz-tooltip-ink: #0b0b0b;
-  --viz-ring: rgba(255, 255, 255, 0.10);
-  --viz-status-good: #0ca30c;
-  --viz-status-warning: #fab219;
-  --viz-status-critical: #d03b3b;
 }
 
 @mixin host {
-  :host { @include tokens; display: block; font-family: inherit; color: var(--viz-ink); }
+  :host { @include tokens; display: block; font-family: inherit; color: var(--ui-text); }
   :host-context(body.dark-mode) { @include dark-tokens; }
 }
 
-/* Shared tooltip look: value leads, label follows */
+/* Shared tooltip look (floating → glass): value leads, label follows */
 @mixin tooltip {
   .viz-tooltip {
+    @include ui.glass(10px);
     position: absolute; pointer-events: none; z-index: 5; min-width: 120px;
-    background: var(--viz-tooltip-bg); color: var(--viz-tooltip-ink);
-    border-radius: 8px; padding: 8px 10px; font-size: 0.78rem; line-height: 1.35;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); white-space: nowrap;
-    .tt-title { opacity: 0.7; margin-bottom: 4px; }
+    color: var(--ui-text);
+    padding: 8px 10px; font-size: 0.78rem; line-height: 1.35; white-space: nowrap;
+    .tt-title { color: var(--ui-text-2); margin-bottom: 4px; }
     .tt-row { display: flex; align-items: center; gap: 8px; }
     .tt-key { width: 12px; height: 2px; border-radius: 1px; flex: none; }
     .tt-value { font-weight: 700; font-variant-numeric: tabular-nums; }
-    .tt-name { opacity: 0.75; }
+    .tt-name { color: var(--ui-text-2); }
   }
 }

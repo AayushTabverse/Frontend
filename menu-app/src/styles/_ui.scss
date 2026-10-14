@@ -1,0 +1,405 @@
+// Admin UI building blocks (glass style). Colours come from the --ui-* tokens in styles.scss,
+// so every mixin works in light and dark mode without per-component dark overrides.
+//
+// Use in a component stylesheet:
+//   @use 'ui';
+//   .stat { @include ui.card; }
+//   .save { @include ui.btn-primary; }
+
+// ── Surfaces ──
+
+/// Content card: frosted white, light edge, soft shadow. No backdrop blur (keeps long pages fast).
+@mixin card($padding: 20px) {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow), var(--ui-highlight);
+  color: var(--ui-text);
+  @if $padding != null { padding: $padding; }
+}
+
+/// Card that reacts to the pointer (clickable tiles).
+@mixin card-interactive($padding: 20px) {
+  @include card($padding);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  &:hover { transform: translateY(-1px); border-color: var(--ui-border-strong); box-shadow: var(--ui-shadow-lg); }
+}
+
+/// Panel inside a card (muted, no shadow).
+@mixin inset-panel($padding: 14px) {
+  background: var(--ui-surface-muted);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  @if $padding != null { padding: $padding; }
+}
+
+/// Real glass (with blur): use for floating things only (modals, popovers, sticky bars).
+@mixin glass($radius: var(--ui-radius-lg)) {
+  background: var(--ui-surface-strong);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--ui-border);
+  border-radius: $radius;
+  box-shadow: var(--ui-shadow-lg), var(--ui-highlight);
+}
+
+// ── Typography ──
+
+@mixin page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  h1 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ui-text); }
+}
+
+@mixin section-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ui-text);
+}
+
+/// Small grey uppercase label (table headers, stat labels, form section labels).
+@mixin eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ui-text-3);
+}
+
+@mixin muted { color: var(--ui-text-2); }
+
+// ── Stat tile ──
+
+@mixin stat {
+  @include card(16px 18px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+@mixin stat-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ui-text); line-height: 1.15; }
+@mixin stat-label { font-size: 0.78rem; color: var(--ui-text-2); }
+
+// ── Buttons ──
+
+@mixin btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  &:focus-visible { outline: none; box-shadow: var(--ui-focus); }
+  &:disabled, &.disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@mixin btn-primary {
+  @include btn-base;
+  background: var(--ui-accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(233, 69, 96, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  &:hover:not(:disabled) { background: var(--ui-accent-hover); }
+}
+
+/// Neutral bordered button (most secondary actions).
+@mixin btn-secondary {
+  @include btn-base;
+  background: var(--ui-surface-solid);
+  border-color: var(--ui-border-strong);
+  color: var(--ui-text);
+  &:hover:not(:disabled) { background: var(--ui-hover); }
+}
+
+/// Text-only button (tertiary actions, toolbars).
+@mixin btn-ghost {
+  @include btn-base;
+  background: transparent;
+  color: var(--ui-text-2);
+  &:hover:not(:disabled) { background: var(--ui-hover); color: var(--ui-text); }
+}
+
+@mixin btn-danger {
+  @include btn-base;
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger-text);
+  &:hover:not(:disabled) { background: var(--ui-danger); color: #fff; }
+}
+
+@mixin btn-success {
+  @include btn-base;
+  background: var(--ui-success);
+  color: #fff;
+  &:hover:not(:disabled) { filter: brightness(0.95); }
+}
+
+/// Dark solid button (strong neutral emphasis, e.g. selected filter).
+@mixin btn-dark {
+  @include btn-base;
+  background: var(--ui-brand);
+  color: #fff;
+  &:hover:not(:disabled) { filter: brightness(1.15); }
+}
+
+@mixin btn-sm { height: 32px; padding: 0 12px; font-size: 0.8rem; border-radius: 8px; }
+
+/// Square icon button.
+@mixin btn-icon($size: 34px) {
+  @include btn-ghost;
+  width: $size;
+  height: $size;
+  padding: 0;
+}
+
+// ── Forms ──
+
+@mixin field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+
+@mixin label { font-size: 0.82rem; font-weight: 600; color: var(--ui-text); }
+
+@mixin input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 10px;
+  background: var(--ui-surface-solid);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  &::placeholder { color: var(--ui-text-3); }
+  &:focus { outline: none; border-color: var(--ui-accent); box-shadow: var(--ui-focus); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &.invalid, &.ng-invalid.ng-touched { border-color: var(--ui-danger); }
+}
+
+@mixin textarea {
+  @include input;
+  height: auto;
+  min-height: 90px;
+  padding: 10px 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+@mixin select {
+  @include input;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+@mixin field-hint { font-size: 0.78rem; color: var(--ui-text-3); line-height: 1.4; }
+@mixin field-error { font-size: 0.78rem; color: var(--ui-danger-text); }
+
+// ── Badges & pills ──
+
+/// Status badge. $tone: neutral | accent | success | warning | danger | info | violet
+@mixin badge($tone: neutral) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  @include tone($tone);
+}
+
+/// Soft background + text colour for a tone (badges, alerts, chips).
+@mixin tone($tone) {
+  @if $tone == accent { background: var(--ui-accent-soft); color: var(--ui-accent-text); }
+  @else if $tone == success { background: var(--ui-success-soft); color: var(--ui-success-text); }
+  @else if $tone == warning { background: var(--ui-warning-soft); color: var(--ui-warning-text); }
+  @else if $tone == danger { background: var(--ui-danger-soft); color: var(--ui-danger-text); }
+  @else if $tone == info { background: var(--ui-info-soft); color: var(--ui-info-text); }
+  @else if $tone == violet { background: var(--ui-violet-soft); color: var(--ui-violet-text); }
+  @else { background: var(--ui-neutral-soft); color: var(--ui-text-2); }
+}
+
+/// Inline message bar. $tone as in badge.
+@mixin alert($tone: info) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: var(--ui-radius);
+  font-size: 0.875rem;
+  @include tone($tone);
+}
+
+// ── Tabs, segmented controls, chips ──
+
+/// Pill tab bar container.
+@mixin tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  box-shadow: var(--ui-highlight);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/// One tab. Add .active for the selected one.
+@mixin tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ui-text-2);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  &:hover { color: var(--ui-text); background: var(--ui-hover); }
+  &.active {
+    background: var(--ui-surface-solid);
+    color: var(--ui-text);
+    box-shadow: 0 1px 3px rgba(26, 26, 46, 0.12);
+  }
+}
+
+/// Selectable chip (filters, quick picks). Add .selected / .active for the chosen one.
+@mixin chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 40px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--ui-border-strong);
+  background: var(--ui-surface-solid);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  &:hover { background: var(--ui-hover); }
+  &.selected, &.active { background: var(--ui-accent-soft); border-color: var(--ui-accent); color: var(--ui-accent-text); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ── Tables ──
+
+/// Wrap a <table> in a card: @include ui.table-card on the wrapper, ui.table on the table.
+@mixin table-card {
+  @include card(0);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+@mixin table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  color: var(--ui-text);
+
+  th {
+    @include eyebrow;
+    text-align: left;
+    padding: 11px 16px;
+    background: var(--ui-surface-muted);
+    border-bottom: 1px solid var(--ui-border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ui-border);
+    vertical-align: middle;
+  }
+  tbody tr { transition: background 0.12s ease; }
+  tbody tr:hover td { background: var(--ui-hover); }
+  tbody tr:last-child td { border-bottom: none; }
+  tfoot td { font-weight: 700; background: var(--ui-surface-muted); border-top: 1px solid var(--ui-border); border-bottom: none; }
+}
+
+// ── Modals ──
+
+@mixin modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--ui-backdrop);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: ui-fade 0.15s ease;
+}
+
+@mixin modal($max-width: 480px) {
+  @include glass(20px);
+  width: 100%;
+  max-width: $max-width;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  color: var(--ui-text);
+  animation: ui-pop 0.18s ease;
+  h2, h3 { margin: 0 0 14px; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+}
+
+@mixin modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+// ── Lists & states ──
+
+/// Row inside a card list (divider between rows).
+@mixin list-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ui-border);
+  &:last-child { border-bottom: none; }
+}
+
+@mixin empty-state {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--ui-text-2);
+  font-size: 0.9rem;
+}
+
+@mixin divider { border: none; border-top: 1px solid var(--ui-border); margin: 16px 0; }
+
+// Keyframes used by the modal mixins (emitted once per component that uses them; tiny).
+@keyframes ui-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }

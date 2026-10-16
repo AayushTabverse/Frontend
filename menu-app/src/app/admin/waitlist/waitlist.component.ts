@@ -176,18 +176,28 @@ export class WaitlistComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Tables that can take a new party right now: active, no running orders, not held by another party. */
-  get freeTables(): TableResponse[] {
+  /** Empty tables: active, no running orders, not held by a seated party, not merged into another. */
+  private get emptyTables(): TableResponse[] {
     return this.tables
       .filter(t => t.isActive && !t.isOccupied && !t.waitlistEntryId && !t.mergedIntoTableId)
       .sort((a, b) => a.capacity - b.capacity || a.tableNumber.localeCompare(b.tableNumber, undefined, { numeric: true }));
   }
 
-  /** Free tables sorted for one party: those that fit alone first (tightest fit), then the rest. */
+  /** Tables a walk-in can take now: empty and not reserved within the next hour. */
+  get freeTables(): TableResponse[] {
+    return this.emptyTables.filter(t => !t.reservationTime);
+  }
+
+  /** Empty tables held for a booking soon: shown last in the seat dialog, with the booking time. */
+  get reservedSoonTables(): TableResponse[] {
+    return this.emptyTables.filter(t => !!t.reservationTime);
+  }
+
+  /** Tables for one party: free ones that fit alone first (tightest fit), then smaller ones, then reserved-soon ones. */
   freeTablesFor(entry: WaitlistEntryResponse): TableResponse[] {
     const fits = this.freeTables.filter(t => t.capacity >= entry.partySize);
     const small = this.freeTables.filter(t => t.capacity < entry.partySize).sort((a, b) => b.capacity - a.capacity);
-    return [...fits, ...small];
+    return [...fits, ...small, ...this.reservedSoonTables];
   }
 
   /**
@@ -456,6 +466,13 @@ export class WaitlistComponent implements OnInit, OnDestroy {
     const entry = this.seatingEntry;
     if (!entry || this.selectedTableIds.length === 0) return;
 
+    const reserved = this.reservedSoonTables.filter(t => this.selectedTableIds.includes(t.id));
+    if (reserved.length &&
+        !confirm(reserved.map(t => `Table ${t.tableNumber} is reserved at ${new Date(t.reservationTime!).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} for ${t.reservationCustomerName}.`).join('\n')
+          + '\nSeat this party there anyway?')) {
+      return;
+    }
+
     if (this.seatsShort &&
         !confirm(`${this.selectedTableNames} seats ${this.selectedSeats}, but the party has ${entry.partySize}. Seat them anyway?`)) {
       return;
@@ -504,7 +521,8 @@ export class WaitlistComponent implements OnInit, OnDestroy {
   // ── Table freed alert ──
 
   private showFreedAlert(table: TableResponse): void {
-    if (!table.isActive || table.isOccupied || table.waitlistEntryId) return;
+    // A table freed just before its booking goes to the booked party, not the queue
+    if (!table.isActive || table.isOccupied || table.waitlistEntryId || table.reservationTime) return;
     const waiting = this.waitingEntries;
     if (waiting.length === 0) return;
     // Oldest party that fits this table, else the oldest party overall

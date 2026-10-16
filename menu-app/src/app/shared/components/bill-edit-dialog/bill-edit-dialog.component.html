@@ -1,0 +1,57 @@
+<div class="be-overlay" (click)="closed.emit()">
+  <div class="be-modal" role="dialog" aria-labelledby="be-title" (click)="$event.stopPropagation()">
+    <div class="be-head">
+      <div>
+        <h2 id="be-title">Edit bill</h2>
+        <p class="be-sub">{{ billNumber }}<ng-container *ngIf="tableNumber"> · Table {{ tableNumber }}</ng-container></p>
+      </div>
+      <button class="be-close" (click)="closed.emit()" aria-label="Close">✕</button>
+    </div>
+
+    <p class="be-hint">Remove items the customer didn't get. The bill, any udhaar and stock are updated, and the change is saved in the bill's history.</p>
+
+    <div class="be-lines">
+      <div class="be-line" *ngFor="let line of lines" [class.removing]="line.remove > 0" [class.gone]="line.remove >= line.quantity">
+        <div class="be-item">
+          <span class="be-name">{{ line.itemName }}</span>
+          <span class="be-meta">
+            ₹{{ line.unitPrice | number:'1.0-2' }} each · billed {{ line.quantity }}
+            <span class="be-removed" *ngIf="line.remove > 0">· removing {{ line.remove }}</span>
+          </span>
+        </div>
+        <div class="be-stepper" [attr.aria-label]="line.itemName + ' quantity on the bill'">
+          <button type="button" (click)="decrease(line)" [disabled]="kept(line) === 0" [attr.aria-label]="'Take one ' + line.itemName + ' off the bill'">−</button>
+          <span class="be-count" [class.changed]="line.remove > 0" aria-live="polite">{{ kept(line) }}</span>
+          <button type="button" (click)="increase(line)" [disabled]="line.remove === 0" [attr.aria-label]="'Put one ' + line.itemName + ' back'">+</button>
+        </div>
+        <button type="button" class="be-all" (click)="toggleAll(line)">{{ line.remove >= line.quantity ? 'Keep' : 'Remove all' }}</button>
+      </div>
+    </div>
+
+    <div class="be-field">
+      <label>Reason</label>
+      <div class="be-chips">
+        <button type="button" *ngFor="let r of reasons" class="be-chip" [class.selected]="reason === r" (click)="reason = reason === r ? '' : r">{{ r }}</button>
+      </div>
+      <input [(ngModel)]="reason" maxlength="200" placeholder="Reason (optional)" />
+    </div>
+
+    <div class="be-summary" *ngIf="removingCount > 0">
+      <div><span>Current total</span><span>₹{{ currentTotal | number:'1.0-0' }}</span></div>
+      <div class="be-minus"><span>Removing {{ removingCount }} item{{ removingCount > 1 ? 's' : '' }}</span><span>− ₹{{ removedAmount | number:'1.0-0' }}</span></div>
+      <div class="be-new"><span>New total</span><span>₹{{ newTotal | number:'1.0-0' }}</span></div>
+    </div>
+    <div class="be-error" *ngIf="removesEverything && removingCount > 0">A bill needs at least one item. Keep one or more items.</div>
+    <div class="be-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <div class="be-actions">
+      <button class="be-btn-secondary" (click)="closed.emit()" [disabled]="!!saving">Cancel</button>
+      <button class="be-btn-secondary" (click)="submit(false)" [disabled]="!removingCount || removesEverything || !!saving">
+        {{ saving === 'update' ? 'Updating…' : 'Update' }}
+      </button>
+      <button class="be-btn-primary" (click)="submit(true)" [disabled]="!removingCount || removesEverything || !!saving">
+        {{ saving === 'print' ? 'Updating…' : '🖨️ Update & Print' }}
+      </button>
+    </div>
+  </div>
+</div>

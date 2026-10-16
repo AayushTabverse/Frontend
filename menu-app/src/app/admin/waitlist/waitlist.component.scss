@@ -148,6 +148,7 @@
   small { @include ui.field-hint; }
   input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; accent-color: var(--ui-accent); }
 }
+.toggle-row-spaced { padding-top: 14px; }
 .qr-block {
   display: flex; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--ui-border); flex-wrap: wrap;
   &.disabled .qr-frame { opacity: 0.35; }

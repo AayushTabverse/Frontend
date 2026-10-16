@@ -124,6 +124,10 @@ export interface MenuModifier {
 
 export interface FullMenuResponse {
   tenantId: string;
+  /** Set when opened from a table's QR. */
+  tableNumber?: string;
+  /** Set when that table is merged into another: only the main table takes orders. */
+  mergedIntoTableNumber?: string;
   restaurantName: string;
   logoUrl?: string;
   instagramUrl?: string;
@@ -174,6 +178,7 @@ export interface OrderResponse {
   preparedAt?: string;
   servedAt?: string;
   completedAt?: string;
+  billNumber?: string;
   items: OrderItemResponse[];
   payment?: PaymentSummary;
 }
@@ -233,6 +238,24 @@ export interface BillResponse {
   customerMobile?: string;
   completedAt: string;
   orders: OrderResponse[];
+  /** Changes made after printing, newest first. */
+  adjustments: BillAdjustment[];
+}
+
+export interface BillAdjustment {
+  itemName: string;
+  quantityRemoved: number;
+  amountRemoved: number;
+  reason?: string;
+  changedBy?: string;
+  changedAt: string;
+}
+
+export interface RemoveBillItemsResponse {
+  bill: BillResponse;
+  previousTotal: number;
+  /** Money to give back: the customer already paid more than the new total. */
+  refundAmount: number;
 }
 
 export interface PaginatedBillsResponse {
@@ -336,6 +359,16 @@ export interface WaitlistStatsResponse {
 export interface WaitlistSettings {
   selfCheckInEnabled: boolean;
   noShowMinutes: number;
+  /** Waiting customers see a live board of table numbers and their status. */
+  showTableStatus: boolean;
+}
+
+/** One table on the customer-facing board (no customer details). */
+export interface PublicTableStatus {
+  tableNumber: string;
+  capacity: number;
+  status: 'Free' | 'Occupied' | 'Reserved';
+  reservedAt?: string;
 }
 
 export interface WaitlistAnalytics {
@@ -361,8 +394,10 @@ export interface PublicWaitlistInfo {
   restaurantName: string;
   logoUrl?: string;
   selfCheckInEnabled: boolean;
+  onlineReservationsEnabled: boolean;
   partiesWaiting: number;
   estimatedWaitMinutes: number;
+  tables?: PublicTableStatus[];
 }
 
 export interface PublicWaitlistStatus {
@@ -379,6 +414,7 @@ export interface PublicWaitlistStatus {
   createdAt: string;
   notifiedAt?: string;
   tableNumbers: string[];
+  tables?: PublicTableStatus[];
 }
 
 // ── Reservations ──

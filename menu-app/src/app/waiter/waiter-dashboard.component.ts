@@ -21,6 +21,7 @@ import { Subscription, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, timeout } from 'rxjs/operators';
 import { LucideAngularModule, Menu } from 'lucide-angular';
 import { SidebarComponent } from '../shared/components/sidebar/sidebar.component';
+import { BillEditDialogComponent, BillEditResult } from '../shared/components/bill-edit-dialog/bill-edit-dialog.component';
 
 interface WaiterCartItem {
   menuItem: MenuItem;
@@ -38,7 +39,7 @@ interface MergedBillItem {
 @Component({
   selector: 'app-waiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule, SidebarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule, SidebarComponent, BillEditDialogComponent],
   templateUrl: './waiter-dashboard.component.html',
   styleUrl: './waiter-dashboard.component.scss'
 })
@@ -83,7 +84,14 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   serviceChargePercent = 0;
   billCustomerName = '';
   billCustomerMobile = '';
+  /** Extra discount typed by staff at billing (on top of any Lucky Draw discount already on the orders). */
   billDiscountAmount = 0;
+  /** True once the table is billed: billSummary then holds the server's final, already-discounted totals. */
+  billFinalized = false;
+  /** Editing a printed bill (remove items the customer didn't get). */
+  showBillEdit = false;
+  billRevised = false;
+  billRefundAmount = 0;
   billPaidAmount = 0;
   billPaymentMode: 'full' | 'partial' = 'full';
   billNotes = '';
@@ -653,7 +661,10 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     // Pre-fill the customer seated here from the waitlist, if any
     this.billCustomerName = this.selectedTable.waitlistCustomerName || '';
     this.billCustomerMobile = this.selectedTable.waitlistCustomerMobile || '';
-    this.billDiscountAmount = this.tableSession.grandDiscount || 0;
+    this.billDiscountAmount = 0;
+    this.billFinalized = false;
+    this.billRevised = false;
+    this.billRefundAmount = 0;
     this.billPaidAmount = 0;
     this.billPaymentMode = 'full';
     this.billNotes = '';
@@ -702,6 +713,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
       next: (summary) => {
         this.clearing = false;
         this.billSummary = summary;
+        this.billFinalized = true;
         this.mergedBillItems = this.computeMergedItems(summary);
         this.tableSession = null;
         this.successMessage = `Table ${this.selectedTable!.tableNumber} cleared! Total bill: ₹${summary.grandTotal}`;
@@ -722,6 +734,10 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
   /** Cancel preview without clearing */
   cancelBillPreview(): void {
     this.showBillSummary = false;
+    this.billFinalized = false;
+    this.showBillEdit = false;
+    this.billRevised = false;
+    this.billRefundAmount = 0;
     this.billSummary = null;
     this.mergedBillItems = [];
     this.billCustomerName = '';
@@ -736,6 +752,10 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
 
   closeBillSummary(): void {
     this.showBillSummary = false;
+    this.billFinalized = false;
+    this.showBillEdit = false;
+    this.billRevised = false;
+    this.billRefundAmount = 0;
     this.billSummary = null;
     this.mergedBillItems = [];
     this.billCustomerName = '';
@@ -751,11 +771,54 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
     this.deselectTable();
   }
 
-  /** Calculate final total after discount + previous dues */
+  /**
+   * Total to pay including previous udhaar. Before billing, grandTotal already has any Lucky Draw
+   * discount taken off, so only the extra discount is subtracted. After billing, the server's
+   * grandTotal is final (all discounts applied).
+   */
   getBillFinalTotal(): number {
     if (!this.billSummary) return 0;
-    const afterDiscount = this.billSummary.grandTotal - (this.billDiscountAmount || 0);
-    return Math.max(0, afterDiscount) + this.previousDueTotal;
+    const billTotal = this.billFinalized
+      ? this.billSummary.grandTotal
+      : Math.max(0, this.billSummary.grandTotal - (this.billDiscountAmount || 0));
+    return billTotal + this.previousDueTotal;
+  }
+
+  /** All discounts on the bill (Lucky Draw + extra), for display and print. */
+  get billDiscountTotal(): number {
+    if (!this.billSummary) return 0;
+    return this.billFinalized
+      ? this.billSummary.grandDiscount
+      : this.billSummary.grandDiscount + (this.billDiscountAmount || 0);
+  }
+
+  get billNumber(): string {
+    return this.billSummary?.orders.find(o => o.billNumber)?.billNumber ?? '';
+  }
+
+  /** After items were removed from the printed bill: show the new totals, and reprint if asked. */
+  onBillEdited(result: BillEditResult): void {
+    const bill = result.response.bill;
+    this.showBillEdit = false;
+    this.billRevised = true;
+    this.billRefundAmount = result.response.refundAmount;
+    this.billSummary = {
+      ...this.billSummary!,
+      tableNumber: bill.tableNumber,
+      tableLabel: bill.tableLabel,
+      grandSubTotal: bill.subTotal,
+      grandTax: bill.tax,
+      grandDiscount: bill.discountAmount,
+      grandTotal: bill.totalAmount,
+      paidAmount: bill.paidAmount,
+      dueAmount: bill.dueAmount,
+      orders: bill.orders
+    };
+    this.mergedBillItems = this.computeMergedItems(this.billSummary);
+    if (this.billPaymentMode === 'partial') this.billPaidAmount = bill.paidAmount;
+    this.successMessage = `Bill updated: ₹${result.response.previousTotal.toFixed(0)} → ₹${bill.totalAmount.toFixed(0)}`;
+    setTimeout(() => this.successMessage = '', 5000);
+    if (result.print) this.printBill();
   }
 
   /** Lookup previous dues when mobile is entered */
@@ -906,6 +969,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
           <div class="brand">Powered by TabVerse</div>
         </div>
         <div class="info">
+          ${this.billNumber ? 'Bill: <strong>' + this.billNumber + '</strong>' + (this.billRevised ? ' <strong>(Revised)</strong>' : '') + '<br/>' : ''}
           Table: <strong>${s.tableNumber}</strong>${s.tableLabel ? ' — ' + s.tableLabel : ''}<br/>
           ${now}
           ${this.billCustomerName ? '<br/>Name: <strong>' + this.billCustomerName + '</strong>' : ''}
@@ -920,7 +984,7 @@ export class WaiterDashboardComponent implements OnInit, OnDestroy {
           ${this.cgstPercent > 0 ? `<div class="total-row"><span>CGST (${this.cgstPercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.cgstPercent / 100)}</span></div>` : ''}
           ${this.sgstPercent > 0 ? `<div class="total-row"><span>SGST (${this.sgstPercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.sgstPercent / 100)}</span></div>` : ''}
           ${this.serviceChargePercent > 0 ? `<div class="total-row"><span>Service Charge (${this.serviceChargePercent}%)</span><span>₹${Math.round(s.grandSubTotal * this.serviceChargePercent / 100)}</span></div>` : ''}
-          ${this.billDiscountAmount > 0 ? `<div class="total-row" style="color:#e94560"><span>Discount</span><span>- ₹${this.billDiscountAmount.toFixed(0)}</span></div>` : ''}
+          ${this.billDiscountTotal > 0 ? `<div class="total-row" style="color:#e94560"><span>Discount</span><span>- ₹${this.billDiscountTotal.toFixed(0)}</span></div>` : ''}
           ${this.previousDueTotal > 0 ? `<div class="total-row" style="color:#ff9800"><span>Previous Udhaar</span><span>+ ₹${this.previousDueTotal.toFixed(0)}</span></div>` : ''}
           <div class="total-row grand"><span>Grand Total</span><span>₹${this.getBillFinalTotal().toFixed(0)}</span></div>
           ${this.billPaymentMode === 'partial' && this.getBillDueAmount() > 0 ? `<div class="total-row" style="color:#e94560;font-weight:700;margin-top:4px"><span>Due (Udhaar)</span><span>₹${this.getBillDueAmount().toFixed(0)}</span></div>` : ''}

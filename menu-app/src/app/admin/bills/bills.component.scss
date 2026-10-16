@@ -83,11 +83,13 @@
   .due-col { color: var(--ui-text-3); font-weight: 600; }
   .due-col.has-due { color: var(--ui-danger-text); font-weight: 700; }
   .center { text-align: center; }
-  .action-col { text-align: center; }
+  th.action-col, td.action-col { text-align: center; }
+  .action-buttons { display: flex; justify-content: center; align-items: center; gap: 6px; }
 }
 
 .invoice-btn {
   @include ui.btn-icon(32px);
+  flex-shrink: 0;
   border-color: var(--ui-border-strong);
   font-size: 1rem;
 }
@@ -317,4 +319,24 @@
   .bill-detail { padding: 12px; }
   .summary-item { padding: 10px 12px; }
   .form-row { flex-direction: column; gap: 0; }
+}
+
+// ── Edited bills ──
+.revised-badge { @include ui.badge(warning); margin-left: 6px; font-size: 0.65rem; padding: 1px 7px; }
+.edit-notice {
+  @include ui.alert(warning);
+  justify-content: space-between;
+  margin-bottom: 14px;
+  .notice-close { @include ui.btn-icon(28px); }
+}
+.action-col { white-space: nowrap; }
+.adjustments {
+  @include ui.alert(warning);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 12px;
+  .adjustments-title { font-weight: 700; font-size: 0.8rem; }
+  .adjustment { display: flex; flex-direction: column; gap: 1px; font-size: 0.82rem; }
+  .adj-meta { font-size: 0.72rem; opacity: 0.85; }
 }

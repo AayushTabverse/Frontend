@@ -247,11 +247,18 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
     return cartItem ? cartItem.quantity : 0;
   }
 
+  /** This table is merged into another: orders are only taken on the main table's QR. */
+  get orderingBlocked(): boolean {
+    return !!this.menu?.mergedIntoTableNumber;
+  }
+
   addToCart(item: MenuItem): void {
+    if (this.orderingBlocked) return;
     this.cartService.addItem(item);
   }
 
   incrementItem(item: MenuItem): void {
+    if (this.orderingBlocked) return;
     this.cartService.addItem(item);
   }
 
@@ -269,6 +276,7 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   goToCart(): void {
+    if (this.orderingBlocked) return;
     this.router.navigate(['/cart'], {
       queryParams: { tenantId: this.tenantId, tableId: this.tableId }
     });

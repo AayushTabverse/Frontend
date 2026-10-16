@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiResponse, OrderResponse, LiveOrdersResponse, CreateOrderRequest, ClearTableRequest, TableSessionSummary, PaginatedBillsResponse, BillResponse, CreatePastBillRequest } from '../models/api.models';
+import { ApiResponse, OrderResponse, LiveOrdersResponse, CreateOrderRequest, ClearTableRequest, TableSessionSummary, PaginatedBillsResponse, BillResponse, CreatePastBillRequest, RemoveBillItemsResponse } from '../models/api.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -69,6 +69,17 @@ export class OrderService {
     return this.http.get<ApiResponse<OrderResponse[]>>(`${this.apiUrl}/history?from=${from}&to=${to}`).pipe(
       map(res => res.data!)
     );
+  }
+
+  getBill(billNumber: string): Observable<BillResponse> {
+    return this.http.get<ApiResponse<BillResponse>>(`${this.apiUrl}/bills/${encodeURIComponent(billNumber)}`).pipe(map(res => res.data!));
+  }
+
+  /** Remove items from a printed bill. Each line: order item id + how many to take off. */
+  removeBillItems(billNumber: string, items: { orderItemId: string; quantity: number }[], reason?: string): Observable<RemoveBillItemsResponse> {
+    return this.http.post<ApiResponse<RemoveBillItemsResponse>>(
+      `${this.apiUrl}/bills/${encodeURIComponent(billNumber)}/remove-items`, { items, reason }
+    ).pipe(map(res => res.data!));
   }
 
   getBills(from: string, to: string, page: number, pageSize: number): Observable<PaginatedBillsResponse> {

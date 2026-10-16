@@ -33,6 +33,11 @@
     </div>
   </header>
 
+  <!-- Edit a printed bill -->
+  <app-bill-edit-dialog *ngIf="showBillEdit && billSummary"
+                        [billNumber]="billNumber" [orders]="billSummary.orders" [tableNumber]="billSummary.tableNumber"
+                        (closed)="showBillEdit = false" (saved)="onBillEdited($event)"></app-bill-edit-dialog>
+
   <!-- ── Success / Error Toasts ── -->
   <div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
   <div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
@@ -130,7 +135,7 @@
           <div class="wheel-discount-badge" *ngIf="tableSession.grandDiscount > 0">
             � Customer won ₹{{ tableSession.grandDiscount | number:'1.0-0' }} discount via Lucky Draw
           </div>
-          <label class="discount-label">💰 Discount (₹)</label>
+          <label class="discount-label">💰 Extra discount (₹)</label>
           <input type="number" [(ngModel)]="billDiscountAmount" min="0" [max]="billSummary.grandTotal" placeholder="0" class="bill-input discount-input" (keypress)="onlyNumbers($event)" />
         </div>
 
@@ -151,9 +156,9 @@
             <span>Service Charge ({{ serviceChargePercent }}%)</span>
             <span>₹{{ billSummary.grandSubTotal * serviceChargePercent / 100 | number:'1.0-0' }}</span>
           </div>
-          <div class="grand-row discount" *ngIf="billDiscountAmount > 0">
+          <div class="grand-row discount" *ngIf="billDiscountTotal > 0">
             <span>Discount</span>
-            <span>- ₹{{ billDiscountAmount | number:'1.0-0' }}</span>
+            <span>- ₹{{ billDiscountTotal | number:'1.0-0' }}</span>
           </div>
           <div class="grand-row previous-due" *ngIf="previousDueTotal > 0">
             <span>Previous Udhaar</span>
@@ -198,11 +203,18 @@
           <input type="text" [(ngModel)]="billNotes" placeholder="Notes (optional)" class="bill-input" />
         </div>
 
+        <div class="bill-revised" *ngIf="billRevised">
+          ✏️ Bill revised<ng-container *ngIf="billRefundAmount > 0">. <strong>Return ₹{{ billRefundAmount | number:'1.0-0' }}</strong> to the customer.</ng-container>
+        </div>
+
         <div class="bill-actions">
           <button class="cancel-bill-btn" (click)="cancelBillPreview()" *ngIf="tableSession">✕ Cancel</button>
           <button class="confirm-bill-btn" (click)="confirmClearTable()"
                   [disabled]="clearing || (billPaymentMode === 'partial' && !billCustomerName) || (billCustomerMobile && billCustomerMobile.length > 0 && billCustomerMobile.length !== 10)" *ngIf="tableSession">
             {{ clearing ? 'Clearing...' : '✓ Confirm & Print Bill' }}
+          </button>
+          <button class="edit-bill-btn" (click)="showBillEdit = true" *ngIf="!tableSession && billFinalized && canSettleBill && billNumber">
+            ✏️ Edit bill
           </button>
           <button class="close-bill-btn" (click)="closeBillSummary()" *ngIf="!tableSession">
             ✓ Done

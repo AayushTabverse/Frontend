@@ -13,17 +13,28 @@
     <header class="wl-header">
       <img *ngIf="info.logoUrl" [src]="info.logoUrl" alt="" class="logo" />
       <h1>{{ info.restaurantName }}</h1>
-      <p class="muted">Join the waitlist</p>
+      <p class="muted">{{ mode === 'now' ? 'Join the waitlist' : 'Book a table for later' }}</p>
     </header>
 
-    <div class="wl-card" *ngIf="!info.selfCheckInEnabled">
+    <!-- Nothing online: ask staff -->
+    <div class="wl-card" *ngIf="!info.selfCheckInEnabled && !info.onlineReservationsEnabled">
       <div class="big-icon">🙋</div>
       <h2>Please check in with our staff</h2>
       <p class="muted">Online check-in isn't available right now. Our host at the entrance will add you to the list.</p>
     </div>
 
-    <div class="wl-card" *ngIf="info.selfCheckInEnabled">
-      <div class="queue-info">
+    <div class="wl-card" *ngIf="info.selfCheckInEnabled || info.onlineReservationsEnabled">
+      <!-- Join now / later -->
+      <div class="mode-switch" *ngIf="showModeSwitch" role="tablist">
+        <button type="button" role="tab" [class.active]="mode === 'now'" [attr.aria-selected]="mode === 'now'" (click)="setMode('now')">
+          ⏳ Wait for a table now
+        </button>
+        <button type="button" role="tab" [class.active]="mode === 'later'" [attr.aria-selected]="mode === 'later'" (click)="setMode('later')">
+          📅 Reserve for later
+        </button>
+      </div>
+
+      <div class="queue-info" *ngIf="mode === 'now'">
         <div>
           <span class="queue-value">{{ info.partiesWaiting }}</span>
           <span class="queue-label">{{ info.partiesWaiting === 1 ? 'party' : 'parties' }} ahead</span>
@@ -47,7 +58,7 @@
                autocomplete="tel" inputmode="tel" (keypress)="onlyNumbers($event)"
                [class.invalid]="submitted && mobileInvalid" />
         <span class="error" *ngIf="submitted && mobileInvalid">Please enter a valid mobile number</span>
-        <span class="hint">We'll message you when your table is ready.</span>
+        <span class="hint">{{ mode === 'now' ? "We'll message you when your table is ready." : "We'll confirm your booking on WhatsApp." }}</span>
       </div>
 
       <div class="field">
@@ -60,11 +71,40 @@
                aria-label="Number of people" />
       </div>
 
+      <!-- Booking for later -->
+      <ng-container *ngIf="mode === 'later'">
+        <div class="field-row">
+          <div class="field">
+            <label for="wl-date">Date</label>
+            <input id="wl-date" type="date" [(ngModel)]="bookingDate" [min]="bookingMinDate" [max]="bookingMaxDate"
+                   [class.invalid]="submitted && !bookingDate" />
+          </div>
+          <div class="field">
+            <label for="wl-time">Time</label>
+            <input id="wl-time" type="time" step="900" [(ngModel)]="bookingTime"
+                   [class.invalid]="submitted && (!bookingTime || bookingTooSoon)" />
+          </div>
+        </div>
+        <span class="error block" *ngIf="submitted && bookingTooSoon">
+          Please pick a time at least 30 minutes from now<ng-container *ngIf="info.selfCheckInEnabled">, or wait for a table now</ng-container>.
+        </span>
+        <div class="field">
+          <label for="wl-notes">Special requests (optional)</label>
+          <input id="wl-notes" [(ngModel)]="bookingNotes" maxlength="500" placeholder="Birthday, high chair…" />
+        </div>
+      </ng-container>
+
       <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
 
-      <button class="btn-join" (click)="join()" [disabled]="joining">
+      <button class="btn-join" *ngIf="mode === 'now'" (click)="join()" [disabled]="joining">
         {{ joining ? 'Joining…' : 'Join waitlist' }}
       </button>
+      <button class="btn-join" *ngIf="mode === 'later'" (click)="reserve()" [disabled]="joining">
+        {{ joining ? 'Sending…' : 'Request booking' }}
+      </button>
+      <p class="hint center" *ngIf="mode === 'later'">The restaurant will confirm your booking. You'll get a link to check or cancel it.</p>
+
+      <app-table-board *ngIf="mode === 'now'" [tables]="info.tables"></app-table-board>
     </div>
 
     <p class="powered">Powered by <strong>TabVerse</strong></p>

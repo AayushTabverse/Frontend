@@ -5,12 +5,13 @@ import { Subscription } from 'rxjs';
 import { WaitlistService } from '../../services/waitlist.service';
 import { SignalRService } from '../../services/signalr.service';
 import { PublicWaitlistStatus } from '../../models/api.models';
+import { TableBoardComponent } from '../../shared/components/table-board/table-board.component';
 
 /** Customer's live place in line. Opened from the WhatsApp link or right after self check-in. */
 @Component({
   selector: 'app-waitlist-status',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TableBoardComponent],
   templateUrl: './waitlist-status.component.html',
   styleUrl: './waitlist-status.component.scss'
 })

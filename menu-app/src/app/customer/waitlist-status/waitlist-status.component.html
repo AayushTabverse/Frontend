@@ -23,6 +23,7 @@
         <div class="headline">{{ positionLabel }}</div>
         <div class="wait">⏱️ {{ waitLabel }}</div>
         <p class="muted">Feel free to wait nearby. We'll message you on WhatsApp when your table is ready. This page updates on its own.</p>
+        <app-table-board [tables]="status.tables"></app-table-board>
       </ng-container>
 
       <!-- Called -->
@@ -30,13 +31,14 @@
         <div class="ready-icon">🎉</div>
         <div class="headline">Your table is ready!</div>
         <p>Please come to the entrance and show token <strong>#{{ status.tokenNumber }}</strong>.</p>
+        <p class="your-table" *ngIf="status.tableNumbers.length">Your table: <strong>{{ status.tableNumbers.join(' + ') }}</strong></p>
       </ng-container>
 
       <!-- Seated -->
       <ng-container *ngIf="status.status === 'Seated'">
         <div class="ready-icon">🍽️</div>
         <div class="headline">Enjoy your meal!</div>
-        <p *ngIf="status.tableNumbers.length">You're at table {{ status.tableNumbers.join(' + ') }}.</p>
+        <p class="your-table" *ngIf="status.tableNumbers.length">Your table: <strong>{{ status.tableNumbers.join(' + ') }}</strong></p>
       </ng-container>
 
       <ng-container *ngIf="status.status === 'Completed'">

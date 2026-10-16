@@ -28,6 +28,14 @@
     </div>
 
     <!-- Summary -->
+    <div class="edit-notice" *ngIf="editNotice">
+      <span>
+        ✏️ {{ editNotice.billNumber }} updated: ₹{{ editNotice.previousTotal | number:'1.0-0' }} → <strong>₹{{ editNotice.newTotal | number:'1.0-0' }}</strong>.
+        <ng-container *ngIf="editNotice.refund > 0"><strong>Return ₹{{ editNotice.refund | number:'1.0-0' }}</strong> to the customer.</ng-container>
+      </span>
+      <button class="notice-close" (click)="editNotice = null" aria-label="Dismiss">✕</button>
+    </div>
+
     <div class="summary-bar" *ngIf="bills.length > 0">
       <div class="summary-item">
         <span class="label">Total Bills</span>
@@ -54,14 +62,14 @@
             <th>Due</th>
             <th>Date</th>
             <th>Time</th>
-            <th>Action</th>
+            <th class="action-col">Action</th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngFor="let bill of bills">
             <tr class="bill-row" (click)="toggleBill(bill.billNumber)" [class.expanded]="expandedBill === bill.billNumber">
               <td class="expand-icon">{{ expandedBill === bill.billNumber ? '▾' : '▸' }}</td>
-              <td class="bill-num">{{ bill.billNumber }}</td>
+              <td class="bill-num">{{ bill.billNumber }} <span class="revised-badge" *ngIf="bill.adjustments?.length" title="Items were removed after printing">Revised</span></td>
               <td>{{ bill.tableNumber }}{{ bill.tableLabel ? ' — ' + bill.tableLabel : '' }}</td>
               <td class="center">{{ bill.orderCount }}</td>
               <td class="center">{{ bill.totalItems }}</td>
@@ -70,7 +78,12 @@
               <td class="amount due-col" [class.has-due]="bill.dueAmount > 0">{{ bill.dueAmount > 0 ? '₹' + (bill.dueAmount | number:'1.0-0') : '—' }}</td>
               <td>{{ bill.completedAt | date:'mediumDate' }}</td>
               <td>{{ bill.completedAt | date:'shortTime' }}</td>
-              <td class="action-col"><button class="invoice-btn" (click)="downloadInvoice(bill); $event.stopPropagation()" title="Download Invoice">🧾</button></td>
+              <td class="action-col">
+                <div class="action-buttons">
+                  <button class="invoice-btn" (click)="openEditBill(bill); $event.stopPropagation()" title="Remove items from this bill" aria-label="Edit bill">✏️</button>
+                  <button class="invoice-btn" (click)="downloadInvoice(bill); $event.stopPropagation()" title="Download Invoice" aria-label="Print invoice">🧾</button>
+                </div>
+              </td>
             </tr>
             <!-- Expanded order details -->
             <tr *ngIf="expandedBill === bill.billNumber" class="detail-row">
@@ -84,6 +97,15 @@
                     <span *ngIf="bill.dueAmount > 0">Due (Udhaar): <strong class="due-highlight">₹{{ bill.dueAmount | number:'1.0-0' }}</strong></span>
                     <span *ngIf="bill.customerName">Customer: <strong>{{ bill.customerName }}</strong></span>
                     <span *ngIf="bill.customerMobile">Mobile: <strong>{{ bill.customerMobile }}</strong></span>
+                  </div>
+
+                  <!-- Changes after printing -->
+                  <div class="adjustments" *ngIf="bill.adjustments?.length">
+                    <div class="adjustments-title">✏️ Changed after printing</div>
+                    <div class="adjustment" *ngFor="let a of bill.adjustments">
+                      <span>Removed {{ a.quantityRemoved }} × {{ a.itemName }} <strong>(− ₹{{ a.amountRemoved | number:'1.0-0' }})</strong></span>
+                      <span class="adj-meta">{{ a.reason || 'No reason given' }} · {{ a.changedBy || 'Staff' }} · {{ a.changedAt | date:'d MMM, h:mm a' }}</span>
+                    </div>
                   </div>
 
                   <!-- Simple view: merged items -->
@@ -146,6 +168,10 @@
     </div>
 
     <!-- Past Bill Dialog -->
+    <app-bill-edit-dialog *ngIf="editingBill" [billNumber]="editingBill.billNumber" [orders]="editingBill.orders"
+                          [tableNumber]="editingBill.tableNumber"
+                          (closed)="editingBill = null" (saved)="onBillEdited($event)"></app-bill-edit-dialog>
+
     <div class="modal-overlay" *ngIf="showPastBillDialog" (click)="closePastBillDialog()">
       <div class="past-bill-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">

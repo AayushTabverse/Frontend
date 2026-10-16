@@ -127,8 +127,8 @@
 
     <!-- Waiting / called -->
     <div class="entry-actions" *ngIf="e.status === 'Waiting' || e.status === 'Notified'">
-      <button class="btn-seat" (click)="openSeat(e)" [disabled]="freeTables.length === 0"
-              [title]="freeTables.length === 0 ? 'No free tables right now' : 'Pick table(s)'">✅ Seat</button>
+      <button class="btn-seat" (click)="openSeat(e)" [disabled]="freeTables.length === 0 && reservedSoonTables.length === 0"
+              [title]="freeTables.length === 0 ? (reservedSoonTables.length ? 'Only tables reserved soon are empty' : 'No free tables right now') : 'Pick table(s)'">✅ Seat</button>
       <button class="btn-whatsapp" *ngIf="e.customerMobile" (click)="sendTableReady(e)" title="Send 'table ready' on WhatsApp">💬 Table ready</button>
       <a class="btn-call" *ngIf="e.customerMobile" [href]="callLink(e)" (click)="markCalled(e)">📞 Call</a>
       <button class="btn-ghost" *ngIf="!e.customerMobile && e.status === 'Waiting'" (click)="markCalled(e)">📣 Mark called</button>
@@ -242,6 +242,15 @@
         <small class="qr-note" *ngIf="!settings.selfCheckInEnabled">Turn on QR check-in above for this QR to work.</small>
       </div>
 
+      <label class="toggle-row toggle-row-spaced">
+        <span>
+          <strong>Show table status to waiting customers</strong>
+          <small>Customers' status page (and the check-in page) shows every table by number as Free, Occupied or Reserved. No names are shown.</small>
+        </span>
+        <input type="checkbox" [checked]="settings.showTableStatus" [disabled]="settingsSaving"
+               (change)="saveSettings({ showTableStatus: $any($event.target).checked })" />
+      </label>
+
       <div class="setting-block">
         <strong>Auto no-show</strong>
         <small>If a called party doesn't arrive in time, mark them as a no-show automatically so the line keeps moving.</small>
@@ -332,7 +341,7 @@
         <span class="seat-table-number">{{ t.tableNumber }}</span>
         <span class="seat-table-cap">{{ t.capacity }} seats</span>
         <span class="seat-table-label" *ngIf="t.label">{{ t.label }}</span>
-        <span class="seat-table-res" *ngIf="t.reservationTime">📅 {{ t.reservationTime | date:'h:mm a' }}</span>
+        <span class="seat-table-res" *ngIf="t.reservationTime">📅 Reserved {{ t.reservationTime | date:'h:mm a' }}</span>
         <span class="primary-tag" *ngIf="isPrimary(t) && selectedTableIds.length > 1">orders here</span>
       </button>
     </div>

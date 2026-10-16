@@ -9,11 +9,12 @@ import { TableService } from '../../services/table.service';
 import { MenuService } from '../../services/menu.service';
 import { BillResponse, TableResponse, PastBillItem, MenuItem, MenuCategory } from '../../models/api.models';
 import { toDateKey } from '../../shared/date-utils';
+import { BillEditDialogComponent, BillEditResult } from '../../shared/components/bill-edit-dialog/bill-edit-dialog.component';
 
 @Component({
   selector: 'app-bills',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, BillEditDialogComponent],
   templateUrl: './bills.component.html',
   styleUrl: './bills.component.scss'
 })
@@ -35,6 +36,10 @@ export class BillsComponent implements OnInit {
 
   // Expanded bill
   expandedBill: string | null = null;
+
+  // Editing a printed bill
+  editingBill: BillResponse | null = null;
+  editNotice: { billNumber: string; previousTotal: number; newTotal: number; refund: number } | null = null;
   simpleView = false;
 
   // Restaurant settings for invoice
@@ -268,6 +273,27 @@ export class BillsComponent implements OnInit {
     });
   }
 
+  openEditBill(bill: BillResponse): void {
+    this.editingBill = bill;
+  }
+
+  /** Items removed from a printed bill: swap in the updated bill, tell staff about any refund, reprint if asked. */
+  onBillEdited(result: BillEditResult): void {
+    const updated = result.response.bill;
+    const old = this.bills.find(b => b.billNumber === updated.billNumber);
+    this.bills = this.bills.map(b => b.billNumber === updated.billNumber ? updated : b);
+    if (old) this.totalRevenue += updated.totalAmount - old.totalAmount;
+    this.editingBill = null;
+    this.editNotice = {
+      billNumber: updated.billNumber,
+      previousTotal: result.response.previousTotal,
+      newTotal: updated.totalAmount,
+      refund: result.response.refundAmount
+    };
+    this.expandedBill = updated.billNumber;
+    if (result.print) this.downloadInvoice(updated);
+  }
+
   downloadInvoice(bill: BillResponse): void {
     const items = this.getMergedItems(bill);
     const billDate = new Date(bill.completedAt).toLocaleString();
@@ -302,7 +328,7 @@ export class BillsComponent implements OnInit {
         </div>
         <div class="info">
           Table: <strong>${bill.tableNumber}</strong>${bill.tableLabel ? ' — ' + bill.tableLabel : ''}<br/>
-          Bill: <strong>${bill.billNumber}</strong><br/>
+          Bill: <strong>${bill.billNumber}</strong>${bill.adjustments?.length ? ' <strong>(Revised)</strong>' : ''}<br/>
           ${billDate}
           ${bill.customerName ? '<br/>Name: <strong>' + bill.customerName + '</strong>' : ''}
           ${bill.customerMobile ? '<br/>Mobile: <strong>' + bill.customerMobile + '</strong>' : ''}

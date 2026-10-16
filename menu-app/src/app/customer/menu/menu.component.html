@@ -21,6 +21,12 @@
     </div>
   </header>
 
+  <!-- Merged table: orders go through the main table -->
+  <div class="merged-banner" *ngIf="orderingBlocked" role="status">
+    🔗 <span>Table {{ menu?.tableNumber }} is joined with <strong>Table {{ menu?.mergedIntoTableNumber }}</strong>.
+    Please order from Table {{ menu?.mergedIntoTableNumber }}'s QR code, or ask your waiter.</span>
+  </div>
+
   <!-- Search Bar -->
   <div class="search-bar">
     <input type="text" [value]="searchQuery" (input)="onSearch($any($event.target).value)"
@@ -72,7 +78,7 @@
               <button class="qty-btn" (click)="incrementItem(item)">+</button>
             </div>
             <ng-template #searchAddBtnTpl>
-              <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable">
+              <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable || orderingBlocked">
                 {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
               </button>
             </ng-template>
@@ -110,7 +116,7 @@
               <button class="qty-btn" (click)="incrementItem(item)">+</button>
             </div>
             <ng-template #addBtnTpl>
-              <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable">
+              <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable || orderingBlocked">
                 {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
               </button>
             </ng-template>
@@ -330,7 +336,7 @@
     </button>
 
     <!-- Cart Slide Bar -->
-    <div class="cart-slide-bar" *ngIf="cartCount > 0" (click)="goToCart()">
+    <div class="cart-slide-bar" *ngIf="cartCount > 0 && !orderingBlocked" (click)="goToCart()">
       <div class="cart-slide-info">
         <span class="cart-slide-count">🛒 {{ cartCount }} item{{ cartCount > 1 ? 's' : '' }}</span>
         <span class="cart-slide-total">₹{{ cartTotal | number:'1.0-0' }}</span>

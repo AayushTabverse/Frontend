@@ -48,6 +48,19 @@ export class TableService {
     );
   }
 
+  /** Waiter: this table is done eating; alert the counter to print the bill. */
+  requestBill(tableId: string): Observable<TableResponse> {
+    return this.http.post<ApiResponse<TableResponse>>(`${this.apiUrl}/${tableId}/request-bill`, {}).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  cancelBillRequest(tableId: string): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${tableId}/cancel-bill-request`, {}).pipe(
+      map(() => void 0)
+    );
+  }
+
   dismissCall(tableId: string): Observable<void> {
     return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${tableId}/dismiss-call`, {}).pipe(
       map(() => void 0)
@@ -85,6 +98,13 @@ export class TableService {
   }
 
   /** Move the party (orders, waitlist hold, merged tables) to a free table. */
+  /** Move a table's running orders onto another table: its own bill there (separateParty) or the target's bill. */
+  moveOrders(fromTableId: string, toTableId: string, separateParty: boolean): Observable<TableResponse> {
+    return this.http.post<ApiResponse<TableResponse>>(`${this.apiUrl}/${fromTableId}/move-orders`, { toTableId, separateParty }).pipe(
+      map(res => res.data!)
+    );
+  }
+
   transfer(fromTableId: string, toTableId: string): Observable<TableResponse> {
     return this.http.post<ApiResponse<TableResponse>>(`${this.apiUrl}/${fromTableId}/transfer`, { toTableId }).pipe(
       map(res => res.data!)

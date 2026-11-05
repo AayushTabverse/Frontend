@@ -1,0 +1,17 @@
+<div class="alert-banner" *ngIf="top as alert" [class.critical]="isCritical" role="alert">
+  <span class="ab-icon" aria-hidden="true">
+    <lucide-icon [img]="isCritical ? icons.OctagonAlert : icons.AlertTriangle" [size]="20"></lucide-icon>
+  </span>
+
+  <button class="ab-text" (click)="open(alert)">
+    <strong>{{ alert.title }}</strong>
+    <span class="ab-message" *ngIf="alert.message">{{ alert.message }}</span>
+  </button>
+
+  <div class="ab-actions">
+    <a class="ab-more" *ngIf="alerts.length > 1" routerLink="/admin/notifications">
+      +{{ alerts.length - 1 }} more
+    </a>
+    <button class="ab-ack" (click)="acknowledge(alert)" [disabled]="acknowledging">Acknowledge</button>
+  </div>
+</div>

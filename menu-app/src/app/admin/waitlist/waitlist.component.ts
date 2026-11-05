@@ -142,6 +142,11 @@ export class WaitlistComponent implements OnInit, OnDestroy {
         this.loadStats();
       }),
       this.signalR.newOrder$.subscribe(() => this.loadTables()),
+      this.signalR.reconnected$.subscribe(() => {
+        this.loadEntries();
+        this.loadTables();
+        this.loadStats();
+      }),
       this.signalR.tableCleared$.subscribe((data) => {
         this.tableService.getTables().subscribe(tables => {
           this.tables = tables;

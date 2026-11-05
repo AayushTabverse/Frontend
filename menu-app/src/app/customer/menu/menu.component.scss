@@ -1076,3 +1076,8 @@
   margin: 10px 16px 0; padding: 12px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.4;
   background: var(--ui-info-soft, rgba(37, 99, 235, 0.1)); color: var(--ui-info-text, #1d4ed8);
 }
+
+.closed-banner {
+  background: var(--ui-warning-soft, rgba(217, 119, 6, 0.12));
+  color: var(--ui-warning-text, #b45309);
+}

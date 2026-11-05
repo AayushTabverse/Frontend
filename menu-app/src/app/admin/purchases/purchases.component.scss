@@ -1,0 +1,65 @@
+@use 'ui';
+
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.primary-btn { @include ui.btn-primary; @include ui.btn-sm; }
+.secondary-btn { @include ui.btn-secondary; @include ui.btn-sm; text-decoration: none; }
+.icon-btn { @include ui.btn-ghost; @include ui.btn-icon(32px); }
+.chip { @include ui.chip; height: 32px; }
+
+.loading, .empty-state { @include ui.empty-state; }
+.msg { margin-bottom: 12px; &.error { @include ui.alert(danger); } &.success { @include ui.alert(success); } }
+.sub { color: var(--ui-text-3); font-size: 0.78rem; margin: 0; }
+
+.range-bar {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px;
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; color: var(--ui-text-2); }
+  input { @include ui.input; }
+  .quick { display: flex; gap: 6px; flex-wrap: wrap; }
+}
+
+.table-wrap { @include ui.table-card; }
+table.bills {
+  @include ui.table;
+  font-size: 0.85rem;
+  th, td { padding: 10px 12px; }
+  .strong { font-weight: 700; }
+  .actions { white-space: nowrap; text-align: right; display: flex; gap: 4px; justify-content: flex-end; align-items: center; }
+}
+.num { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+.badge.paid { @include ui.badge(success); }
+.badge.credit { @include ui.badge(warning); }
+
+.modal-overlay { @include ui.modal-overlay; }
+.modal {
+  @include ui.modal(620px);
+  display: flex; flex-direction: column; gap: 12px;
+  h2 { margin-bottom: 0; }
+  &.small { max-width: 400px; }
+}
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.span-2 { grid-column: 1 / -1; }
+.field {
+  display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; color: var(--ui-text-2);
+  input { @include ui.input; }
+  select { @include ui.select; }
+  .opt { font-weight: 400; color: var(--ui-text-3); }
+  .upper { text-transform: uppercase; }
+}
+.segmented {
+  display: inline-flex; gap: 4px; padding: 4px; border-radius: var(--ui-radius); background: var(--ui-surface-muted);
+  button {
+    flex: 1; padding: 6px 10px; border: none; border-radius: var(--ui-radius-sm); background: none; color: var(--ui-text-2);
+    font: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+    small { font-weight: 400; font-size: 0.7rem; color: var(--ui-text-3); }
+    &.active { background: var(--ui-surface-solid); color: var(--ui-text); box-shadow: var(--ui-shadow); }
+  }
+}
+.rates { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.total-line {
+  @include ui.inset-panel(12px);
+  display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+  strong { font-size: 1.2rem; }
+}
+.modal-actions { @include ui.modal-actions; margin-top: 4px; }

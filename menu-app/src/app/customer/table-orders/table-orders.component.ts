@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoDirective } from '@jsverse/transloco';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { TableSessionService } from '../../services/table-session.service';
@@ -8,7 +9,7 @@ import { OrderResponse } from '../../models/api.models';
 @Component({
   selector: 'app-table-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective],
   templateUrl: './table-orders.component.html',
   styleUrl: './table-orders.component.scss'
 })

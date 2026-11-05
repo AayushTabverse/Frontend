@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked }
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { MenuService } from '../../services/menu.service';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
@@ -9,13 +11,15 @@ import { TableService } from '../../services/table.service';
 import { ThemeService } from '../../services/theme.service';
 import { TableSessionService } from '../../services/table-session.service';
 import { SignalRService } from '../../services/signalr.service';
+import { HotelService } from '../../services/hotel.service';
 import { SettingsService } from '../../services/settings.service';
-import { FullMenuResponse, MenuCategory, MenuItem, CartItem, OrderResponse } from '../../models/api.models';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
+import { FullMenuResponse, MenuCategory, MenuItem, CartItem, OrderResponse, PublicRoomResponse } from '../../models/api.models';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective, LanguageSwitcherComponent],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss'
 })
@@ -32,6 +36,8 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
   waiterCalled = false;
   activeOrders: OrderResponse[] = [];
   sessionExpired = false;
+  /** Our party paid while others at the table are still eating (vs the whole table cleared). */
+  partyBilled = false;
   searchQuery = '';
   searchResults: MenuItem[] = [];
   isSearching = false;
@@ -89,14 +95,16 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
     public themeService: ThemeService,
     private sessionService: TableSessionService,
     private signalR: SignalRService,
-    private settingsService: SettingsService
+    private hotelService: HotelService,
+    private settingsService: SettingsService,
+    private transloco: TranslocoService
   ) {}
 
   ngOnInit(): void {
     this.tenantId = this.route.snapshot.paramMap.get('tenantId') || '';
     this.tableId = this.route.snapshot.paramMap.get('tableId') || '';
 
-    // Initialize customer session for this table
+    // Initialize customer session for this table (or the takeaway counter)
     if (this.tableId) {
       this.sessionService.initSession(this.tableId);
       this.restoreLuckyResult();
@@ -121,10 +129,17 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
       })
     );
 
-    if (this.tableId) {
+    if (this.isRoom) {
+      this.hotelService.getPublicRoom(this.tableId.slice('room-'.length)).subscribe({
+        next: (room) => this.room = room,
+        error: () => this.room = { roomId: '', tenantId: this.tenantId, roomNumber: '', checkedIn: false, pinRequired: false, roomServiceEnabled: false }
+      });
+    }
+
+    if (this.tableId && !this.isTakeaway && !this.isRoom) {
       this.loadTableOrders();
       this.listenForTableCleared();
-      this.menuService.getMenuByTable(this.tableId).subscribe({
+      this.menuService.getMenuByTable(this.tableId, this.transloco.getActiveLang()).subscribe({
         next: (menu) => {
           this.menu = menu;
           this.tenantId = menu.tenantId;
@@ -138,7 +153,7 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
       });
     } else if (this.tenantId) {
       this.loadMaxDiscount(this.tenantId);
-      this.menuService.getMenuByTenant(this.tenantId).subscribe({
+      this.menuService.getMenuByTenant(this.tenantId, this.transloco.getActiveLang()).subscribe({
         next: (menu) => {
           this.menu = menu;
           if (menu.categories.length > 0) {
@@ -149,6 +164,28 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
         error: () => this.loading = false
       });
     }
+
+    // Re-fetch the menu so dish names follow the selected language
+    this.subs.push(
+      this.transloco.langChanges$.pipe(skip(1)).subscribe(() => this.reloadMenu())
+    );
+  }
+
+  private reloadMenu(): void {
+    const lang = this.transloco.getActiveLang();
+    const menu$ = this.tableId && !this.isTakeaway && !this.isRoom
+      ? this.menuService.getMenuByTable(this.tableId, lang)
+      : this.tenantId ? this.menuService.getMenuByTenant(this.tenantId, lang) : null;
+    if (!menu$) return;
+    const selectedId = this.selectedCategory?.id;
+    menu$.subscribe({
+      next: (menu) => {
+        this.menu = menu;
+        this.selectedCategory = menu.categories.find(c => c.id === selectedId) ?? menu.categories[0];
+        if (this.isSearching) this.onSearch(this.searchQuery);
+      },
+      error: () => {}
+    });
   }
 
   ngAfterViewChecked(): void {
@@ -171,25 +208,36 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
           sessionOrderIds.includes(o.id) &&
           !['Completed', 'Cancelled'].includes(o.status)
         );
+        // Status changes arrive on each order's own group
+        this.activeOrders.forEach(o => this.signalR.trackOrder(o.id));
       },
       error: () => {}
     });
   }
 
   private async listenForTableCleared(): Promise<void> {
-    if (!this.tenantId) return;
-    await this.signalR.startConnection(this.tenantId);
+    await this.signalR.connectPublic();
+    await this.signalR.followTable(this.tableId);
     this.subs.push(
-      this.signalR.tableCleared$.subscribe(data => {
-        if (data.tableId === this.tableId) {
+      this.signalR.tableSessionEnded$.subscribe(() => this.sessionService.clearSession()),
+      // Shared table: our party paid and left while others are still eating
+      this.signalR.partySettled$.subscribe(sessionIds => {
+        const mine = this.sessionService.getSessionId();
+        if (mine && sessionIds.includes(mine)) {
+          this.partyBilled = true;
           this.sessionService.clearSession();
         }
-      })
+      }),
+      this.signalR.statusUpdate$.subscribe(order => {
+        if (this.activeOrders.some(o => o.id === order.id)) this.loadTableOrders();
+      }),
+      this.signalR.reconnected$.subscribe(() => this.loadTableOrders())
     );
   }
 
   startNewSession(): void {
     this.sessionExpired = false;
+    this.partyBilled = false;
     this.sessionService.initSession(this.tableId);
   }
 
@@ -247,9 +295,42 @@ export class MenuComponent implements OnInit, OnDestroy, AfterViewChecked {
     return cartItem ? cartItem.quantity : 0;
   }
 
-  /** This table is merged into another: orders are only taken on the main table's QR. */
+  /** Opened from a hotel room's QR (/menu/{tenant}/room-{roomId}). */
+  get isRoom(): boolean {
+    return this.tableId.startsWith('room-');
+  }
+
+  /** Room QR: which room, and whether it can order (checked in, room service on). */
+  room: PublicRoomResponse | null = null;
+
+  get roomUnavailable(): boolean {
+    return this.isRoom && !!this.room && (!this.room.checkedIn || !this.room.roomServiceEnabled);
+  }
+
+  /** Opened from the counter's takeaway QR (/menu/{tenant}/takeaway). */
+  get isTakeaway(): boolean {
+    return this.tableId === 'takeaway';
+  }
+
+  /** Takeaway QR scanned while the restaurant has QR takeaway turned off. */
+  get takeawayUnavailable(): boolean {
+    return this.isTakeaway && !!this.menu && !this.menu.takeawayEnabled;
+  }
+
+  /** Merged into another table (order from the main table's QR), or takeaway is switched off. */
   get orderingBlocked(): boolean {
-    return !!this.menu?.mergedIntoTableNumber;
+    // Room service isn't bound by restaurant hours (check-in and the room PIN secure it)
+    return this.sessionExpired || !!this.menu?.mergedIntoTableNumber || this.takeawayUnavailable || this.roomUnavailable
+      || (this.menu?.orderingOpen === false && !this.isRoom);
+  }
+
+  /** Closed banner in the customer's language, with the next opening time when known. */
+  get closedText(): string {
+    const opens = this.menu?.opensAt ? new Date(this.menu.opensAt) : null;
+    if (!opens || isNaN(opens.getTime())) return this.transloco.translate('menu.closedForOrders');
+    const lang = this.transloco.getActiveLang();
+    const when = opens.toLocaleString(`${lang}-IN`, { weekday: 'long', hour: 'numeric', minute: '2-digit' });
+    return this.transloco.translate('menu.closedOpensAt', { when });
   }
 
   addToCart(item: MenuItem): void {

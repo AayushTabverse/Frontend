@@ -1,0 +1,32 @@
+{
+  "printStation": {
+    "title": "Print Station",
+    "subtitle": "keep this page open on the counter PC",
+    "paused": "Paused",
+    "live": "Live",
+    "connecting": "Connecting…",
+    "resume": "Resume",
+    "pause": "Pause",
+    "testPrint": "Test print",
+    "settings": "Settings",
+    "autoPrintOff": "KOT auto-print is off, so only KOTs staff reprint will arrive here.",
+    "turnOnBefore": "Turn it on in",
+    "printerSettingsLink": "Settings → Printer Settings",
+    "turnOnAfter": ".",
+    "setup": {
+      "title": "Set up silent printing (once per PC)",
+      "step1": "Set the kitchen/thermal printer as the PC's default printer.",
+      "step2": "Close Chrome, then start it with <code>--kiosk-printing</code>. Windows: right-click the Chrome shortcut → Properties → add <code>--kiosk-printing</code> after <code>chrome.exe\"</code>.",
+      "step3": "Open this page, press <strong>Test print</strong>. It should print without a dialog.",
+      "step4": "Leave the page open. It keeps the screen awake and prints each KOT as it arrives."
+    },
+    "printed": "Printed",
+    "nothingPrinted": "Nothing printed yet. New KOTs print here automatically.",
+    "takeaway": "Takeaway",
+    "room": "Room",
+    "table": "Table",
+    "printedOk": "Printed",
+    "printFailed": "Print failed",
+    "printFrameError": "Could not open print frame"
+  }
+}

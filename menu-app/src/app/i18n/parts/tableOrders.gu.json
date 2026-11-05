@@ -1,0 +1,22 @@
+{
+  "tableOrders": {
+    "backToMenu": "← મેનુ પર પાછા",
+    "title": "તમારા ઓર્ડર",
+    "activeOrders": "ચાલુ ઓર્ડર",
+    "order": "ઓર્ડર",
+    "track": "ટ્રેક કરો →",
+    "empty": "📋 આ ટેબલ પરથી હજી કોઈ ઓર્ડર નથી",
+    "browseMenu": "મેનુ જુઓ",
+    "orderMore": "➕ વધુ ઓર્ડર કરો",
+    "loading": "ઓર્ડર લોડ થઈ રહ્યા છે...",
+    "status": {
+      "Pending": "રાહ જોવાય છે",
+      "Accepted": "સ્વીકારાયો",
+      "Preparing": "બની રહ્યો છે",
+      "Ready": "તૈયાર",
+      "Served": "પીરસાયો",
+      "Completed": "પૂર્ણ",
+      "Cancelled": "રદ"
+    }
+  }
+}

@@ -78,6 +78,10 @@
             <input type="number" [(ngModel)]="settleAmounts[due.id]" min="1"
                    [placeholder]="'₹' + due.dueAmount" class="settle-input"
                    (input)="capSettleAmount($event, due)" />
+            <select class="settle-input" *ngIf="paymentAccounts.length" [ngModel]="settleAccounts[due.id] || defaultAccount"
+                    (ngModelChange)="settleAccounts[due.id] = $event" aria-label="Paid by">
+              <option *ngFor="let a of paymentAccounts" [value]="a.key">{{ a.label }}</option>
+            </select>
             <button class="settle-btn" (click)="settleDue(due)"
                     [disabled]="settling[due.id] || !settleAmounts[due.id] || settleAmounts[due.id] <= 0 || settleAmounts[due.id] > due.dueAmount">
               {{ settling[due.id] ? 'Processing...' : '💰 Receive Payment' }}

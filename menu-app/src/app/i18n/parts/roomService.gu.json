@@ -1,0 +1,39 @@
+{
+  "roomService": {
+    "title": "રૂમ સર્વિસ",
+    "rooms": "રૂમ",
+    "logout": "લૉગઆઉટ",
+    "loading": "લોડ થઈ રહ્યું છે…",
+    "empty": "હમણાં કોઈ રૂમ સર્વિસ ઑર્ડર નથી.",
+    "room": "રૂમ {{room}}",
+    "onRoomBill": "રૂમ બિલમાં",
+    "collect": "₹{{amount}} લેવાના",
+    "pickedUp": "કિચનમાંથી લઈ લીધું",
+    "delivered": "પહોંચાડ્યું",
+    "paid": "₹{{amount}} મળી ગયા",
+    "paidBy": "₹{{amount}} ની ચુકવણી",
+    "payment": {
+      "cash": "રોકડા",
+      "upi": "UPI",
+      "card": "કાર્ડ"
+    },
+    "readyToCarry": "ઉપર લઈ જવા તૈયાર",
+    "onTheWay": "રસ્તામાં",
+    "paymentToRecord": "પહોંચાડ્યું, પેમેન્ટ નોંધવાનું બાકી",
+    "inKitchen": "કિચનમાં",
+    "loadError": "રૂમ સર્વિસ ઑર્ડર લોડ ન થઈ શક્યા.",
+    "updateError": "ઑર્ડર અપડેટ ન થઈ શક્યો.",
+    "status": {
+      "Pending": "બાકી",
+      "Accepted": "સ્વીકાર્યો",
+      "Preparing": "બની રહ્યો છે",
+      "Ready": "તૈયાર",
+      "Served": "પીરસ્યો",
+      "Completed": "પૂરો",
+      "Cancelled": "રદ",
+      "Rejected": "નામંજૂર",
+      "OnTheWay": "રસ્તામાં",
+      "Delivered": "પહોંચાડી દીધું"
+    }
+  }
+}

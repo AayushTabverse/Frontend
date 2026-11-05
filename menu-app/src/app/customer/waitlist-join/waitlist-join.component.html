@@ -1,112 +1,114 @@
-<div class="wl-page">
+<div class="wl-page" *transloco="let t">
+  <div class="lang-bar"><app-language-switcher></app-language-switcher></div>
+
   <div class="wl-card" *ngIf="loading">
     <div class="spinner"></div>
   </div>
 
   <div class="wl-card" *ngIf="!loading && notFound">
     <div class="big-icon">🤔</div>
-    <h1>Restaurant not found</h1>
-    <p class="muted">Please ask the staff at the entrance to add you to the waitlist.</p>
+    <h1>{{ t('waitlistJoin.notFound.title') }}</h1>
+    <p class="muted">{{ t('waitlistJoin.notFound.message') }}</p>
   </div>
 
   <ng-container *ngIf="!loading && info">
     <header class="wl-header">
       <img *ngIf="info.logoUrl" [src]="info.logoUrl" alt="" class="logo" />
       <h1>{{ info.restaurantName }}</h1>
-      <p class="muted">{{ mode === 'now' ? 'Join the waitlist' : 'Book a table for later' }}</p>
+      <p class="muted">{{ mode === 'now' ? t('waitlistJoin.subtitleNow') : t('waitlistJoin.subtitleLater') }}</p>
     </header>
 
     <!-- Nothing online: ask staff -->
     <div class="wl-card" *ngIf="!info.selfCheckInEnabled && !info.onlineReservationsEnabled">
       <div class="big-icon">🙋</div>
-      <h2>Please check in with our staff</h2>
-      <p class="muted">Online check-in isn't available right now. Our host at the entrance will add you to the list.</p>
+      <h2>{{ t('waitlistJoin.offline.title') }}</h2>
+      <p class="muted">{{ t('waitlistJoin.offline.message') }}</p>
     </div>
 
     <div class="wl-card" *ngIf="info.selfCheckInEnabled || info.onlineReservationsEnabled">
       <!-- Join now / later -->
       <div class="mode-switch" *ngIf="showModeSwitch" role="tablist">
         <button type="button" role="tab" [class.active]="mode === 'now'" [attr.aria-selected]="mode === 'now'" (click)="setMode('now')">
-          ⏳ Wait for a table now
+          {{ t('waitlistJoin.modeNow') }}
         </button>
         <button type="button" role="tab" [class.active]="mode === 'later'" [attr.aria-selected]="mode === 'later'" (click)="setMode('later')">
-          📅 Reserve for later
+          {{ t('waitlistJoin.modeLater') }}
         </button>
       </div>
 
       <div class="queue-info" *ngIf="mode === 'now'">
         <div>
           <span class="queue-value">{{ info.partiesWaiting }}</span>
-          <span class="queue-label">{{ info.partiesWaiting === 1 ? 'party' : 'parties' }} ahead</span>
+          <span class="queue-label">{{ info.partiesWaiting === 1 ? t('waitlistJoin.queue.partyAhead') : t('waitlistJoin.queue.partiesAhead') }}</span>
         </div>
         <div>
-          <span class="queue-value">{{ info.estimatedWaitMinutes === 0 ? 'Now' : '~' + info.estimatedWaitMinutes + 'm' }}</span>
-          <span class="queue-label">expected wait</span>
+          <span class="queue-value">{{ info.estimatedWaitMinutes === 0 ? t('waitlistJoin.queue.now') : t('waitlistJoin.queue.minutes', { minutes: info.estimatedWaitMinutes }) }}</span>
+          <span class="queue-label">{{ t('waitlistJoin.queue.expectedWait') }}</span>
         </div>
       </div>
 
       <div class="field">
-        <label for="wl-name">Your name</label>
-        <input id="wl-name" [(ngModel)]="name" placeholder="Name" maxlength="100" autocomplete="name"
+        <label for="wl-name">{{ t('waitlistJoin.form.nameLabel') }}</label>
+        <input id="wl-name" [(ngModel)]="name" [placeholder]="t('waitlistJoin.form.namePlaceholder')" maxlength="100" autocomplete="name"
                [class.invalid]="submitted && !name.trim()" />
-        <span class="error" *ngIf="submitted && !name.trim()">Please enter your name</span>
+        <span class="error" *ngIf="submitted && !name.trim()">{{ t('waitlistJoin.form.nameRequired') }}</span>
       </div>
 
       <div class="field">
-        <label for="wl-mobile">Mobile (WhatsApp)</label>
-        <input id="wl-mobile" type="tel" [(ngModel)]="mobile" placeholder="10-digit mobile" maxlength="15"
+        <label for="wl-mobile">{{ t('waitlistJoin.form.mobileLabel') }}</label>
+        <input id="wl-mobile" type="tel" [(ngModel)]="mobile" [placeholder]="t('waitlistJoin.form.mobilePlaceholder')" maxlength="15"
                autocomplete="tel" inputmode="tel" (keypress)="onlyNumbers($event)"
                [class.invalid]="submitted && mobileInvalid" />
-        <span class="error" *ngIf="submitted && mobileInvalid">Please enter a valid mobile number</span>
-        <span class="hint">{{ mode === 'now' ? "We'll message you when your table is ready." : "We'll confirm your booking on WhatsApp." }}</span>
+        <span class="error" *ngIf="submitted && mobileInvalid">{{ t('waitlistJoin.form.mobileInvalid') }}</span>
+        <span class="hint">{{ mode === 'now' ? t('waitlistJoin.form.mobileHintNow') : t('waitlistJoin.form.mobileHintLater') }}</span>
       </div>
 
       <div class="field">
-        <label>How many people?</label>
+        <label>{{ t('waitlistJoin.form.partySizeLabel') }}</label>
         <div class="chips">
           <button type="button" *ngFor="let n of partySizes" class="chip"
                   [class.selected]="partySize === n" (click)="partySize = n">{{ n === 8 ? '8+' : n }}</button>
         </div>
         <input *ngIf="partySize >= 8" type="number" class="party-input" [(ngModel)]="partySize" min="8" max="30"
-               aria-label="Number of people" />
+               [attr.aria-label]="t('waitlistJoin.form.partySizeAria')" />
       </div>
 
       <!-- Booking for later -->
       <ng-container *ngIf="mode === 'later'">
         <div class="field-row">
           <div class="field">
-            <label for="wl-date">Date</label>
+            <label for="wl-date">{{ t('waitlistJoin.form.dateLabel') }}</label>
             <input id="wl-date" type="date" [(ngModel)]="bookingDate" [min]="bookingMinDate" [max]="bookingMaxDate"
                    [class.invalid]="submitted && !bookingDate" />
           </div>
           <div class="field">
-            <label for="wl-time">Time</label>
+            <label for="wl-time">{{ t('waitlistJoin.form.timeLabel') }}</label>
             <input id="wl-time" type="time" step="900" [(ngModel)]="bookingTime"
                    [class.invalid]="submitted && (!bookingTime || bookingTooSoon)" />
           </div>
         </div>
         <span class="error block" *ngIf="submitted && bookingTooSoon">
-          Please pick a time at least 30 minutes from now<ng-container *ngIf="info.selfCheckInEnabled">, or wait for a table now</ng-container>.
+          {{ info.selfCheckInEnabled ? t('waitlistJoin.form.tooSoonOrWait') : t('waitlistJoin.form.tooSoon') }}
         </span>
         <div class="field">
-          <label for="wl-notes">Special requests (optional)</label>
-          <input id="wl-notes" [(ngModel)]="bookingNotes" maxlength="500" placeholder="Birthday, high chair…" />
+          <label for="wl-notes">{{ t('waitlistJoin.form.notesLabel') }}</label>
+          <input id="wl-notes" [(ngModel)]="bookingNotes" maxlength="500" [placeholder]="t('waitlistJoin.form.notesPlaceholder')" />
         </div>
       </ng-container>
 
       <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
 
       <button class="btn-join" *ngIf="mode === 'now'" (click)="join()" [disabled]="joining">
-        {{ joining ? 'Joining…' : 'Join waitlist' }}
+        {{ joining ? t('waitlistJoin.actions.joining') : t('waitlistJoin.actions.join') }}
       </button>
       <button class="btn-join" *ngIf="mode === 'later'" (click)="reserve()" [disabled]="joining">
-        {{ joining ? 'Sending…' : 'Request booking' }}
+        {{ joining ? t('waitlistJoin.actions.sending') : t('waitlistJoin.actions.requestBooking') }}
       </button>
-      <p class="hint center" *ngIf="mode === 'later'">The restaurant will confirm your booking. You'll get a link to check or cancel it.</p>
+      <p class="hint center" *ngIf="mode === 'later'">{{ t('waitlistJoin.laterHint') }}</p>
 
       <app-table-board *ngIf="mode === 'now'" [tables]="info.tables"></app-table-board>
     </div>
 
-    <p class="powered">Powered by <strong>TabVerse</strong></p>
+    <p class="powered">{{ t('waitlistJoin.poweredBy') }} <strong>TabVerse</strong></p>
   </ng-container>
 </div>

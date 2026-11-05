@@ -1,0 +1,14 @@
+{
+  "tableBoard": {
+    "title": "अभी टेबलों की स्थिति",
+    "summary": "{{free}} खाली · {{occupied}} भरी",
+    "summaryReserved": "{{reserved}} रिज़र्व",
+    "tableAria": "टेबल {{number}}: {{status}}",
+    "seats": "{{count}} सीटें",
+    "status": {
+      "Free": "खाली",
+      "Occupied": "भरी",
+      "Reserved": "रिज़र्व"
+    }
+  }
+}

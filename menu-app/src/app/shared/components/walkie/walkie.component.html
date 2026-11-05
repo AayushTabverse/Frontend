@@ -1,0 +1,76 @@
+<ng-container *transloco="let t">
+  <button class="wk-fab" [class.flash]="flash || playingId" [class.open]="open" (click)="toggle()"
+          [attr.aria-label]="t('walkie.title')" [attr.aria-expanded]="open">
+    📻
+    <span class="wk-badge" *ngIf="unread > 0">{{ unread }}</span>
+  </button>
+
+  <section class="wk-panel" *ngIf="open" role="dialog" [attr.aria-label]="t('walkie.title')">
+    <header class="wk-head">
+      <strong>📻 {{ t('walkie.title') }}</strong>
+      <button class="wk-x" (click)="toggle()" [attr.aria-label]="t('walkie.close')">✕</button>
+    </header>
+
+    <button class="wk-sound" *ngIf="!walkie.soundEnabled" (click)="walkie.enableSound()">
+      🔊 {{ t('walkie.enableSound') }}
+      <small>{{ t('walkie.enableHint') }}</small>
+    </button>
+
+    <label class="wk-target">
+      {{ t('walkie.talkTo') }}
+      <select [ngModel]="targetValue" (ngModelChange)="setTarget($event)">
+        <optgroup [label]="t('walkie.channelsLabel')">
+          <option *ngFor="let c of channels" [value]="c">{{ t('walkie.channels.' + c) }}</option>
+        </optgroup>
+        <optgroup [label]="t('walkie.people')" *ngIf="contacts.length">
+          <option *ngFor="let p of contacts" [value]="'user:' + p.id">👤 {{ p.name }} · {{ p.role }}</option>
+        </optgroup>
+      </select>
+    </label>
+
+    <button class="wk-talk" [class.rec]="recording"
+            (pointerdown)="startTalk($event)" (pointerup)="endTalk()" (pointerleave)="endTalk()" (pointercancel)="endTalk()"
+            (contextmenu)="$event.preventDefault()">
+      <span class="wk-mic">🎙️</span>
+      {{ recording ? t('walkie.recording', { seconds: recordSeconds }) : t('walkie.holdToTalk') }}
+    </button>
+    <div class="wk-status" *ngIf="status" role="status">{{ t(status) }}</div>
+
+    <details class="wk-quick">
+      <summary>⚡ {{ t('walkie.quickCalls') }}</summary>
+      <input class="wk-table" [(ngModel)]="quickTable" [placeholder]="t('walkie.tableNo')" list="wk-tables" maxlength="20" />
+      <datalist id="wk-tables"><option *ngFor="let tn of tables" [value]="tn"></option></datalist>
+      <div class="wk-chips">
+        <button *ngFor="let q of quickCalls" (click)="quick(q.key, q.needsTable)">
+          {{ t('walkie.quickShort.' + q.key) }}
+        </button>
+      </div>
+    </details>
+
+    <div class="wk-list">
+      <div class="wk-empty" *ngIf="!messages.length">{{ t('walkie.empty') }}</div>
+      <div class="wk-msg" *ngFor="let m of messages" [class.mine]="isMine(m)" [class.playing]="playingId === m.id"
+           [class.other]="!isMine(m) && !walkie.isForMe(m)">
+        <div class="wk-meta">
+          <strong>{{ isMine(m) ? t('walkie.you') : m.senderName }}</strong>
+          → {{ m.channel === 'Direct' ? (m.recipientName ?? '') : t('walkie.channels.' + m.channel) }}
+          · {{ m.createdAt | date:'h:mm a' }}
+        </div>
+        <div class="wk-body">
+          <span *ngIf="m.quickKey">⚡ {{ walkie.quickText(m) }}</span>
+          <span *ngIf="m.hasAudio">🎙️ {{ (m.durationMs / 1000) | number:'1.0-0' }}s</span>
+          <button class="wk-play" (click)="walkie.replay(m)" [attr.aria-label]="t('walkie.replay')">▶</button>
+          <button class="wk-reply" *ngIf="!isMine(m)" (click)="replyTo(m)">{{ t('walkie.reply') }}</button>
+        </div>
+      </div>
+    </div>
+
+    <details class="wk-listen">
+      <summary>{{ t('walkie.listening') }}</summary>
+      <label *ngFor="let c of channels">
+        <input type="checkbox" [checked]="walkie.listening.has(c)" (change)="walkie.toggleListening(c)" />
+        {{ t('walkie.channels.' + c) }}
+      </label>
+    </details>
+  </section>
+</ng-container>

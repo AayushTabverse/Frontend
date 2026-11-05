@@ -188,3 +188,22 @@
     }
   }
 }
+
+.parcel-toggle {
+  margin-top: 4px;
+  padding: 3px 8px;
+  border: 1px dashed var(--ui-border-strong, #ccc);
+  border-radius: 999px;
+  background: none;
+  color: var(--ui-text-2, #666);
+  font-size: 0.75rem;
+  cursor: pointer;
+  span { color: var(--ui-text-3, #999); }
+  &.on {
+    border-style: solid;
+    border-color: var(--ui-success, #16a34a);
+    background: var(--ui-success-soft, rgba(22, 163, 74, 0.11));
+    color: var(--ui-success-text, #15803d);
+    font-weight: 600;
+  }
+}

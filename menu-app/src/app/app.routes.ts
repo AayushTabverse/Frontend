@@ -89,6 +89,36 @@ export const routes: Routes = [
         data: { permission: 'dashboard' }
       },
       {
+        path: 'accounting',
+        loadComponent: () => import('./admin/accounting/accounting.component').then(m => m.AccountingComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'accounting' }
+      },
+      {
+        path: 'purchases',
+        loadComponent: () => import('./admin/purchases/purchases.component').then(m => m.PurchasesComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'purchases' }
+      },
+      {
+        path: 'customers',
+        loadComponent: () => import('./admin/customers/customers.component').then(m => m.CustomersComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'customers' }
+      },
+      {
+        path: 'rooms',
+        loadComponent: () => import('./admin/rooms/rooms.component').then(m => m.RoomsComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'rooms' }
+      },
+      {
+        path: 'notifications',
+        loadComponent: () => import('./admin/notifications/notifications.component').then(m => m.NotificationsComponent),
+        canActivate: [permissionGuard],
+        data: { permission: 'notifications' }
+      },
+      {
         path: 'menu',
         loadComponent: () => import('./admin/menu-management/menu-management.component').then(m => m.MenuManagementComponent),
         canActivate: [permissionGuard],
@@ -180,6 +210,22 @@ export const routes: Routes = [
     loadComponent: () => import('./waiter/waiter-dashboard.component').then(m => m.WaiterDashboardComponent),
     canActivate: [permissionGuard],
     data: { permission: 'takeOrder' }
+  },
+
+  // ── Room Service (hotel attendants' delivery queue) ──
+  {
+    path: 'room-service',
+    loadComponent: () => import('./room-service/room-service.component').then(m => m.RoomServiceComponent),
+    canActivate: [permissionGuard],
+    data: { permission: 'roomService' }
+  },
+
+  // ── Print Station (counter PC, prints KOTs) ──
+  {
+    path: 'print-station',
+    loadComponent: () => import('./print-station/print-station.component').then(m => m.PrintStationComponent),
+    canActivate: [permissionGuard],
+    data: { permission: 'printStation' }
   },
 
   // ── Kitchen Display ──

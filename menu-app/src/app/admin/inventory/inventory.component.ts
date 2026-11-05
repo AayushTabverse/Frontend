@@ -1,8 +1,11 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Subscription, debounceTime, merge } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { InventoryService } from '../../services/inventory.service';
+import { SignalRService } from '../../services/signalr.service';
+import { AuthService } from '../../services/auth.service';
 import { InventoryImportRow, InventoryItem, InventoryLog, InventorySummary } from '../../models/api.models';
 import { ExcelImportComponent, ExcelImportConfig } from '../../shared/components/excel-import/excel-import.component';
 import { InventoryAnalyticsComponent } from './inventory-analytics/inventory-analytics.component';
@@ -14,7 +17,9 @@ import { InventoryAnalyticsComponent } from './inventory-analytics/inventory-ana
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })
-export class InventoryComponent implements OnInit {
+export class InventoryComponent implements OnInit, OnDestroy {
+  private liveSub?: Subscription;
+
 
   // Data
   items: InventoryItem[] = [];
@@ -88,11 +93,31 @@ export class InventoryComponent implements OnInit {
   };
 
   constructor(
-    private inventoryService: InventoryService
+    private inventoryService: InventoryService,
+    private signalR: SignalRService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.loadAll();
+    this.setupRealTime();
+  }
+
+  ngOnDestroy(): void {
+    this.liveSub?.unsubscribe();
+  }
+
+  /** Stock used by orders (and changes from other devices) shows up without a refresh. */
+  private async setupRealTime(): Promise<void> {
+    const tenantId = this.authService.getTenantId();
+    if (!tenantId) return;
+    await this.signalR.startConnection(tenantId);
+    this.liveSub = merge(this.signalR.inventoryChanged$, this.signalR.reconnected$)
+      .pipe(debounceTime(1000))
+      .subscribe(() => {
+        this.loadItems();
+        this.loadSummary();
+      });
   }
 
   loadAll(): void {

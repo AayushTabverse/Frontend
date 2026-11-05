@@ -1,46 +1,71 @@
+<ng-container *transloco="let t">
 <div class="checkout-page">
   <header class="checkout-header">
-    <button class="back-btn" (click)="goBack()">← Back</button>
-    <h1>Checkout</h1>
+    <button class="back-btn" (click)="goBack()">{{ t('checkout.back') }}</button>
+    <h1>{{ t('checkout.title') }}</h1>
+    <app-language-switcher style="margin-left: auto"></app-language-switcher>
   </header>
 
   <div class="checkout-content">
-    <div class="section">
-      <h2>Table</h2>
-      <p class="table-info">Auto-detected from QR scan</p>
+    <div class="section" *ngIf="isRoom">
+      <h2>{{ t('checkout.roomService') }}</h2>
+      <input *ngIf="roomPinRequired" class="contact-input" type="password" [(ngModel)]="roomPin" [placeholder]="t('checkout.roomPinPlaceholder')"
+             inputmode="numeric" maxlength="4" autocomplete="one-time-code" />
+      <label class="pay-choice"><input type="radio" name="pay" [value]="true" [(ngModel)]="chargeToRoom" /> {{ t('checkout.chargeToRoom') }}</label>
+      <label class="pay-choice"><input type="radio" name="pay" [value]="false" [(ngModel)]="chargeToRoom" /> {{ t('checkout.payOnDelivery') }}</label>
+    </div>
+
+    <div class="section" *ngIf="!isTakeaway && !isRoom">
+      <h2>{{ t('checkout.table') }}</h2>
+      <p class="table-info">{{ t('checkout.tableAutoDetected') }}</p>
+    </div>
+
+    <div class="section" *ngIf="isTakeaway">
+      <h2>{{ t('checkout.takeawayDetails') }}</h2>
+      <p class="table-info">{{ t('checkout.takeawayInfo') }}</p>
+      <input class="contact-input" type="text" [(ngModel)]="customerName" [placeholder]="t('checkout.namePlaceholder')" autocomplete="name" maxlength="100" />
+      <input class="contact-input" type="tel" [(ngModel)]="customerMobile" [placeholder]="t('checkout.mobilePlaceholder')"
+             inputmode="numeric" autocomplete="tel" maxlength="10" />
     </div>
 
     <div class="section">
-      <h2>Order Summary</h2>
+      <h2>{{ t('checkout.orderSummary') }}</h2>
       <div class="order-item" *ngFor="let item of items">
-        <span>{{ item.quantity }}x {{ item.menuItem.name }}</span>
-        <span>₹{{ item.menuItem.price * item.quantity | number:'1.0-0' }}</span>
+        <span>{{ item.quantity }}x {{ item.menuItem | localDish }}<small *ngIf="item.isParcel && !isTakeaway"> · 🥡 {{ t('checkout.parcel') }}</small></span>
+        <span>₹{{ item.menuItem.price * item.quantity | number:'1.0-2' }}</span>
       </div>
     </div>
 
     <div class="section">
-      <h2>Special Instructions</h2>
+      <h2>{{ t('checkout.specialInstructions') }}</h2>
       <textarea
         [(ngModel)]="specialInstructions"
-        placeholder="Any allergies or special requests..."
+        [placeholder]="t('checkout.specialInstructionsPlaceholder')"
         rows="3">
       </textarea>
     </div>
 
+    <p class="table-info" *ngIf="locationRequired && !isRoom">{{ t('checkout.locationNotice') }}</p>
+
     <div class="error-msg" *ngIf="error">{{ error }}</div>
 
     <div class="total-section">
+      <div class="total-row" *ngIf="packaging > 0">
+        <span>{{ t('checkout.packingCharges') }}</span>
+        <span>₹{{ packaging | number:'1.0-2' }}</span>
+      </div>
       <div class="total-row">
-        <span>Total (incl. taxes)</span>
-        <strong>₹{{ total | number:'1.0-0' }}</strong>
+        <span>{{ t('checkout.totalInclTaxes') }}</span>
+        <strong>₹{{ total | number:'1.0-2' }}</strong>
       </div>
     </div>
 
     <button
       class="place-order-btn"
       (click)="placeOrder()"
-      [disabled]="loading || items.length === 0">
-      {{ loading ? 'Placing Order...' : 'Place Order' }}
+      [disabled]="loading || items.length === 0 || !contactValid">
+      {{ locating ? t('checkout.checkingLocation') : loading ? t('checkout.placingOrder') : t('checkout.placeOrder') }}
     </button>
   </div>
 </div>
+</ng-container>

@@ -1,0 +1,146 @@
+<div class="page-header">
+  <h1>🛏️ Rooms</h1>
+  <div class="header-actions">
+    <span class="occupancy" *ngIf="rooms.length">{{ occupiedCount }} of {{ rooms.length }} occupied</span>
+    <button class="primary-btn" *ngIf="canManageRooms" (click)="openAddRoom()">＋ Add room</button>
+  </div>
+</div>
+
+<div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
+<div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+<div class="hint-bar" *ngIf="settings && !settings.hotelModeEnabled">
+  Hotel mode is off, so room QRs won't take orders. Turn it on in Settings → Hotel.
+</div>
+
+<div class="loading" *ngIf="loading">Loading rooms...</div>
+<div class="empty-state" *ngIf="!loading && !rooms.length">
+  No rooms yet. {{ canManageRooms ? 'Add your rooms to start checking guests in.' : 'Ask a manager to add rooms.' }}
+</div>
+
+<div class="room-grid" *ngIf="!loading && rooms.length">
+  <div class="room-card" *ngFor="let r of rooms" [class.occupied]="r.stay" [class.inactive]="!r.isActive">
+    <div class="room-head">
+      <span class="room-number">{{ r.roomNumber }}</span>
+      <span class="room-meta">{{ r.floor ? 'Floor ' + r.floor : '' }}{{ r.floor && r.roomType ? ' · ' : '' }}{{ r.roomType }}</span>
+    </div>
+
+    <ng-container *ngIf="r.stay as stay; else vacant">
+      <div class="guest">👤 {{ stay.guestName }}</div>
+      <div class="room-sub">In since {{ stay.checkInAt | date:'d MMM, h:mm a' }}</div>
+      <div class="room-sub" *ngIf="stay.pin">Room service PIN: <strong>{{ stay.pin }}</strong></div>
+      <div class="balance" *ngIf="r.openBalance > 0">Room bill so far: <strong>₹{{ r.openBalance | number:'1.0-0' }}</strong> ({{ r.openOrderCount }} order{{ r.openOrderCount === 1 ? '' : 's' }})</div>
+      <div class="room-actions">
+        <button class="primary-btn" (click)="openFolio(r)">🧾 Room bill / Check out</button>
+      </div>
+    </ng-container>
+    <ng-template #vacant>
+      <div class="room-sub">{{ r.isActive ? 'Vacant' : 'Switched off' }}</div>
+      <div class="room-actions">
+        <button class="primary-btn" *ngIf="r.isActive" (click)="openCheckIn(r)">Check in</button>
+      </div>
+    </ng-template>
+
+    <div class="room-tools">
+      <button (click)="printQr(r)" title="Print the room's ordering QR">QR</button>
+      <button *ngIf="canManageRooms" (click)="openEditRoom(r)">Edit</button>
+      <button *ngIf="canManageRooms && !r.stay" (click)="deleteRoom(r)">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / edit room -->
+<div class="modal-overlay" *ngIf="roomForm" (click)="roomForm = null">
+  <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-label="Room details">
+    <h2>{{ editingRoomId ? 'Edit room' : 'Add room' }}</h2>
+    <label>Room number <input [(ngModel)]="roomForm.roomNumber" placeholder="e.g. 204" maxlength="20" /></label>
+    <label>Floor <input [(ngModel)]="roomForm.floor" placeholder="e.g. 2" maxlength="20" /></label>
+    <label>Room type <input [(ngModel)]="roomForm.roomType" placeholder="e.g. Deluxe" maxlength="50" /></label>
+    <label class="check"><input type="checkbox" [(ngModel)]="roomForm.isActive" /> In use</label>
+    <div class="modal-actions">
+      <button (click)="roomForm = null">Cancel</button>
+      <button class="primary-btn" (click)="saveRoom()" [disabled]="busy || !roomForm.roomNumber.trim()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Check-in -->
+<div class="modal-overlay" *ngIf="checkInRoom" (click)="closeCheckIn()">
+  <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-label="Check in">
+    <ng-container *ngIf="!newStay; else checkedIn">
+      <h2>Check in · Room {{ checkInRoom.roomNumber }}</h2>
+      <label>Guest name <input [(ngModel)]="checkInForm.guestName" maxlength="100" /></label>
+      <label>Mobile <input [(ngModel)]="checkInForm.guestMobile" inputmode="numeric" maxlength="10" placeholder="10 digits" /></label>
+      <label>Expected check-out <input type="date" [(ngModel)]="checkInForm.expectedCheckOutAt" /></label>
+      <label class="check"><input type="checkbox" [(ngModel)]="checkInForm.requirePin" />
+        Give a PIN for room-service orders (stops visitors ordering on this room's bill)</label>
+      <div class="modal-actions">
+        <button (click)="closeCheckIn()">Cancel</button>
+        <button class="primary-btn" (click)="confirmCheckIn()" [disabled]="busy || !checkInForm.guestName.trim()">Check in</button>
+      </div>
+    </ng-container>
+    <ng-template #checkedIn>
+      <h2>✅ {{ newStay!.guestName }} is in Room {{ newStay!.roomNumber }}</h2>
+      <p *ngIf="newStay!.pin">Tell the guest their room-service PIN:</p>
+      <div class="pin" *ngIf="newStay!.pin">{{ newStay!.pin }}</div>
+      <p class="room-sub">They can order from the QR in the room; orders go on the room bill.</p>
+      <div class="modal-actions">
+        <button class="primary-btn" (click)="closeCheckIn()">Done</button>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Room bill / checkout -->
+<div class="modal-overlay" *ngIf="folio" (click)="folio = null">
+  <div class="modal wide" (click)="$event.stopPropagation()" role="dialog" aria-label="Room bill">
+    <h2>Room {{ folio.stay.roomNumber }} · {{ folio.stay.guestName }}</h2>
+    <p class="room-sub">Checked in {{ folio.stay.checkInAt | date:'d MMM, h:mm a' }}<span *ngIf="folio.stay.guestMobile"> · 📞 {{ folio.stay.guestMobile }}</span></p>
+
+    <div class="empty-state" *ngIf="!folio.orders.length">No room service orders.</div>
+    <table class="folio" *ngIf="folio.orders.length">
+      <tr><th>When</th><th>Items</th><th>Status</th><th class="num">Amount</th></tr>
+      <tr *ngFor="let o of folio.orders" [class.billed]="o.billNumber">
+        <td>{{ o.createdAt | date:'d MMM, h:mm a' }}</td>
+        <td><span *ngFor="let i of o.items; let last = last">{{ i.quantity }}× {{ i.itemName }}{{ last ? '' : ', ' }}</span></td>
+        <td>{{ o.billNumber ? 'Paid' : o.deliveredAt ? 'Delivered' : o.status }}{{ !o.billNumber && !o.chargeToRoom ? ' · pay on delivery' : '' }}</td>
+        <td class="num">₹{{ o.totalAmount | number:'1.0-0' }}</td>
+      </tr>
+    </table>
+
+    <div class="checkout">
+      <div class="row"><span>Owed now</span><strong>₹{{ folio.openBalance | number:'1.0-0' }}</strong></div>
+      <label>Discount (₹) <input type="number" min="0" [(ngModel)]="discount" /></label>
+      <div class="mode">
+        <label><input type="radio" name="pm" value="full" [(ngModel)]="paymentMode" /> Paid in full</label>
+        <label><input type="radio" name="pm" value="partial" [(ngModel)]="paymentMode" /> Part paid (rest as udhaar)</label>
+      </div>
+      <label *ngIf="paymentMode === 'partial' && !paySplit">Amount paid (₹) <input type="number" min="0" [(ngModel)]="paidAmount" /></label>
+      <div class="pay-by" *ngIf="paymentAccounts.length">
+        <span class="pay-by-label">Paid by</span>
+        <div class="mode">
+          <ng-container *ngIf="!paySplit">
+            <label *ngFor="let a of paymentAccounts"><input type="radio" name="payAccount" [value]="a.key" [(ngModel)]="payAccount" /> {{ a.label }}</label>
+          </ng-container>
+          <label *ngIf="paymentAccounts.length > 1"><input type="checkbox" [(ngModel)]="paySplit" (ngModelChange)="splitAmounts = {}" /> Split</label>
+        </div>
+        <div class="split" *ngIf="paySplit">
+          <label *ngFor="let a of paymentAccounts">{{ a.label }} (₹) <input type="number" min="0" [(ngModel)]="splitAmounts[a.key]" /></label>
+          <div class="row" *ngIf="paymentMode === 'full'" [class.split-bad]="splitInvalid">
+            <span>{{ amountDue - splitSum >= 0 ? 'Remaining' : 'Extra' }}</span><strong>₹{{ (amountDue - splitSum >= 0 ? amountDue - splitSum : splitSum - amountDue) | number:'1.0-0' }}</strong>
+          </div>
+          <div class="row" *ngIf="paymentMode === 'partial'" [class.split-bad]="splitInvalid">
+            <span>Paid now{{ splitInvalid ? ' (more than the bill)' : '' }}</span><strong>₹{{ splitSum | number:'1.0-0' }}</strong>
+          </div>
+        </div>
+      </div>
+      <label>Notes <input [(ngModel)]="checkoutNotes" maxlength="200" /></label>
+      <div class="row total"><span>To pay</span><strong>₹{{ amountDue | number:'1.0-2' }}</strong></div>
+    </div>
+
+    <div class="modal-actions">
+      <button (click)="folio = null">Close</button>
+      <button class="primary-btn" (click)="checkOut()" [disabled]="busy || splitInvalid">✓ Check out{{ folio.openBalance > 0 ? ' & print bill' : '' }}</button>
+    </div>
+  </div>
+</div>

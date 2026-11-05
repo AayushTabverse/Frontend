@@ -2,9 +2,15 @@
       <h1>📋 Menu Management</h1>
       <div class="header-actions">
         <button class="btn-secondary btn-import" (click)="showImport = true">📥 Import from Excel</button>
+        <button class="btn-secondary" (click)="autoTranslate()" [disabled]="translating"
+                title="Fill in Hindi and Gujarati names for dishes that don't have them (AI). You can edit them after.">
+          {{ translating ? 'Translating…' : '🌐 Auto-translate menu' }}
+        </button>
         <button class="btn-primary" (click)="openAddCategory()">+ Add Category</button>
       </div>
     </div>
+
+  <p class="translate-msg" *ngIf="translateMessage">{{ translateMessage }}</p>
 
   <!-- Category Form Modal -->
   <div class="modal-overlay" *ngIf="showCategoryForm">
@@ -20,6 +26,13 @@
         <label>Description</label>
         <input [(ngModel)]="categoryForm.description" placeholder="Optional description" />
       </div>
+      <details class="translations">
+        <summary>🌐 Other languages</summary>
+        <div class="form-group" *ngFor="let l of translationLangs">
+          <label [attr.lang]="l.code">{{ l.label }}</label>
+          <input [(ngModel)]="categoryForm.translations[l.code].name" [attr.lang]="l.code" placeholder="Name" />
+        </div>
+      </details>
       <div class="form-group">
         <label>Image</label>
         <input type="file" accept="image/*" (change)="onFileSelected($event, 'category')" />
@@ -58,11 +71,25 @@
                  [class.invalid]="itemSubmitted && (!itemForm.price || itemForm.price <= 0)" />
           <span class="field-error" *ngIf="itemSubmitted && (!itemForm.price || itemForm.price <= 0)">Price must be greater than 0</span>
         </div>
+        <div class="form-group">
+          <label>Packing charge (₹)</label>
+          <input type="number" [(ngModel)]="itemForm.packagingCharge" min="0" placeholder="0"
+                 (keypress)="onlyNumbers($event)" />
+          <span class="field-hint">Per item, when ordered as parcel or takeaway</span>
+        </div>
       </div>
       <div class="form-group">
         <label>Description</label>
         <textarea [(ngModel)]="itemForm.description" rows="2"></textarea>
       </div>
+      <details class="translations">
+        <summary>🌐 Other languages (shown to customers who pick them)</summary>
+        <div class="form-group" *ngFor="let l of translationLangs">
+          <label [attr.lang]="l.code">{{ l.label }}</label>
+          <input [(ngModel)]="itemForm.translations[l.code].name" [attr.lang]="l.code" placeholder="Name" />
+          <textarea [(ngModel)]="itemForm.translations[l.code].description" [attr.lang]="l.code" rows="2" placeholder="Description"></textarea>
+        </div>
+      </details>
       <div class="form-row">
         <div class="form-group">
           <label>Image</label>

@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "groups": {
+      "Overview": "सारांश",
+      "Floor": "फ़्लोर",
+      "Sales": "बिक्री",
+      "Menu & Stock": "मेन्यू और स्टॉक",
+      "Grow": "बढ़ाएँ",
+      "Manage": "प्रबंधन"
+    },
+    "items": {
+      "dashboard": "डैशबोर्ड",
+      "analytics": "एनालिटिक्स",
+      "notifications": "सूचनाएँ",
+      "takeOrder": "ऑर्डर लें",
+      "tables": "टेबल",
+      "printStation": "प्रिंट स्टेशन",
+      "rooms": "कमरे",
+      "roomService": "रूम सर्विस",
+      "waitlist": "वेटलिस्ट",
+      "reservations": "बुकिंग",
+      "bills": "बिल",
+      "udhaar": "उधार",
+      "menu": "मेन्यू",
+      "inventory": "इन्वेंटरी",
+      "website": "वेबसाइट",
+      "aiMarketing": "AI मार्केटिंग",
+      "reviews": "रिव्यू",
+      "staff": "स्टाफ़",
+      "settings": "सेटिंग्स",
+      "billing": "प्लान और भुगतान",
+      "customers": "ग्राहक",
+      "purchases": "खरीद",
+      "accounting": "हिसाब-किताब (Tally)"
+    },
+    "lightMode": "लाइट मोड",
+    "darkMode": "डार्क मोड",
+    "logout": "लॉग आउट",
+    "expand": "साइडबार खोलें",
+    "collapse": "साइडबार छोटा करें"
+  }
+}

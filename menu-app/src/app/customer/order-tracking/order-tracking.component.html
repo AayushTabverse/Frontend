@@ -1,76 +1,96 @@
+<ng-container *transloco="let t">
 <!-- Session expired / unauthorized -->
 <div class="unauthorized-page" *ngIf="unauthorized">
   <div class="unauthorized-content">
-    <h2>🔒 Order Not Found</h2>
-    <p>This order doesn't belong to your current session. Please scan the QR code to start a new session.</p>
+    <h2>{{ t('tracking.notFoundTitle') }}</h2>
+    <p>{{ t('tracking.notFoundMessage') }}</p>
   </div>
 </div>
 
-<div class="tracking-page" *ngIf="!loading && !unauthorized; else loadingTpl">
+<ng-container *ngIf="!unauthorized">
+<div class="tracking-page" *ngIf="!loading; else loadingTpl">
   <header class="tracking-header">
     <div class="header-nav">
-      <button class="back-btn" (click)="goBackToMenu()" *ngIf="tenantId && tableId">← Menu</button>
-      <button class="orders-link" (click)="viewAllOrders()" *ngIf="tableId">All Orders</button>
+      <button class="back-btn" (click)="goBackToMenu()" *ngIf="tenantId && tableId">{{ t('tracking.backToMenuShort') }}</button>
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto">
+        <button class="orders-link" (click)="viewAllOrders()" *ngIf="tableId && !isTakeaway && !isRoom">{{ t('tracking.allOrders') }}</button>
+        <app-language-switcher></app-language-switcher>
+      </div>
     </div>
-    <h1>Order #{{ order?.orderNumber }}</h1>
-    <span class="status-badge" [attr.data-status]="order?.status">{{ order?.status }}</span>
+    <h1>{{ t('tracking.orderNumber', { number: order?.orderNumber }) }}</h1>
+    <span class="status-badge" [attr.data-status]="displayStatus">{{ order?.status ? t('tracking.status.' + stepLabel(displayStatus)) : '' }}</span>
   </header>
 
+  <!-- Takeaway: token to show at the counter -->
+  <div class="token-card" *ngIf="isTakeaway && order" [class.ready]="order.status === 'Ready'">
+    <span class="token-label">{{ t('tracking.yourToken') }}</span>
+    <span class="token-number">{{ order.tokenNumber }}</span>
+    <p *ngIf="order.status === 'Ready'">{{ t('tracking.takeawayReady') }}</p>
+    <p *ngIf="order.status === 'Completed'">{{ t('tracking.takeawayPickedUp') }}</p>
+    <p *ngIf="order.status !== 'Ready' && order.status !== 'Completed' && order.status !== 'Cancelled'">
+      {{ t('tracking.takeawayKeepOpen') }}
+      <span *ngIf="!order.billNumber"> {{ t('tracking.payAtCounter') }}</span>
+    </p>
+  </div>
+
   <div class="status-timeline">
-    <div class="step" *ngFor="let step of statusSteps" [class.completed]="isStepCompleted(step)" [class.active]="order?.status === step">
+    <div class="step" *ngFor="let step of statusSteps" [class.completed]="isStepCompleted(step)" [class.active]="displayStatus === step">
       <div class="step-dot"></div>
-      <span class="step-label">{{ step }}</span>
+      <span class="step-label">{{ t('tracking.status.' + stepLabel(step)) }}</span>
     </div>
   </div>
 
   <div class="eta-section" *ngIf="order && order.status !== 'Completed' && order.status !== 'Served'">
-    <p>⏱ Estimated time: <strong>{{ order.estimatedMinutes }} minutes</strong></p>
+    <p>{{ t('tracking.etaLabel') }} <strong>{{ t('tracking.etaMinutes', { minutes: order.estimatedMinutes }) }}</strong></p>
   </div>
 
   <!-- Served message -->
   <div class="served-banner" *ngIf="showServedMessage">
     <div class="served-icon">🍽️</div>
-    <h2>Your order has been served!</h2>
-    <p>Enjoy your meal. Redirecting to menu...</p>
-    <button class="back-to-menu-btn" (click)="goBackToMenu()">Back to Menu</button>
+    <h2>{{ t('tracking.servedTitle') }}</h2>
+    <p>{{ t('tracking.servedMessage') }}</p>
+    <button class="back-to-menu-btn" (click)="goBackToMenu()">{{ t('tracking.backToMenu') }}</button>
   </div>
 
   <div class="order-details" *ngIf="order">
-    <h2>Order Items</h2>
+    <h2>{{ t('tracking.orderItems') }}</h2>
     <div class="detail-item" *ngFor="let item of order.items">
       <div class="item-left">
         <span>{{ item.quantity }}x {{ item.itemName }}</span>
       </div>
       <div class="item-right">
-        <span class="item-price">₹{{ item.totalPrice | number:'1.0-0' }}</span>
+        <span class="item-price">₹{{ item.totalPrice | number:'1.0-2' }}</span>
 
         <!-- Cancel confirm inline -->
         <div class="cancel-confirm" *ngIf="confirmCancelItemId === item.id">
-          <span class="cancel-msg">Cancel?</span>
+          <span class="cancel-msg">{{ t('tracking.cancelConfirm') }}</span>
           <button class="cancel-yes" (click)="cancelItem(item)" [disabled]="cancellingItemId === item.id">
-            {{ cancellingItemId === item.id ? '...' : 'Yes' }}
+            {{ cancellingItemId === item.id ? '...' : t('tracking.yes') }}
           </button>
-          <button class="cancel-no" (click)="dismissCancel()">No</button>
+          <button class="cancel-no" (click)="dismissCancel()">{{ t('tracking.no') }}</button>
         </div>
 
         <!-- Cancel trigger -->
         <button class="cancel-item-btn"
                 *ngIf="canCancelItems && confirmCancelItemId !== item.id"
-                (click)="promptCancelItem(item.id)" title="Cancel item">
+                (click)="promptCancelItem(item.id)" [title]="t('tracking.cancelItem')">
           ✕
         </button>
       </div>
     </div>
     <div class="order-total">
-      <span>Total</span>
-      <strong>₹{{ order.totalAmount | number:'1.0-0' }}</strong>
+      <span>{{ t('tracking.total') }}</span>
+      <strong>₹{{ order.totalAmount | number:'1.0-2' }}</strong>
     </div>
   </div>
 </div>
 
+</ng-container>
+
 <ng-template #loadingTpl>
-  <div class="loading">
+  <div class="loading" *transloco="let t">
     <div class="spinner"></div>
-    <p>Loading order...</p>
+    <p>{{ t('tracking.loading') }}</p>
   </div>
 </ng-template>
+</ng-container>

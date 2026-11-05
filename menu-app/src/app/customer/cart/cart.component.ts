@@ -1,14 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoDirective } from '@jsverse/transloco';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { SettingsService } from '../../services/settings.service';
 import { CartItem } from '../../models/api.models';
 
+import { LocalDishPipe } from '../../shared/local-dish.pipe';
+
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective, LocalDishPipe],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss'
 })
@@ -19,6 +22,7 @@ export class CartComponent implements OnInit {
   cgstPercent = 2.5;
   sgstPercent = 2.5;
   serviceChargePercent = 0;
+  takeawayPackingFee = 0;
 
   constructor(
     private cartService: CartService,
@@ -40,6 +44,7 @@ export class CartComponent implements OnInit {
         this.cgstPercent = s.cgstPercent ?? 2.5;
         this.sgstPercent = s.sgstPercent ?? 2.5;
         this.serviceChargePercent = s.serviceChargePercent ?? 0;
+        this.takeawayPackingFee = s.takeawayPackingFee ?? 0;
       }
     });
   }
@@ -52,6 +57,23 @@ export class CartComponent implements OnInit {
     this.cartService.updateQuantity(item.menuItem.id, item.quantity - 1);
   }
 
+  get isTakeaway(): boolean {
+    return this.tableId === 'takeaway';
+  }
+
+  toggleParcel(item: CartItem): void {
+    this.cartService.toggleParcel(item.menuItem.id);
+  }
+
+  getPackaging(): number {
+    return this.cartService.getPackagingTotal(this.isTakeaway, this.takeawayPackingFee);
+  }
+
+  /** Food + packing: what tax is charged on. */
+  private getTaxable(): number {
+    return this.getSubtotal() + this.getPackaging();
+  }
+
   remove(item: CartItem): void {
     this.cartService.removeItem(item.menuItem.id);
   }
@@ -61,23 +83,23 @@ export class CartComponent implements OnInit {
   }
 
   getCgst(): number {
-    return Math.round(this.getSubtotal() * this.cgstPercent / 100);
+    return round2(this.getTaxable() * this.cgstPercent / 100);
   }
 
   getSgst(): number {
-    return Math.round(this.getSubtotal() * this.sgstPercent / 100);
+    return round2(this.getTaxable() * this.sgstPercent / 100);
   }
 
   getServiceCharge(): number {
-    return Math.round(this.getSubtotal() * this.serviceChargePercent / 100);
+    return round2(this.getTaxable() * this.serviceChargePercent / 100);
   }
 
   getTax(): number {
-    return this.getCgst() + this.getSgst() + this.getServiceCharge();
+    return round2(this.getTaxable() * (this.cgstPercent + this.sgstPercent + this.serviceChargePercent) / 100);
   }
 
   getGrandTotal(): number {
-    return this.getSubtotal() + this.getTax();
+    return this.getTaxable() + this.getTax();
   }
 
   goBack(): void {
@@ -89,4 +111,8 @@ export class CartComponent implements OnInit {
       queryParams: { tenantId: this.tenantId, tableId: this.tableId }
     });
   }
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }

@@ -1,0 +1,32 @@
+{
+  "printStation": {
+    "title": "प्रिंट स्टेशन",
+    "subtitle": "यह पेज काउंटर PC पर खुला रखें",
+    "paused": "रुका हुआ",
+    "live": "चालू",
+    "connecting": "जुड़ रहा है…",
+    "resume": "फिर चालू करें",
+    "pause": "रोकें",
+    "testPrint": "टेस्ट प्रिंट",
+    "settings": "सेटिंग्स",
+    "autoPrintOff": "KOT ऑटो-प्रिंट बंद है, इसलिए यहाँ सिर्फ़ स्टाफ़ के दोबारा प्रिंट किए KOT आएँगे।",
+    "turnOnBefore": "इसे",
+    "printerSettingsLink": "सेटिंग्स → प्रिंटर सेटिंग्स",
+    "turnOnAfter": " में चालू करें।",
+    "setup": {
+      "title": "बिना डायलॉग प्रिंटिंग सेट करें (हर PC पर एक बार)",
+      "step1": "किचन/थर्मल प्रिंटर को PC का डिफ़ॉल्ट प्रिंटर बनाएँ।",
+      "step2": "Chrome बंद करें, फिर उसे <code>--kiosk-printing</code> के साथ खोलें। Windows: Chrome शॉर्टकट पर राइट-क्लिक → Properties → <code>chrome.exe\"</code> के बाद <code>--kiosk-printing</code> जोड़ें।",
+      "step3": "यह पेज खोलें, <strong>टेस्ट प्रिंट</strong> दबाएँ। बिना डायलॉग के प्रिंट होना चाहिए।",
+      "step4": "पेज खुला रहने दें। यह स्क्रीन चालू रखता है और हर KOT आते ही प्रिंट करता है।"
+    },
+    "printed": "प्रिंट हुए",
+    "nothingPrinted": "अभी कुछ प्रिंट नहीं हुआ। नए KOT यहाँ अपने-आप प्रिंट होंगे।",
+    "takeaway": "टेकअवे",
+    "room": "रूम",
+    "table": "टेबल",
+    "printedOk": "प्रिंट हुआ",
+    "printFailed": "प्रिंट नहीं हुआ",
+    "printFrameError": "प्रिंट फ़्रेम नहीं खुल सका"
+  }
+}

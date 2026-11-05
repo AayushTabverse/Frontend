@@ -1,0 +1,38 @@
+{
+  "tracking": {
+    "notFoundTitle": "🔒 ऑर्डर नहीं मिला",
+    "notFoundMessage": "यह ऑर्डर आपके मौजूदा सेशन का नहीं है। नया सेशन शुरू करने के लिए कृपया QR कोड स्कैन करें।",
+    "backToMenuShort": "← मेन्यू",
+    "allOrders": "सभी ऑर्डर",
+    "orderNumber": "ऑर्डर #{{number}}",
+    "yourToken": "आपका टोकन",
+    "takeawayReady": "✅ पैक होकर तैयार है! काउंटर से ले लीजिए।",
+    "takeawayPickedUp": "ले लिया गया। खाने का आनंद लें!",
+    "takeawayKeepOpen": "यह पेज खुला रखें। ऑर्डर तैयार होते ही हम यहीं बताएँगे।",
+    "payAtCounter": "कृपया काउंटर पर भुगतान करें।",
+    "etaLabel": "⏱ अनुमानित समय:",
+    "etaMinutes": "{{minutes}} मिनट",
+    "servedTitle": "आपका ऑर्डर परोस दिया गया है!",
+    "servedMessage": "खाने का आनंद लें। मेन्यू पर ले जा रहे हैं...",
+    "backToMenu": "मेन्यू पर वापस",
+    "orderItems": "ऑर्डर आइटम",
+    "cancelConfirm": "रद्द करें?",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "cancelItem": "आइटम रद्द करें",
+    "total": "कुल",
+    "loading": "ऑर्डर लोड हो रहा है...",
+    "status": {
+      "Pending": "इंतज़ार में",
+      "Accepted": "स्वीकार हुआ",
+      "Preparing": "बन रहा है",
+      "Ready": "तैयार",
+      "Served": "परोसा गया",
+      "Completed": "पूरा हुआ",
+      "Cancelled": "रद्द",
+      "PickedUp": "ले लिया गया",
+      "OnTheWay": "रास्ते में",
+      "Delivered": "पहुँच गया"
+    }
+  }
+}

@@ -52,3 +52,4 @@
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.lang-bar { width: 100%; max-width: 420px; display: flex; justify-content: flex-end; margin-bottom: 12px; }

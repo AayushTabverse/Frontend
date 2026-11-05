@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sb-backdrop" *ngIf="mobileOpen" (click)="closeMobile()"></div>
 
 <aside class="sb" [class.collapsed]="collapsed" [class.mobile-open]="mobileOpen" aria-label="Main navigation">
@@ -17,20 +18,20 @@
   <!-- Navigation -->
   <nav class="sb-nav">
     <div class="sb-section" *ngFor="let section of sections">
-      <div class="sb-section-label">{{ section.group }}</div>
+      <div class="sb-section-label">{{ t('nav.groups.' + section.group) }}</div>
       <a *ngFor="let item of section.items"
          class="sb-link"
          [routerLink]="item.path"
          routerLinkActive="active"
-         [attr.aria-label]="collapsed ? item.label : null"
+         [attr.aria-label]="collapsed ? t('nav.items.' + item.icon) : null"
          (click)="closeMobile()"
-         (mouseenter)="showTooltip($event, item.label)"
+         (mouseenter)="showTooltip($event, t('nav.items.' + item.icon))"
          (mouseleave)="hideTooltip()">
         <span class="sb-icon">
           <lucide-icon [img]="iconFor(item)" [size]="18" [strokeWidth]="1.9"></lucide-icon>
           <span class="sb-dot" *ngIf="collapsed && badges[item.path]"></span>
         </span>
-        <span class="sb-label">{{ item.label }}</span>
+        <span class="sb-label">{{ t('nav.items.' + item.icon) }}</span>
         <span class="sb-badge" *ngIf="badges[item.path]">{{ badges[item.path] }}</span>
         <span class="sb-pro" *ngIf="item.premium && !badges[item.path]">PRO</span>
       </a>
@@ -39,6 +40,7 @@
 
   <!-- Account -->
   <div class="sb-footer">
+    <div class="sb-lang" *ngIf="!collapsed"><app-language-switcher></app-language-switcher></div>
     <div class="sb-account">
       <div class="sb-avatar" aria-hidden="true">{{ userInitials }}</div>
       <div class="sb-account-text">
@@ -47,18 +49,18 @@
       </div>
       <div class="sb-account-actions">
         <button class="sb-icon-btn" (click)="themeService.toggle()"
-                [attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
-                (mouseenter)="showTooltip($event, themeService.isDark() ? 'Light mode' : 'Dark mode')" (mouseleave)="hideTooltip()">
+                [attr.aria-label]="themeService.isDark() ? t('nav.lightMode') : t('nav.darkMode')"
+                (mouseenter)="showTooltip($event, themeService.isDark() ? t('nav.lightMode') : t('nav.darkMode'))" (mouseleave)="hideTooltip()">
           <lucide-icon [img]="themeService.isDark() ? icons.Sun : icons.Moon" [size]="17"></lucide-icon>
         </button>
-        <button class="sb-icon-btn sb-logout" (click)="logout()" aria-label="Log out"
-                (mouseenter)="showTooltip($event, 'Log out')" (mouseleave)="hideTooltip()">
+        <button class="sb-icon-btn sb-logout" (click)="logout()" [attr.aria-label]="t('nav.logout')"
+                (mouseenter)="showTooltip($event, t('nav.logout'))" (mouseleave)="hideTooltip()">
           <lucide-icon [img]="icons.LogOut" [size]="17"></lucide-icon>
         </button>
         <button class="sb-icon-btn sb-collapse" (click)="toggleCollapsed()"
-                [attr.aria-label]="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-                [attr.title]="collapsed ? null : 'Collapse sidebar'"
-                (mouseenter)="showTooltip($event, 'Expand sidebar')" (mouseleave)="hideTooltip()">
+                [attr.aria-label]="collapsed ? t('nav.expand') : t('nav.collapse')"
+                [attr.title]="collapsed ? null : t('nav.collapse')"
+                (mouseenter)="showTooltip($event, t('nav.expand'))" (mouseleave)="hideTooltip()">
           <lucide-icon [img]="collapsed ? icons.ChevronsRight : icons.ChevronsLeft" [size]="17"></lucide-icon>
         </button>
       </div>
@@ -67,3 +69,4 @@
 </aside>
 
 <div class="sb-tooltip" *ngIf="tooltip && collapsed" [style.top.px]="tooltip.top">{{ tooltip.text }}</div>
+</ng-container>

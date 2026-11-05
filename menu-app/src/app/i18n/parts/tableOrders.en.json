@@ -1,0 +1,22 @@
+{
+  "tableOrders": {
+    "backToMenu": "← Back to Menu",
+    "title": "Your Orders",
+    "activeOrders": "Active Orders",
+    "order": "Order",
+    "track": "Track →",
+    "empty": "📋 No orders yet for this table",
+    "browseMenu": "Browse Menu",
+    "orderMore": "➕ Order More Items",
+    "loading": "Loading orders...",
+    "status": {
+      "Pending": "Pending",
+      "Accepted": "Accepted",
+      "Preparing": "Preparing",
+      "Ready": "Ready",
+      "Served": "Served",
+      "Completed": "Completed",
+      "Cancelled": "Cancelled"
+    }
+  }
+}

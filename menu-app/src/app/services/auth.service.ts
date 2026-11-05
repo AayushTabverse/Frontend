@@ -11,16 +11,33 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<AuthResponse | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
+  /**
+   * Each browser tab keeps its own login (sessionStorage), so a waiter and a manager can work in two
+   * tabs of the same browser. localStorage only remembers the latest login, so a newly opened tab
+   * starts signed in as that person.
+   */
   constructor(private http: HttpClient) {
-    const stored = localStorage.getItem('auth');
-    if (stored) {
-      const auth: AuthResponse = JSON.parse(stored);
-      if (new Date(auth.expiresAt) > new Date()) {
-        this.currentUserSubject.next(auth);
-      } else {
-        localStorage.removeItem('auth');
-      }
+    const auth = this.read(sessionStorage) ?? this.read(localStorage);
+    if (auth) {
+      this.currentUserSubject.next(auth);
+      // Pin it to this tab: a later login in another tab won't change who this tab is
+      this.write(sessionStorage, auth);
     }
+  }
+
+  private read(storage: Storage): AuthResponse | null {
+    try {
+      const stored = storage.getItem('auth');
+      if (!stored) return null;
+      const auth: AuthResponse = JSON.parse(stored);
+      if (new Date(auth.expiresAt) > new Date()) return auth;
+      storage.removeItem('auth');
+    } catch { /* storage blocked or corrupt */ }
+    return null;
+  }
+
+  private write(storage: Storage, auth: AuthResponse): void {
+    try { storage.setItem('auth', JSON.stringify(auth)); } catch { /* storage blocked */ }
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {
@@ -38,7 +55,12 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem('auth');
+    const token = this.getToken();
+    try {
+      sessionStorage.removeItem('auth');
+      // Forget the remembered login only if it's this tab's user (another tab may have logged in since)
+      if (this.read(localStorage)?.token === token) localStorage.removeItem('auth');
+    } catch { /* storage blocked */ }
     this.currentUserSubject.next(null);
   }
 
@@ -110,7 +132,8 @@ export class AuthService {
   }
 
   private storeAuth(auth: AuthResponse): void {
-    localStorage.setItem('auth', JSON.stringify(auth));
+    this.write(sessionStorage, auth);
+    this.write(localStorage, auth);
     this.currentUserSubject.next(auth);
   }
 }

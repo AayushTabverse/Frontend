@@ -1,0 +1,91 @@
+<div class="page-header">
+  <h1>👥 Customers</h1>
+  <button class="secondary-btn" (click)="exportCsv()">⬇ Export CSV</button>
+</div>
+
+<div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+<div class="stats" *ngIf="data">
+  <div class="stat"><span class="stat-value">{{ data.members | number }}</span><span class="stat-label">Customers</span></div>
+  <div class="stat"><span class="stat-value">{{ data.repeatCustomerPercent }}%</span><span class="stat-label">Came back more than once</span></div>
+  <div class="stat"><span class="stat-value">{{ data.pointsOutstanding | number }}</span><span class="stat-label">Points not used yet (₹{{ data.outstandingValue | number:'1.0-0' }})</span></div>
+  <div class="stat"><span class="stat-value">{{ data.pointsRedeemedThisMonth | number }}</span><span class="stat-label">Points used this month</span></div>
+</div>
+
+<div class="toolbar">
+  <input class="search" type="search" [(ngModel)]="query" (input)="onSearch()" placeholder="Search name or mobile…" />
+  <div class="sorts" role="tablist">
+    <button [class.active]="sort === 'recent'" (click)="setSort('recent')">Recent</button>
+    <button [class.active]="sort === 'points'" (click)="setSort('points')">Points</button>
+    <button [class.active]="sort === 'spend'" (click)="setSort('spend')">Spend</button>
+    <button [class.active]="sort === 'visits'" (click)="setSort('visits')">Visits</button>
+  </div>
+</div>
+
+<div class="loading" *ngIf="loading">Loading customers...</div>
+<div class="empty-state" *ngIf="!loading && data && !data.items.length">
+  {{ query ? 'No customers match.' : 'Customers appear here once bills are settled with their mobile number.' }}
+</div>
+
+<div class="table-wrap" *ngIf="!loading && data?.items?.length">
+  <table class="customers">
+    <thead>
+      <tr><th>Customer</th><th class="num">Visits</th><th class="num">Spent</th><th class="num">Points</th><th>Last visit</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of data!.items" (click)="open(c)" tabindex="0" (keydown.enter)="open(c)">
+        <td><strong>{{ c.customerName }}</strong><div class="sub">{{ c.customerMobile }}</div></td>
+        <td class="num">{{ c.visitCount }}</td>
+        <td class="num">₹{{ c.totalSpent | number:'1.0-0' }}</td>
+        <td class="num"><span class="points" [class.zero]="!c.pointsBalance">{{ c.pointsBalance | number }}</span></td>
+        <td>{{ c.lastVisitAt ? (c.lastVisitAt | date:'d MMM y') : '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="pager" *ngIf="totalPages > 1">
+  <button (click)="goToPage(page - 1)" [disabled]="page <= 1">‹ Prev</button>
+  <span>Page {{ page }} of {{ totalPages }}</span>
+  <button (click)="goToPage(page + 1)" [disabled]="page >= totalPages">Next ›</button>
+</div>
+
+<!-- Customer detail -->
+<div class="modal-overlay" *ngIf="selected" (click)="close()">
+  <div class="modal" (click)="$event.stopPropagation()" role="dialog" [attr.aria-label]="selected.customerName">
+    <div class="modal-head">
+      <div>
+        <h2>{{ selected.customerName }}</h2>
+        <div class="sub">📞 {{ selected.customerMobile }} · {{ selected.visitCount }} visits · ₹{{ selected.totalSpent | number:'1.0-0' }} spent</div>
+      </div>
+      <div class="balance"><span>{{ selected.pointsBalance | number }}</span> points</div>
+    </div>
+
+    <div class="panel-msg" *ngIf="panelMessage">{{ panelMessage }}</div>
+
+    <div class="form-row">
+      <label>Name <input [(ngModel)]="editName" maxlength="100" /></label>
+      <label>Birthday <input type="date" [(ngModel)]="editDob" /></label>
+      <button class="secondary-btn" (click)="saveDetails()" [disabled]="busy">Save</button>
+    </div>
+
+    <div class="form-row">
+      <label>Add / remove points <input type="number" [(ngModel)]="adjustPoints" placeholder="e.g. 50 or -50" /></label>
+      <label class="grow">Reason <input [(ngModel)]="adjustReason" maxlength="200" placeholder="e.g. Complaint goodwill" /></label>
+      <button class="secondary-btn" (click)="applyAdjustment()" [disabled]="busy || !adjustPoints || !adjustReason.trim()">Apply</button>
+    </div>
+
+    <h3>Points history</h3>
+    <div class="empty-state" *ngIf="!ledger.length">No points yet.</div>
+    <table class="ledger" *ngIf="ledger.length">
+      <tr *ngFor="let row of ledger">
+        <td>{{ row.createdAt | date:'d MMM y, h:mm a' }}</td>
+        <td>{{ typeLabel(row.type) }}<div class="sub">{{ row.note }}{{ row.billNumber ? ' · ' + row.billNumber : '' }}{{ row.createdBy ? ' · ' + row.createdBy : '' }}</div></td>
+        <td class="num" [class.plus]="row.points > 0" [class.minus]="row.points < 0">{{ row.points > 0 ? '+' : '' }}{{ row.points }}</td>
+        <td class="num sub">{{ row.balanceAfter }}</td>
+      </tr>
+    </table>
+
+    <div class="modal-actions"><button class="secondary-btn" (click)="close()">Close</button></div>
+  </div>
+</div>

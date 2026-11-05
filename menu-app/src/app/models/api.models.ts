@@ -32,10 +32,16 @@ export interface AuthResponse {
 }
 
 // ── Menu ──
+/** Dish/category text in another language. */
+export interface MenuText { name?: string; description?: string; }
+/** { hi: {...}, gu: {...} } — English is the base name/description. */
+export type MenuTranslations = Partial<Record<'hi' | 'gu', MenuText>>;
+
 export interface MenuCategory {
   id: string;
   name: string;
   description?: string;
+  translations?: MenuTranslations;
   imageUrl?: string;
   sortOrder: number;
   isActive: boolean;
@@ -104,6 +110,11 @@ export interface MenuItem {
   name: string;
   description?: string;
   price: number;
+  /** Packing charge per unit when ordered as parcel/takeaway. */
+  packagingCharge?: number;
+  translations?: MenuTranslations;
+  /** The restaurant's own (English) name when `name` is shown in another language. */
+  baseName?: string;
   imageUrl?: string;
   isAvailable: boolean;
   isVeg: boolean;
@@ -135,6 +146,15 @@ export interface FullMenuResponse {
   twitterUrl?: string;
   websiteUrl?: string;
   googleMapsUrl?: string;
+  /** Customers may order takeaway from the counter QR. */
+  takeawayEnabled?: boolean;
+  takeawayPackingFee?: number;
+  /** False outside opening hours when QR ordering is locked: browse only. */
+  orderingOpen?: boolean;
+  closedMessage?: string;
+  opensAt?: string;
+  /** Orders need the phone's location (only accepted from inside the restaurant). */
+  locationRequired?: boolean;
   categories: MenuCategory[];
 }
 
@@ -144,11 +164,25 @@ export interface CartItem {
   quantity: number;
   modifiers?: string;
   notes?: string;
+  /** Pack to take away (dine-in customer ordering for home). */
+  isParcel?: boolean;
 }
 
 // ── Order ──
 export interface CreateOrderRequest {
-  tableId: string;
+  /** Empty for takeaway. */
+  tableId?: string;
+  type?: 'DineIn' | 'Takeaway' | 'RoomService';
+  /** Room service: the room ordering, the guest's PIN and whether it goes on the room bill. */
+  roomId?: string;
+  roomPin?: string;
+  chargeToRoom?: boolean;
+  customerName?: string;
+  customerMobile?: string;
+  /** Phone location, when the restaurant only takes QR orders from inside. */
+  latitude?: number;
+  longitude?: number;
+  locationAccuracy?: number;
   specialInstructions?: string;
   items: CreateOrderItemRequest[];
 }
@@ -158,16 +192,35 @@ export interface CreateOrderItemRequest {
   quantity: number;
   modifiers?: string;
   notes?: string;
+  isParcel?: boolean;
 }
 
 export interface OrderResponse {
   id: string;
   orderNumber: string;
+  /** Table number; the pickup token for takeaway. */
   tableNumber: string;
-  tableId: string;
+  tableId?: string;
   status: string;
+  /** 'DineIn' | 'Takeaway' | 'RoomService' */
   type: string;
   subTotal: number;
+  packagingCharge?: number;
+  /** Loyalty points redeemed (₹), before tax. */
+  loyaltyDiscount?: number;
+  /** Takeaway pickup token, e.g. T-012. */
+  tokenNumber?: string;
+  customerName?: string;
+  customerMobile?: string;
+  pickedUpAt?: string;
+  roomId?: string;
+  stayId?: string;
+  /** Room service on the room bill (paid at checkout). */
+  chargeToRoom?: boolean;
+  dispatchedAt?: string;
+  deliveredAt?: string;
+  /** Phone (QR session) or waiter-assigned party that placed it: one bill per party at shared tables. */
+  customerSessionId?: string;
   tax: number;
   discountAmount: number;
   totalAmount: number;
@@ -192,6 +245,9 @@ export interface OrderItemResponse {
   totalPrice: number;
   modifiers?: string;
   notes?: string;
+  isParcel?: boolean;
+  /** Per unit. */
+  packagingCharge?: number;
 }
 
 export interface PaymentSummary {
@@ -207,12 +263,20 @@ export interface LiveOrdersResponse {
   orders: OrderResponse[];
 }
 
+/** Loyalty result of settling a bill. */
+export interface LoyaltyOutcome { pointsRedeemed: number; redeemedValue: number; pointsEarned: number; bonusPoints: number; balance: number; }
+
 export interface TableSessionSummary {
-  tableId: string;
+  /** Set on a just-settled bill when the customer is in the loyalty program. */
+  loyalty?: LoyaltyOutcome;
+  tableId?: string;
   tableNumber: string;
   tableLabel?: string;
   activeOrderCount: number;
   grandSubTotal: number;
+  grandPackaging?: number;
+  /** Loyalty points redeemed (₹), before tax. */
+  grandLoyaltyDiscount?: number;
   grandTax: number;
   grandDiscount: number;
   grandTotal: number;
@@ -229,6 +293,10 @@ export interface BillResponse {
   orderCount: number;
   totalItems: number;
   subTotal: number;
+  packagingCharge?: number;
+  loyaltyDiscount?: number;
+  pointsEarned?: number;
+  pointsRedeemed?: number;
   tax: number;
   discountAmount: number;
   totalAmount: number;
@@ -278,6 +346,9 @@ export interface TableResponse {
   activeOrderCount: number;
   isCallingWaiter: boolean;
   waiterCalledAt?: string;
+  /** Waiter marked the table ready for its bill. */
+  billRequestedAt?: string;
+  billRequestedBy?: string;
   qrCodeUrl?: string;
   qrData?: string;
   assignedWaiterIds?: string[];
@@ -532,6 +603,42 @@ export interface BusinessSettings {
   serviceChargePercent?: number;
   maxDiscountPercent?: number;
   spinWheelEnabled?: boolean;
+  /** Print a KOT at the Print Station automatically. */
+  autoPrintKot?: boolean;
+  /** 'OnOrder' (as soon as it is placed) or 'OnAccept' (when the kitchen accepts it). */
+  kotPrintTrigger?: 'OnOrder' | 'OnAccept';
+  kotCopies?: number;
+  /** Customers may order takeaway from the counter QR. */
+  takeawayEnabled?: boolean;
+  /** Flat packing fee per takeaway order. */
+  takeawayPackingFee?: number;
+  /** QR ordering only during the website's opening hours. */
+  qrOrderingHoursEnabled?: boolean;
+  /** Stop QR orders this many minutes before closing. */
+  lastOrderMinutes?: number;
+  /** "Open now" override: QR ordering open until this time. */
+  orderingOpenUntil?: string;
+  latitude?: number;
+  longitude?: number;
+  /** QR orders only from phones within this distance (metres). 0 = off. */
+  geofenceRadiusMeters?: number;
+  /** Hotel features: rooms, check-in/out, room service. */
+  hotelModeEnabled?: boolean;
+  // Loyalty program
+  loyaltyEnabled?: boolean;
+  /** Points per ₹100 paid (before tax). */
+  loyaltyPointsPer100?: number;
+  /** ₹ value of one point. */
+  loyaltyPointValue?: number;
+  loyaltyMinRedeemPoints?: number;
+  /** Most of a bill (before tax, %) points can pay. */
+  loyaltyMaxRedeemPercent?: number;
+  /** 0 = never expire. */
+  loyaltyExpiryMonths?: number;
+  loyaltyWelcomeBonus?: number;
+  loyaltyBirthdayBonus?: number;
+  /** Most points one number can earn per day; 0 = no limit. */
+  loyaltyDailyEarnCap?: number;
 }
 
 // ── Website Content ──
@@ -825,6 +932,14 @@ export interface ClaimSubdomainRequest {
 
 // ── Clear Table / Discount / Dues ──
 export interface ClearTableRequest {
+  /** Bill only these orders (one party, or takeaway orders). Empty = the whole table. */
+  orderIds?: string[];
+  /** Loyalty points the customer uses on this bill (taken off before tax). */
+  redeemPoints?: number;
+  /** How the paid part was paid (cash/UPI/card…, several for a split). Their total is what's paid now. */
+  payments?: PaymentSplit[];
+  /** yyyy-MM-dd, saved for the birthday bonus. */
+  customerDateOfBirth?: string;
   discountAmount: number;
   paidAmount: number;
   customerName?: string;
@@ -1137,3 +1252,189 @@ export interface InventoryAnalytics {
   valueByCategory: { category: string; itemCount: number; totalValue: number }[];
   insights: Insight[];
 }
+
+// ── Notifications ──
+export type NotificationSeverity = 'Info' | 'Warning' | 'Critical';
+export interface AppNotification {
+  id: string;
+  /** LowStock, OutOfStock, StockReminder, ReservationRequest */
+  type: string;
+  severity: NotificationSeverity;
+  title: string;
+  message?: string;
+  /** Admin route that deals with it. */
+  link?: string;
+  createdAt: string;
+  updatedAt?: string;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+  resolvedAt?: string;
+}
+export interface NotificationSummary {
+  unacknowledgedCount: number;
+  /** Unacknowledged Warning/Critical notifications, most severe first. These blink on admin screens. */
+  activeAlerts: AppNotification[];
+}
+export interface PaginatedNotifications { items: AppNotification[]; totalCount: number; page: number; pageSize: number; }
+
+// ── Print Station ──
+export interface KotTicketItem { name: string; quantity: number; modifiers?: string; notes?: string; isParcel?: boolean; }
+export interface KotTicket {
+  jobId: string;
+  orderId: string;
+  orderNumber: string;
+  orderType: 'DineIn' | 'Takeaway' | 'RoomService';
+  /** Table number, takeaway token or room number. */
+  destination: string;
+  specialInstructions?: string;
+  createdAt: string;
+  copies: number;
+  isReprint: boolean;
+  items: KotTicketItem[];
+}
+
+// ── Hotel ──
+export interface StayResponse {
+  id: string;
+  roomId: string;
+  roomNumber: string;
+  guestName: string;
+  guestMobile?: string;
+  /** Room QR orders need it; tell the guest at check-in. */
+  pin?: string;
+  status: 'Active' | 'CheckedOut';
+  checkInAt: string;
+  expectedCheckOutAt?: string;
+  checkedOutAt?: string;
+  billNumber?: string;
+  notes?: string;
+}
+export interface RoomResponse {
+  id: string;
+  roomNumber: string;
+  floor?: string;
+  roomType?: string;
+  isActive: boolean;
+  stay?: StayResponse;
+  /** Unbilled charges of the current stay. */
+  openBalance: number;
+  openOrderCount: number;
+}
+export interface RoomRequest { roomNumber: string; floor?: string; roomType?: string; isActive: boolean; }
+export interface CheckInRequest { guestName: string; guestMobile?: string; expectedCheckOutAt?: string; requirePin: boolean; notes?: string; }
+export interface FolioResponse { stay: StayResponse; orders: OrderResponse[]; openBalance: number; }
+export interface CheckOutResponse { stay: StayResponse; bill?: TableSessionSummary; }
+export interface PublicRoomResponse {
+  roomId: string;
+  tenantId: string;
+  roomNumber: string;
+  checkedIn: boolean;
+  pinRequired: boolean;
+  guestFirstName?: string;
+  roomServiceEnabled: boolean;
+}
+
+// ── Loyalty & customers ──
+export interface LoyaltyLookup {
+  enabled: boolean;
+  customerId?: string;
+  customerName?: string;
+  pointsBalance: number;
+  pointValue: number;
+  minRedeemPoints: number;
+  maxRedeemPercent: number;
+  hasDateOfBirth: boolean;
+  birthdayBonusOn: boolean;
+  visitCount: number;
+}
+export interface CustomerListItem {
+  id: string;
+  customerName: string;
+  customerMobile: string;
+  dateOfBirth?: string;
+  pointsBalance: number;
+  visitCount: number;
+  totalSpent: number;
+  lastVisitAt?: string;
+  createdAt: string;
+}
+export interface CustomerList {
+  items: CustomerListItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  members: number;
+  pointsOutstanding: number;
+  outstandingValue: number;
+  pointsRedeemedThisMonth: number;
+  repeatCustomerPercent: number;
+}
+export interface LoyaltyTransaction {
+  id: string;
+  /** Earn, Redeem, Expire, Bonus, Adjust, Reverse */
+  type: string;
+  points: number;
+  balanceAfter: number;
+  billNumber?: string;
+  note?: string;
+  createdBy?: string;
+  createdAt: string;
+}
+
+// ── Walkie-talkie ──
+export type WalkieChannel = 'All' | 'Kitchen' | 'Floor' | 'Counter' | 'Hotel' | 'Direct';
+export interface WalkieMessage {
+  id: string;
+  senderUserId: string;
+  senderName: string;
+  senderRole: string;
+  channel: WalkieChannel;
+  recipientUserId?: string;
+  recipientName?: string;
+  /** Quick call key; each device reads it aloud in its own language. */
+  quickKey?: string;
+  quickTable?: string;
+  hasAudio: boolean;
+  durationMs: number;
+  createdAt: string;
+}
+export interface WalkieContact { id: string; name: string; role: string; }
+
+// ── Accounting (Tally) ──
+export type PaymentAccountKind = 'Cash' | 'Upi' | 'Card' | 'Bank';
+/** Where money goes: cash drawer, a UPI/bank account, a card machine. */
+export interface PaymentAccount { key: string; label: string; kind: PaymentAccountKind; ledger: string; }
+/** Amount paid into one account; several for a split payment. */
+export interface PaymentSplit { accountKey: string; amount: number; }
+export interface AccountingLedgers {
+  sales: string; packing: string; cgst: string; sgst: string; serviceCharge: string; discount: string;
+  loyaltyDiscount: string; roundOff: string; salary: string; purchases: string; inputCgst: string; inputSgst: string; inputIgst: string;
+}
+export interface AccountingSettings {
+  gstin?: string;
+  stateName?: string;
+  paymentAccounts: PaymentAccount[];
+  ledgers: AccountingLedgers;
+  /** Account salaries paid by UPI/bank come from. */
+  salaryBankAccountKey?: string;
+}
+export interface AccountingDay {
+  date: string; bills: number; sales: number; packing: number; cgst: number; sgst: number; serviceCharge: number;
+  discounts: number; loyaltyDiscount: number; billTotal: number;
+  /** Money in at billing, by payment account label. */
+  received: Record<string, number>;
+  udhaarGiven: number; udhaarReceived: number; refunds: number; salaries: number; purchases: number; supplierPayments: number;
+  /** Sales voucher difference booked to Round Off (should be paise). */
+  roundOff: number;
+}
+export interface AccountingSummary { days: AccountingDay[]; total: AccountingDay; warnings: string[]; }
+export interface PurchaseBillRequest {
+  supplierName: string; supplierGstin?: string; invoiceNumber: string;
+  /** yyyy-MM-dd */
+  invoiceDate: string;
+  description?: string; expenseLedger?: string;
+  taxableAmount: number; cgst: number; sgst: number; igst: number;
+  /** Paid now from this account; empty = on credit. */
+  paidAccountKey?: string;
+}
+export interface PurchaseBill extends PurchaseBillRequest { id: string; totalAmount: number; paidAt?: string; }

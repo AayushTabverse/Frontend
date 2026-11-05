@@ -124,6 +124,201 @@
           </label>
           <p class="field-hint">Prints directly to your default printer without showing the print dialog. Requires launching Chrome with <strong>--kiosk-printing</strong> flag. Create a shortcut: <code>chrome.exe --kiosk-printing</code></p>
         </div>
+
+        <h3 class="subsection-title">🧾 KOT auto-print</h3>
+        <div class="form-group toggle-group">
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="settings.autoPrintKot" />
+            <span>Print KOTs automatically</span>
+          </label>
+          <p class="field-hint">
+            Every order prints a kitchen ticket (KOT) on the counter PC. Keep the
+            <a routerLink="/print-station">Print Station</a> page open there, in Chrome started with
+            <strong>--kiosk-printing</strong> so it prints without a dialog.
+          </p>
+        </div>
+        <div class="form-row" *ngIf="settings.autoPrintKot">
+          <div class="form-group">
+            <label>Print when</label>
+            <select [(ngModel)]="settings.kotPrintTrigger">
+              <option value="OnOrder">The order is placed</option>
+              <option value="OnAccept">The kitchen accepts the order</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Copies per KOT</label>
+            <select [(ngModel)]="settings.kotCopies">
+              <option [ngValue]="1">1</option>
+              <option [ngValue]="2">2 (kitchen + counter)</option>
+              <option [ngValue]="3">3</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Takeaway -->
+      <div class="form-section">
+        <h2>🥡 Takeaway & Parcel</h2>
+        <div class="form-group toggle-group">
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="settings.takeawayEnabled" (change)="settings.takeawayEnabled && loadTakeawayQr()" />
+            <span>Customers can order takeaway by QR</span>
+          </label>
+          <p class="field-hint">Put the takeaway QR at the counter. Customers order with their name and number, get a token,
+            and see when it's ready. Staff handle these on Take Order → Takeaway.</p>
+        </div>
+        <div class="form-group">
+          <label>Packing fee per takeaway order (₹)</label>
+          <input type="number" [(ngModel)]="settings.takeawayPackingFee" min="0" (keypress)="onlyNumbers($event)" />
+          <p class="field-hint">Added once per takeaway order, on top of each dish's own packing charge (set on the Menu page).
+            Packing is taxed at the same GST rate as the food.</p>
+        </div>
+        <div class="takeaway-qr" *ngIf="settings.takeawayEnabled && takeawayQrUrl">
+          <img [src]="takeawayQrUrl" alt="Takeaway counter QR code" />
+          <button type="button" class="btn-test-qr" (click)="printTakeawayQr()">🖨️ Print QR</button>
+        </div>
+      </div>
+
+      <!-- Loyalty -->
+      <div class="form-section">
+        <h2>⭐ Loyalty Points</h2>
+        <div class="form-group toggle-group">
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="settings.loyaltyEnabled" />
+            <span>Reward customers with points</span>
+          </label>
+          <p class="field-hint">Customers earn points on what they pay (by mobile number, entered on the bill) and use them
+            at the counter as a discount. Points come off before tax. See every customer on the <a routerLink="/admin/customers">Customers</a> page.</p>
+        </div>
+        <ng-container *ngIf="settings.loyaltyEnabled">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Points per ₹100 spent</label>
+              <input type="number" min="0" step="0.5" [(ngModel)]="settings.loyaltyPointsPer100" />
+            </div>
+            <div class="form-group">
+              <label>Value of 1 point (₹)</label>
+              <input type="number" min="0.01" step="0.25" [(ngModel)]="settings.loyaltyPointValue" />
+            </div>
+          </div>
+          <p class="field-hint">Customers get back about <strong>{{ loyaltyCashbackPercent }}%</strong> of what they spend.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Points needed before first use</label>
+              <input type="number" min="0" [(ngModel)]="settings.loyaltyMinRedeemPoints" />
+            </div>
+            <div class="form-group">
+              <label>Most of a bill points can pay (%)</label>
+              <input type="number" min="0" max="100" [(ngModel)]="settings.loyaltyMaxRedeemPercent" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Points expire after no visit for</label>
+              <select [(ngModel)]="settings.loyaltyExpiryMonths">
+                <option [ngValue]="0">Never</option>
+                <option [ngValue]="3">3 months</option>
+                <option [ngValue]="6">6 months</option>
+                <option [ngValue]="12">12 months</option>
+                <option [ngValue]="24">24 months</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Daily limit per mobile number (points)</label>
+              <input type="number" min="0" [(ngModel)]="settings.loyaltyDailyEarnCap" />
+              <span class="field-hint">0 = no limit. Stops staff collecting points on their own number.</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Welcome bonus (points)</label>
+              <input type="number" min="0" [(ngModel)]="settings.loyaltyWelcomeBonus" />
+              <span class="field-hint">Given on a customer's first bill. 0 = off.</span>
+            </div>
+            <div class="form-group">
+              <label>Birthday bonus (points)</label>
+              <input type="number" min="0" [(ngModel)]="settings.loyaltyBirthdayBonus" />
+              <span class="field-hint">On a bill within 3 days of their birthday, once a year. The bill screen asks for the date. 0 = off.</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Hotel -->
+      <div class="form-section">
+        <h2>🏨 Hotel</h2>
+        <div class="form-group toggle-group">
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="settings.hotelModeEnabled" />
+            <span>This restaurant is part of a hotel (rooms & room service)</span>
+          </label>
+          <p class="field-hint">Adds Rooms (check-in, room bills, checkout) and Room Service (delivery queue) to the sidebar,
+            and lets checked-in guests order from the QR in their room. Add <strong>Front Desk</strong> and
+            <strong>Room Service</strong> staff on the Staff page.</p>
+        </div>
+      </div>
+
+      <!-- QR ordering rules -->
+      <div class="form-section">
+        <h2>🔒 QR Ordering Rules</h2>
+        <div class="form-group toggle-group">
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="settings.qrOrderingHoursEnabled" />
+            <span>Only take QR orders during opening hours</span>
+          </label>
+          <p class="field-hint">Uses the opening hours on your <a routerLink="/admin/website">Website</a> page.
+            Outside them, customers can still browse the menu but see a "Closed" message instead of ordering. Staff can always take orders.</p>
+        </div>
+        <div class="form-row" *ngIf="settings.qrOrderingHoursEnabled">
+          <div class="form-group">
+            <label>Last QR order before closing</label>
+            <select [(ngModel)]="settings.lastOrderMinutes">
+              <option [ngValue]="0">Until closing time</option>
+              <option [ngValue]="15">15 minutes before</option>
+              <option [ngValue]="30">30 minutes before</option>
+              <option [ngValue]="45">45 minutes before</option>
+              <option [ngValue]="60">1 hour before</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Open outside hours</label>
+            <div class="inline-actions">
+              <button type="button" class="btn-test-qr" *ngIf="!overrideActive" (click)="setOrderingOverride(120)">Open now for 2 hours</button>
+              <ng-container *ngIf="overrideActive">
+                <span class="field-hint">Open until {{ settings.orderingOpenUntil | date:'h:mm a' }}</span>
+                <button type="button" class="btn-test-qr" (click)="setOrderingOverride(0)">Back to normal hours</button>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Only accept QR orders from inside the restaurant</label>
+          <select [(ngModel)]="settings.geofenceRadiusMeters">
+            <option [ngValue]="0">Off: accept from anywhere</option>
+            <option [ngValue]="100">Within 100 m</option>
+            <option [ngValue]="200">Within 200 m</option>
+            <option [ngValue]="500">Within 500 m</option>
+          </select>
+          <p class="field-hint">Customers are asked for their location once when ordering, which stops prank orders from
+            photographed QR codes. GPS indoors can be off by 50–100 m, so 200 m is a safe setting.</p>
+        </div>
+        <div class="form-row" *ngIf="settings.geofenceRadiusMeters">
+          <div class="form-group">
+            <label>Restaurant location (latitude, longitude)</label>
+            <div class="inline-actions">
+              <input type="number" step="0.000001" [(ngModel)]="settings.latitude" placeholder="Latitude" />
+              <input type="number" step="0.000001" [(ngModel)]="settings.longitude" placeholder="Longitude" />
+            </div>
+            <button type="button" class="btn-test-qr" (click)="useCurrentLocation()" [disabled]="locating">
+              {{ locating ? 'Getting location…' : '📍 Use this device\'s location' }}
+            </button>
+            <span class="field-error" *ngIf="locationError">{{ locationError }}</span>
+            <span class="field-error" *ngIf="settings.latitude == null || settings.longitude == null">
+              Set the location, or the distance check stays off.
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- Tax Configuration -->

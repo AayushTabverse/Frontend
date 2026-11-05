@@ -1,0 +1,38 @@
+{
+  "tracking": {
+    "notFoundTitle": "🔒 Order Not Found",
+    "notFoundMessage": "This order doesn't belong to your current session. Please scan the QR code to start a new session.",
+    "backToMenuShort": "← Menu",
+    "allOrders": "All Orders",
+    "orderNumber": "Order #{{number}}",
+    "yourToken": "Your token",
+    "takeawayReady": "✅ Packed and ready! Collect it at the counter.",
+    "takeawayPickedUp": "Picked up. Enjoy your meal!",
+    "takeawayKeepOpen": "Keep this page open. We'll show it here when your order is ready.",
+    "payAtCounter": "Please pay at the counter.",
+    "etaLabel": "⏱ Estimated time:",
+    "etaMinutes": "{{minutes}} minutes",
+    "servedTitle": "Your order has been served!",
+    "servedMessage": "Enjoy your meal. Redirecting to menu...",
+    "backToMenu": "Back to Menu",
+    "orderItems": "Order Items",
+    "cancelConfirm": "Cancel?",
+    "yes": "Yes",
+    "no": "No",
+    "cancelItem": "Cancel item",
+    "total": "Total",
+    "loading": "Loading order...",
+    "status": {
+      "Pending": "Pending",
+      "Accepted": "Accepted",
+      "Preparing": "Preparing",
+      "Ready": "Ready",
+      "Served": "Served",
+      "Completed": "Completed",
+      "Cancelled": "Cancelled",
+      "PickedUp": "Picked up",
+      "OnTheWay": "On the way",
+      "Delivered": "Delivered"
+    }
+  }
+}

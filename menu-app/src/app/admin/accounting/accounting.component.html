@@ -1,0 +1,206 @@
+<div class="page-header">
+  <h1>📒 Accounting</h1>
+</div>
+
+<div class="tabs" role="tablist">
+  <button role="tab" [class.active]="tab === 'summary'" (click)="tab = 'summary'">📊 Summary &amp; Tally</button>
+  <button role="tab" [class.active]="tab === 'setup'" (click)="showSetup()">⚙️ Setup</button>
+  <a class="tab-link" routerLink="/admin/purchases">🧾 Purchases →</a>
+</div>
+
+<!-- ═════════ Summary & Tally ═════════ -->
+<ng-container *ngIf="tab === 'summary'">
+  <div class="range-bar">
+    <label>From <input type="date" [(ngModel)]="from" (change)="load()" [max]="to" /></label>
+    <label>To <input type="date" [(ngModel)]="to" (change)="load()" [min]="from" /></label>
+    <div class="quick">
+      <button class="chip" (click)="today()">Today</button>
+      <button class="chip" (click)="thisMonth()">This month</button>
+      <button class="chip" (click)="lastMonth()">Last month</button>
+    </div>
+  </div>
+
+  <div class="msg error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+  <div class="warnings" *ngIf="summary?.warnings?.length">
+    <strong>⚠️ Check before sending to Tally</strong>
+    <ul><li *ngFor="let w of summary!.warnings">{{ w }}</li></ul>
+  </div>
+
+  <div class="loading" *ngIf="loading">Loading summary...</div>
+
+  <ng-container *ngIf="!loading && summary as s">
+    <div class="stats">
+      <div class="stat"><span class="stat-value">₹{{ s.total.billTotal | number:'1.0-2' }}</span><span class="stat-label">Bill total ({{ s.total.bills | number }} bills)</span></div>
+      <div class="stat"><span class="stat-value">₹{{ s.total.sales | number:'1.0-2' }}</span><span class="stat-label">Food sales</span></div>
+      <div class="stat"><span class="stat-value">₹{{ gst(s.total) | number:'1.0-2' }}</span><span class="stat-label">GST (CGST ₹{{ s.total.cgst | number:'1.0-2' }} + SGST ₹{{ s.total.sgst | number:'1.0-2' }})</span></div>
+      <div class="stat" *ngFor="let label of receivedLabels">
+        <span class="stat-value">₹{{ received(s.total, label) | number:'1.0-2' }}</span><span class="stat-label">Received · {{ label }}</span>
+      </div>
+      <div class="stat"><span class="stat-value">₹{{ s.total.udhaarGiven | number:'1.0-2' }}</span><span class="stat-label">Udhaar given</span></div>
+      <div class="stat"><span class="stat-value">₹{{ s.total.udhaarReceived | number:'1.0-2' }}</span><span class="stat-label">Udhaar received</span></div>
+      <div class="stat"><span class="stat-value">₹{{ s.total.purchases | number:'1.0-2' }}</span><span class="stat-label">Purchases (supplier paid ₹{{ s.total.supplierPayments | number:'1.0-2' }})</span></div>
+      <div class="stat"><span class="stat-value">₹{{ s.total.salaries | number:'1.0-2' }}</span><span class="stat-label">Salaries paid</span></div>
+    </div>
+
+    <div class="downloads">
+      <section class="dl-card">
+        <h3>Tally export</h3>
+        <p class="sub">For {{ from }} to {{ to }}</p>
+        <div class="dl-buttons">
+          <button class="secondary-btn" (click)="downloadTally('masters')" [disabled]="!!downloading">
+            {{ downloading === 'tally-masters' ? 'Preparing…' : '⬇ 1. Ledgers (import once)' }}
+          </button>
+          <button class="primary-btn" (click)="downloadTally('vouchers')" [disabled]="!!downloading">
+            {{ downloading === 'tally-vouchers' ? 'Preparing…' : '⬇ 2. Vouchers' }}
+          </button>
+        </div>
+      </section>
+      <section class="dl-card">
+        <h3>CSV reports</h3>
+        <p class="sub">Open in Excel / Google Sheets</p>
+        <div class="dl-buttons">
+          <button class="secondary-btn" *ngFor="let r of reports" (click)="downloadReport(r.kind)" [disabled]="!!downloading">
+            {{ downloading === 'csv-' + r.kind ? 'Preparing…' : '⬇ ' + r.label }}
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <details class="help">
+      <summary>ℹ️ How to import into Tally</summary>
+      <ol>
+        <li>Open <strong>TallyPrime → Gateway of Tally → Import → Masters</strong> and choose the <em>ledgers</em> file.
+          Do this once, and again whenever new customers or suppliers appear.</li>
+        <li>Then <strong>Import → Transactions</strong> and choose the <em>vouchers</em> file.</li>
+        <li>Re-importing the same dates? When Tally asks about existing vouchers, choose <strong>Replace</strong> so edited bills update instead of duplicating.</li>
+      </ol>
+      <p class="sub">What gets created: one Sales voucher per day, one Receipt voucher for udhaar received, one Payment voucher for salaries,
+        and one Purchase voucher per supplier invoice (plus a Payment voucher when it is paid).</p>
+    </details>
+
+    <div class="empty-state" *ngIf="!s.days.length">No bills or entries in this period.</div>
+
+    <div class="table-wrap" *ngIf="s.days.length">
+      <table class="days">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="num">Bills</th>
+            <th class="num">Sales</th>
+            <th class="num">GST</th>
+            <th class="num">Bill total</th>
+            <th class="num" *ngFor="let label of receivedLabels">{{ label }}</th>
+            <th class="num">Udhaar given</th>
+            <th class="num">Udhaar recd.</th>
+            <th class="num">Purchases</th>
+            <th class="num">Round off</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of s.days">
+            <td class="nowrap">{{ d.date | date:'EEE d MMM' }}</td>
+            <td class="num">{{ d.bills }}</td>
+            <td class="num">{{ d.sales | number:'1.2-2' }}</td>
+            <td class="num">{{ gst(d) | number:'1.2-2' }}</td>
+            <td class="num strong">{{ d.billTotal | number:'1.2-2' }}</td>
+            <td class="num" *ngFor="let label of receivedLabels">{{ received(d, label) | number:'1.2-2' }}</td>
+            <td class="num">{{ d.udhaarGiven | number:'1.2-2' }}</td>
+            <td class="num">{{ d.udhaarReceived | number:'1.2-2' }}</td>
+            <td class="num">{{ d.purchases | number:'1.2-2' }}</td>
+            <td class="num" [class.warn]="d.roundOff >= 1 || d.roundOff <= -1">{{ d.roundOff | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num">{{ s.total.bills }}</td>
+            <td class="num">{{ s.total.sales | number:'1.2-2' }}</td>
+            <td class="num">{{ gst(s.total) | number:'1.2-2' }}</td>
+            <td class="num">{{ s.total.billTotal | number:'1.2-2' }}</td>
+            <td class="num" *ngFor="let label of receivedLabels">{{ received(s.total, label) | number:'1.2-2' }}</td>
+            <td class="num">{{ s.total.udhaarGiven | number:'1.2-2' }}</td>
+            <td class="num">{{ s.total.udhaarReceived | number:'1.2-2' }}</td>
+            <td class="num">{{ s.total.purchases | number:'1.2-2' }}</td>
+            <td class="num">{{ s.total.roundOff | number:'1.2-2' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </ng-container>
+</ng-container>
+
+<!-- ═════════ Setup ═════════ -->
+<ng-container *ngIf="tab === 'setup'">
+  <div class="loading" *ngIf="settingsLoading">Loading settings...</div>
+  <div class="msg error" *ngIf="setupError && !settings">❌ {{ setupError }}</div>
+
+  <form class="setup" *ngIf="settings" (ngSubmit)="saveSetup()">
+    <section class="card">
+      <h3>Business</h3>
+      <div class="grid-2">
+        <label class="field">GSTIN
+          <input name="gstin" [(ngModel)]="settings.gstin" (input)="uppercaseGstin()" maxlength="15" placeholder="e.g. 27ABCDE1234F1Z5" autocomplete="off" />
+          <span class="hint" [class.bad]="settings.gstin && settings.gstin.length !== 15">{{ settings.gstin?.length || 0 }}/15 characters · leave blank if not registered</span>
+        </label>
+        <label class="field">State
+          <input name="stateName" [(ngModel)]="settings.stateName" maxlength="50" placeholder="e.g. Maharashtra" />
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Payment accounts</h3>
+        <button type="button" class="secondary-btn" (click)="addAccount()">+ Add account</button>
+      </div>
+      <p class="sub">Where money goes: cash drawer, UPI / bank accounts, card machine. Keep at least one Cash account.</p>
+      <div class="accounts">
+        <div class="account-row head">
+          <span>Label</span><span>Type</span><span>Tally ledger name</span><span></span>
+        </div>
+        <div class="account-row" *ngFor="let a of accounts; let i = index">
+          <div>
+            <input [name]="'acc-label-' + i" [(ngModel)]="a.label" (ngModelChange)="onLabelChange(a)" maxlength="50" placeholder="e.g. UPI HDFC" aria-label="Label" />
+            <span class="hint">key: {{ a.key || '—' }}{{ a.isNew ? ' (new)' : '' }}</span>
+          </div>
+          <select [name]="'acc-kind-' + i" [(ngModel)]="a.kind" (ngModelChange)="onKindChange(a)" aria-label="Type">
+            <option *ngFor="let k of kinds" [ngValue]="k.value">{{ k.label }}</option>
+          </select>
+          <input [name]="'acc-ledger-' + i" [(ngModel)]="a.ledger" maxlength="100" placeholder="e.g. HDFC Bank" aria-label="Tally ledger name" />
+          <button type="button" class="icon-btn" (click)="removeAccount(i)" title="Remove" aria-label="Remove account">✕</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Tally ledger names</h3>
+      <p class="sub">Must match the ledger names in your Tally company (the ledgers file creates any that are missing).</p>
+      <div class="grid-3">
+        <label class="field" *ngFor="let f of ledgerFields">{{ f.label }}
+          <input [name]="'ledger-' + f.key" [(ngModel)]="settings.ledgers[f.key]" maxlength="100" />
+          <span class="hint" *ngIf="f.hint">{{ f.hint }}</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Salaries</h3>
+      <label class="field narrow">Salaries paid by bank/UPI come from
+        <select name="salaryAccount" [(ngModel)]="settings.salaryBankAccountKey">
+          <option [ngValue]="undefined">— Not set —</option>
+          <option *ngFor="let a of nonCashAccounts" [ngValue]="a.key">{{ a.label || a.key }}</option>
+        </select>
+        <span class="hint">Cash salaries come from the Cash account.</span>
+      </label>
+    </section>
+
+    <div class="msg error" *ngIf="setupError">❌ {{ setupError }}</div>
+    <div class="msg success" *ngIf="setupMessage">✅ {{ setupMessage }}</div>
+
+    <div class="save-bar">
+      <button type="button" class="secondary-btn" (click)="loadSettings()" [disabled]="saving">Discard changes</button>
+      <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving…' : 'Save settings' }}</button>
+    </div>
+  </form>
+</ng-container>

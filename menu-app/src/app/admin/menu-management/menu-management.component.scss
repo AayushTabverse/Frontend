@@ -136,3 +136,14 @@
   .modal-actions { flex-direction: column; button { width: 100%; } }
   .category-card { overflow-x: auto; }
 }
+
+.translations {
+  margin: 4px 0 12px;
+  summary { cursor: pointer; font-weight: 600; font-size: 0.85rem; margin-bottom: 8px; }
+  textarea { margin-top: 6px; }
+}
+.translate-msg {
+  margin: -6px 0 12px;
+  font-size: 0.85rem;
+  color: var(--ui-text-2);
+}

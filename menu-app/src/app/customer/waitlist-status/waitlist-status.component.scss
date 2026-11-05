@@ -62,3 +62,4 @@ p { line-height: 1.45; }
   background: var(--ui-success-soft, rgba(22,163,74,0.11)); color: var(--ui-success-text, #15803d); font-size: 1rem;
   strong { font-size: 1.2rem; }
 }
+.lang-bar { width: 100%; max-width: 420px; display: flex; justify-content: flex-end; margin-bottom: 12px; }

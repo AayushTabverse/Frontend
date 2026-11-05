@@ -1,16 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoDirective } from '@jsverse/transloco';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { SignalRService } from '../../services/signalr.service';
 import { TableSessionService } from '../../services/table-session.service';
 import { OrderResponse, OrderItemResponse } from '../../models/api.models';
 import { Subscription } from 'rxjs';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-order-tracking',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective, LanguageSwitcherComponent],
   templateUrl: './order-tracking.component.html',
   styleUrl: './order-tracking.component.scss'
 })
@@ -49,7 +51,9 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
     this.orderService.getOrder(orderId).subscribe({
       next: (order) => {
         this.order = order;
-        if (!this.tableId) this.tableId = order.tableId;
+        if (!this.tableId) this.tableId = order.tableId ?? (order.type === 'Takeaway' ? 'takeaway' : order.roomId ? `room-${order.roomId}` : '');
+        if (this.isTakeaway) this.statusSteps = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Completed'];
+        if (this.isRoom) this.statusSteps = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed'];
         this.loading = false;
         this.checkServedRedirect();
         this.setupRealTime(orderId);
@@ -61,7 +65,25 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   showServedMessage = false;
   private servedTimer?: any;
 
+  get isTakeaway(): boolean {
+    return this.order?.type === 'Takeaway';
+  }
+
+  get isRoom(): boolean {
+    return this.order?.type === 'RoomService';
+  }
+
+  /** Translation key suffix under tracking.status for a timeline step. */
+  stepLabel(step: string): string {
+    if (this.isTakeaway && step === 'Completed') return 'PickedUp';
+    if (this.isRoom && step === 'Served') return 'OnTheWay';
+    if (this.isRoom && step === 'Completed') return 'Delivered';
+    return step;
+  }
+
   private checkServedRedirect(): void {
+    // Takeaway customers wait at the counter, hotel guests in their room: keep the status on screen
+    if (this.isTakeaway || this.isRoom) return;
     if (this.order?.status === 'Served' || this.order?.status === 'Completed') {
       this.showServedMessage = true;
       this.servedTimer = setTimeout(() => this.goBackToMenu(), 5000);
@@ -84,21 +106,32 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
 
   private async setupRealTime(orderId: string): Promise<void> {
     if (this.tenantId) {
-      await this.signalR.startConnection(this.tenantId);
+      await this.signalR.connectPublic();
       await this.signalR.trackOrder(orderId);
 
       this.sub = this.signalR.statusUpdate$.subscribe(updated => {
         if (updated.id === this.order?.id) {
+          const wasReady = this.order?.status === 'Ready';
           this.order = updated;
+          if (this.isTakeaway && updated.status === 'Ready' && !wasReady) {
+            try { navigator.vibrate?.([300, 150, 300]); } catch { /* not supported */ }
+          }
           this.checkServedRedirect();
         }
       });
     }
   }
 
+  /** Status as the guest sees it: a delivered room order is done even before it's paid. */
+  get displayStatus(): string {
+    if (!this.order) return '';
+    if (this.isRoom && this.order.deliveredAt) return 'Completed';
+    return this.order.status;
+  }
+
   getStepIndex(): number {
     if (!this.order) return 0;
-    return this.statusSteps.indexOf(this.order.status);
+    return this.statusSteps.indexOf(this.displayStatus);
   }
 
   isStepCompleted(step: string): boolean {

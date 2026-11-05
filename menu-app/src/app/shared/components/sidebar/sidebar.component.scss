@@ -354,3 +354,9 @@ $gap: 12px;
 @media (prefers-reduced-motion: reduce) {
   .sb { transition: none; }
 }
+
+.sb-lang {
+  display: flex;
+  justify-content: center;
+  padding: 0 0 10px;
+}

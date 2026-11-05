@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { DueService } from '../../services/due.service';
-import { CustomerDue } from '../../models/api.models';
+import { CustomerDue, PaymentAccount } from '../../models/api.models';
+import { AccountingService } from '../../services/accounting.service';
 
 @Component({
   selector: 'app-dues',
@@ -23,15 +24,27 @@ export class DuesComponent implements OnInit {
 
   settleAmounts: { [id: string]: number } = {};
   settling: { [id: string]: boolean } = {};
+  /** Where each payment went (cash / UPI / card…), per due; defaults to cash. */
+  paymentAccounts: PaymentAccount[] = [];
+  settleAccounts: { [id: string]: string } = {};
+  defaultAccount = '';
 
   private searchTimeout: any;
 
   constructor(
-    private dueService: DueService
+    private dueService: DueService,
+    private accounting: AccountingService
   ) {}
 
   ngOnInit(): void {
     this.loadDues();
+    this.accounting.paymentAccounts().subscribe({
+      next: accounts => {
+        this.paymentAccounts = accounts;
+        this.defaultAccount = (accounts.find(a => a.kind === 'Cash') ?? accounts[0])?.key ?? '';
+      },
+      error: () => {}
+    });
   }
 
   loadDues(): void {
@@ -82,7 +95,7 @@ export class DuesComponent implements OnInit {
     if (!amount || amount <= 0 || amount > due.dueAmount) return;
 
     this.settling[due.id] = true;
-    this.dueService.settleDue(due.id, amount).subscribe({
+    this.dueService.settleDue(due.id, amount, this.settleAccounts[due.id] || this.defaultAccount).subscribe({
       next: (updated) => {
         // Update the due in the list
         const index = this.dues.findIndex(d => d.id === due.id);

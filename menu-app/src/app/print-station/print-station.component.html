@@ -1,0 +1,45 @@
+<ng-container *transloco="let t">
+<div class="ps">
+  <header class="ps-header">
+    <div>
+      <h1>🖨️ {{ t('printStation.title') }}</h1>
+      <p class="ps-sub">{{ restaurantName }} · {{ t('printStation.subtitle') }}</p>
+    </div>
+    <div class="ps-actions">
+      <app-language-switcher></app-language-switcher>
+      <span class="ps-status" [class.on]="connected && !paused">
+        {{ paused ? '⏸ ' + t('printStation.paused') : connected ? '● ' + t('printStation.live') : '○ ' + t('printStation.connecting') }}
+      </span>
+      <button (click)="togglePause()">{{ paused ? '▶ ' + t('printStation.resume') : '⏸ ' + t('printStation.pause') }}</button>
+      <button (click)="testPrint()">{{ t('printStation.testPrint') }}</button>
+      <a routerLink="/admin/settings" class="ps-link">{{ t('printStation.settings') }}</a>
+    </div>
+  </header>
+
+  <div class="ps-warn" *ngIf="!autoPrintEnabled">
+    {{ t('printStation.autoPrintOff') }}
+    {{ t('printStation.turnOnBefore') }} <a routerLink="/admin/settings">{{ t('printStation.printerSettingsLink') }}</a>{{ t('printStation.turnOnAfter') }}
+  </div>
+
+  <details class="ps-setup">
+    <summary>{{ t('printStation.setup.title') }}</summary>
+    <ol>
+      <li>{{ t('printStation.setup.step1') }}</li>
+      <li [innerHTML]="t('printStation.setup.step2')"></li>
+      <li [innerHTML]="t('printStation.setup.step3')"></li>
+      <li>{{ t('printStation.setup.step4') }}</li>
+    </ol>
+  </details>
+
+  <h2>{{ t('printStation.printed') }}</h2>
+  <div class="ps-empty" *ngIf="!printed.length">{{ t('printStation.nothingPrinted') }}</div>
+  <ul class="ps-log" *ngIf="printed.length">
+    <li *ngFor="let p of printed" [class.failed]="!p.ok">
+      <span class="ps-time">{{ p.at | date:'h:mm:ss a' }}</span>
+      <strong>#{{ p.orderNumber }}</strong>
+      <span>{{ p.orderType === 'Takeaway' ? t('printStation.takeaway') : p.orderType === 'RoomService' ? t('printStation.room') : t('printStation.table') }} {{ p.destination }}</span>
+      <span class="ps-result">{{ p.ok ? '✓ ' + t('printStation.printedOk') : '✕ ' + p.error }}</span>
+    </li>
+  </ul>
+</div>
+</ng-container>

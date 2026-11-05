@@ -1,0 +1,48 @@
+<div class="page-header">
+  <h1>🔔 Notifications</h1>
+  <button class="ack-all-btn" *ngIf="filter === 'open' && items.length" (click)="acknowledgeAll()" [disabled]="busy">
+    Acknowledge all
+  </button>
+</div>
+
+<div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+<div class="filter-tabs" role="tablist">
+  <button role="tab" [class.active]="filter === 'open'" [attr.aria-selected]="filter === 'open'" (click)="setFilter('open')">Needs attention</button>
+  <button role="tab" [class.active]="filter === 'all'" [attr.aria-selected]="filter === 'all'" (click)="setFilter('all')">All</button>
+</div>
+
+<div class="loading" *ngIf="loading">Loading notifications...</div>
+
+<div class="empty-state" *ngIf="!loading && !items.length">
+  {{ filter === 'open' ? '✅ Nothing needs your attention right now.' : 'No notifications yet.' }}
+</div>
+
+<ul class="notif-list" *ngIf="!loading && items.length">
+  <li *ngFor="let n of items"
+      class="notif"
+      [class.critical]="n.severity === 'Critical'"
+      [class.warning]="n.severity === 'Warning'"
+      [class.closed]="n.acknowledgedAt"
+      [class.clickable]="n.link"
+      (click)="open(n)">
+    <span class="notif-icon" aria-hidden="true">{{ icon(n) }}</span>
+    <div class="notif-body">
+      <div class="notif-title">{{ n.title }}</div>
+      <div class="notif-message" *ngIf="n.message">{{ n.message }}</div>
+      <div class="notif-meta">
+        {{ (n.updatedAt || n.createdAt) | date:'d MMM, h:mm a' }}
+        <span *ngIf="n.acknowledgedAt"> · {{ closedLabel(n) }}</span>
+      </div>
+    </div>
+    <button class="notif-ack" *ngIf="!n.acknowledgedAt" (click)="acknowledge(n, $event)" [disabled]="busy">
+      Acknowledge
+    </button>
+  </li>
+</ul>
+
+<div class="pager" *ngIf="totalPages > 1">
+  <button (click)="goToPage(page - 1)" [disabled]="page <= 1">‹ Prev</button>
+  <span>Page {{ page }} of {{ totalPages }}</span>
+  <button (click)="goToPage(page + 1)" [disabled]="page >= totalPages">Next ›</button>
+</div>

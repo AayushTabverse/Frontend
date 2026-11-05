@@ -48,7 +48,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
       this.subs.push(
         this.signalR.newOrder$.subscribe(() => this.loadOrders()),
-        this.signalR.statusUpdate$.subscribe(() => this.loadOrders())
+        this.signalR.statusUpdate$.subscribe(() => this.loadOrders()),
+        this.signalR.reconnected$.subscribe(() => this.loadOrders())
       );
     }
   }

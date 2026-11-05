@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import {
-  Armchair, CalendarDays, ChartLine, ChevronsLeft, ChevronsRight, ClipboardPen, CreditCard, Globe, Hourglass,
-  LayoutDashboard, LogOut, LucideAngularModule, LucideIconData, Moon, NotebookPen, Package, ReceiptText,
+  Armchair, Bell, BedDouble, BookOpenCheck, CalendarDays, ConciergeBell, Contact, ShoppingBasket, ChartLine, ChevronsLeft, ChevronsRight, ClipboardPen, CreditCard, Globe, Hourglass,
+  LayoutDashboard, LogOut, LucideAngularModule, LucideIconData, Moon, NotebookPen, Package, Printer, ReceiptText,
   Settings, Sparkles, Star, Sun, UtensilsCrossed, Users, X
 } from 'lucide-angular';
 import { AuthService } from '../../../services/auth.service';
@@ -13,7 +13,10 @@ import { SettingsService } from '../../../services/settings.service';
 import { ThemeService } from '../../../services/theme.service';
 import { ReservationService } from '../../../services/reservation.service';
 import { WaitlistService } from '../../../services/waitlist.service';
+import { NotificationService } from '../../../services/notification.service';
 import { NAV_GROUPS, NavGroup, NavIcon, NavItem, can, navItemsFor, roleDisplayName } from '../../permissions';
+import { TranslocoDirective } from '@jsverse/transloco';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 const NAV_ICONS: Record<NavIcon, LucideIconData> = {
   dashboard: LayoutDashboard,
@@ -31,7 +34,14 @@ const NAV_ICONS: Record<NavIcon, LucideIconData> = {
   reviews: Star,
   staff: Users,
   settings: Settings,
-  billing: CreditCard
+  billing: CreditCard,
+  notifications: Bell,
+  printStation: Printer,
+  rooms: BedDouble,
+  roomService: ConciergeBell,
+  customers: Contact,
+  purchases: ShoppingBasket,
+  accounting: BookOpenCheck
 };
 
 const COLLAPSED_KEY = 'tabverse.sidebarCollapsed';
@@ -48,7 +58,7 @@ interface NavSection {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
+  imports: [CommonModule, RouterModule, LucideAngularModule, TranslocoDirective, LanguageSwitcherComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
@@ -81,6 +91,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private settings = inject(SettingsService);
   private reservations = inject(ReservationService);
   private waitlist = inject(WaitlistService);
+  private notifications = inject(NotificationService);
 
   private subs: Subscription[] = [];
   private badgeTimer?: ReturnType<typeof setInterval>;
@@ -94,17 +105,34 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const role = this.auth.getRole();
     this.roleLabel = roleDisplayName(role ?? '');
     this.buildSections(navItemsFor(role, true));
+    // Premium and hotel-only entries depend on the plan and settings; rebuild as each loads
+    let hasPremium = true;
+    let hotelMode = false;
 
     this.subs.push(this.auth.currentUser$.subscribe(u => this.userName = u?.fullName || ''));
     this.subscriptions.getStatus().subscribe(s => {
-      this.buildSections(navItemsFor(role, s.isTrialActive || s.plan === 'Premium'));
+      hasPremium = s.isTrialActive || s.plan === 'Premium';
+      this.buildSections(navItemsFor(role, hasPremium, hotelMode));
     });
     this.settings.getSettings().subscribe({
       next: (s) => {
         this.restaurantName = s.name || '';
         this.logoUrl = s.logoUrl || '';
+        hotelMode = !!s.hotelModeEnabled;
+        this.buildSections(navItemsFor(role, hasPremium, hotelMode));
       }
     });
+
+    this.notifications.start();
+    this.subs.push(this.notifications.summary$.subscribe(s => {
+      if (s) this.badges = { ...this.badges, '/admin/notifications': s.unacknowledgedCount };
+    }));
+
+    this.subs.push(this.settings.saved$.subscribe(s => {
+      hotelMode = !!s.hotelModeEnabled;
+      this.restaurantName = s.name || this.restaurantName;
+      this.buildSections(navItemsFor(role, hasPremium, hotelMode));
+    }));
 
     this.refreshBadges();
     this.badgeTimer = setInterval(() => this.refreshBadges(), 60_000);

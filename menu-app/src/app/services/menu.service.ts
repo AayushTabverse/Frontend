@@ -12,19 +12,27 @@ export class MenuService {
 
   // ── Public (Customer) ──
 
-  getMenuByTenant(tenantId: string): Observable<FullMenuResponse> {
-    return this.http.get<ApiResponse<FullMenuResponse>>(`${this.apiUrl}?tenantId=${tenantId}`).pipe(
+  /** Customer menu. Dish and category names come in <lang> where the restaurant has translated them. */
+  getMenuByTenant(tenantId: string, lang = 'en'): Observable<FullMenuResponse> {
+    return this.http.get<ApiResponse<FullMenuResponse>>(`${this.apiUrl}?tenantId=${tenantId}&lang=${lang}`).pipe(
       map(res => res.data!)
     );
   }
 
-  getMenuByTable(tableId: string): Observable<FullMenuResponse> {
-    return this.http.get<ApiResponse<FullMenuResponse>>(`${this.apiUrl}/by-table/${tableId}`).pipe(
+  getMenuByTable(tableId: string, lang = 'en'): Observable<FullMenuResponse> {
+    return this.http.get<ApiResponse<FullMenuResponse>>(`${this.apiUrl}/by-table/${tableId}?lang=${lang}`).pipe(
       map(res => res.data!)
     );
   }
 
   // ── Admin ──
+
+  /** Best sellers (menu item id + quantity sold) over the last `days` days, most sold first. */
+  getPopular(days = 30): Observable<{ menuItemId: string; quantity: number }[]> {
+    return this.http.get<ApiResponse<{ menuItemId: string; quantity: number }[]>>(`${this.apiUrl}/popular?days=${days}`).pipe(
+      map(res => res.data ?? [])
+    );
+  }
 
   getCategories(): Observable<MenuCategory[]> {
     return this.http.get<ApiResponse<MenuCategory[]>>(`${this.apiUrl}/categories`).pipe(
@@ -95,6 +103,13 @@ export class MenuService {
     const params = new HttpParams().set('updateExisting', updateExisting).set('apply', apply);
     return this.http.post<ApiResponse<MenuImportResult>>(`${this.apiUrl}/import`, form, { params }).pipe(
       map(res => res.data!)
+    );
+  }
+
+  /** AI-fills Hindi and Gujarati names/descriptions that are missing (overwrite: redo all). */
+  autoTranslate(overwrite = false): Observable<string> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/translate?overwrite=${overwrite}`, {}).pipe(
+      map(res => res.message ?? '')
     );
   }
 }

@@ -2,15 +2,17 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { ReservationService } from '../../services/reservation.service';
 import { SignalRService } from '../../services/signalr.service';
 import { PublicReservationStatus } from '../../models/api.models';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 
 /** Customer's booking page: shows whether the restaurant accepted, and lets them cancel. */
 @Component({
   selector: 'app-reservation-status',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective, LanguageSwitcherComponent],
   templateUrl: './reservation-status.component.html',
   styleUrl: './reservation-status.component.scss'
 })
@@ -30,7 +32,8 @@ export class ReservationStatusComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private reservationService: ReservationService,
-    private signalR: SignalRService
+    private signalR: SignalRService,
+    private transloco: TranslocoService
   ) {}
 
   ngOnInit(): void {
@@ -63,7 +66,7 @@ export class ReservationStatusComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.cancelling = false;
         this.confirmCancel = false;
-        this.errorMessage = err.error?.message || 'Could not cancel. Please call the restaurant.';
+        this.errorMessage = err.error?.message || this.transloco.translate('reservationStatus.errors.cancelFailed');
       }
     });
   }
@@ -71,8 +74,11 @@ export class ReservationStatusComponent implements OnInit, OnDestroy {
   private async startRealtime(tenantId: string): Promise<void> {
     if (this.realtimeStarted || !['Pending', 'Confirmed'].includes(this.booking?.status ?? '')) return;
     this.realtimeStarted = true;
-    await this.signalR.startConnection(tenantId);
+    await this.signalR.connectPublic();
     await this.signalR.followReservation(this.id);
-    this.subs.push(this.signalR.reservationUpdated$.subscribe(id => { if (id === this.id) this.load(); }));
+    this.subs.push(
+      this.signalR.reservationUpdated$.subscribe(id => { if (id === this.id) this.load(); }),
+      this.signalR.reconnected$.subscribe(() => this.load())
+    );
   }
 }

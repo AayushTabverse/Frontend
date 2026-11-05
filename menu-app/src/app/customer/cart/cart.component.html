@@ -1,7 +1,8 @@
+<ng-container *transloco="let t">
 <div class="cart-page">
   <header class="cart-header">
-    <button class="back-btn" (click)="goBack()">← Back</button>
-    <h1>Your Cart</h1>
+    <button class="back-btn" (click)="goBack()">{{ t('cart.back') }}</button>
+    <h1>{{ isTakeaway ? t('cart.titleTakeaway') : t('cart.title') }}</h1>
   </header>
 
   <div class="cart-items" *ngIf="items.length > 0">
@@ -9,8 +10,13 @@
       <div class="item-details">
         <span class="veg-indicator">{{ item.menuItem.isVeg ? '🟢' : '🔴' }}</span>
         <div>
-          <h3>{{ item.menuItem.name }}</h3>
-          <p class="item-price">₹{{ item.menuItem.price | number:'1.0-0' }}</p>
+          <h3>{{ item.menuItem | localDish }}</h3>
+          <p class="item-price">₹{{ item.menuItem.price | number:'1.0-2' }}</p>
+          <button class="parcel-toggle" *ngIf="!isTakeaway && !tableId.startsWith('room-')" [class.on]="item.isParcel" (click)="toggleParcel(item)"
+                  [attr.aria-pressed]="!!item.isParcel">
+            🥡 {{ item.isParcel ? t('cart.parcel') : t('cart.packToTakeHome') }}
+            <span *ngIf="item.menuItem.packagingCharge">{{ t('cart.packagingEach', { amount: (item.menuItem.packagingCharge | number:'1.0-2') }) }}</span>
+          </button>
         </div>
       </div>
       <div class="quantity-controls">
@@ -19,40 +25,45 @@
         <button (click)="increment(item)">+</button>
       </div>
       <div class="item-total">
-        ₹{{ item.menuItem.price * item.quantity | number:'1.0-0' }}
+        ₹{{ item.menuItem.price * item.quantity | number:'1.0-2' }}
       </div>
       <button class="remove-btn" (click)="remove(item)">✕</button>
     </div>
   </div>
 
   <div class="empty-cart" *ngIf="items.length === 0">
-    <p>🛒 Your cart is empty</p>
-    <button (click)="goBack()">Browse Menu</button>
+    <p>{{ t('cart.empty') }}</p>
+    <button (click)="goBack()">{{ t('cart.browseMenu') }}</button>
   </div>
 
   <div class="cart-summary" *ngIf="items.length > 0">
     <div class="summary-row">
-      <span>Subtotal</span>
-      <span>₹{{ getSubtotal() | number:'1.0-0' }}</span>
+      <span>{{ t('cart.subtotal') }}</span>
+      <span>₹{{ getSubtotal() | number:'1.0-2' }}</span>
+    </div>
+    <div class="summary-row" *ngIf="getPackaging() > 0">
+      <span>{{ t('cart.packingCharges') }}</span>
+      <span>₹{{ getPackaging() | number:'1.0-2' }}</span>
     </div>
     <div class="summary-row" *ngIf="cgstPercent > 0">
-      <span>CGST ({{ cgstPercent }}%)</span>
-      <span>₹{{ getCgst() | number:'1.0-0' }}</span>
+      <span>{{ t('cart.cgst', { percent: cgstPercent }) }}</span>
+      <span>₹{{ getCgst() | number:'1.0-2' }}</span>
     </div>
     <div class="summary-row" *ngIf="sgstPercent > 0">
-      <span>SGST ({{ sgstPercent }}%)</span>
-      <span>₹{{ getSgst() | number:'1.0-0' }}</span>
+      <span>{{ t('cart.sgst', { percent: sgstPercent }) }}</span>
+      <span>₹{{ getSgst() | number:'1.0-2' }}</span>
     </div>
     <div class="summary-row" *ngIf="serviceChargePercent > 0">
-      <span>Service Charge ({{ serviceChargePercent }}%)</span>
-      <span>₹{{ getServiceCharge() | number:'1.0-0' }}</span>
+      <span>{{ t('cart.serviceCharge', { percent: serviceChargePercent }) }}</span>
+      <span>₹{{ getServiceCharge() | number:'1.0-2' }}</span>
     </div>
     <div class="summary-row total">
-      <span>Total</span>
-      <span>₹{{ getGrandTotal() | number:'1.0-0' }}</span>
+      <span>{{ t('cart.total') }}</span>
+      <span>₹{{ getGrandTotal() | number:'1.0-2' }}</span>
     </div>
     <button class="checkout-btn" (click)="checkout()">
-      Proceed to Checkout → ₹{{ getGrandTotal() | number:'1.0-0' }}
+      {{ t('cart.proceedToCheckout', { amount: (getGrandTotal() | number:'1.0-2') }) }}
     </button>
   </div>
 </div>
+</ng-container>

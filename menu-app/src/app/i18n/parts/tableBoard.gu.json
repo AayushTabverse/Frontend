@@ -1,0 +1,14 @@
+{
+  "tableBoard": {
+    "title": "હાલમાં ટેબલોની સ્થિતિ",
+    "summary": "{{free}} ખાલી · {{occupied}} ભરેલાં",
+    "summaryReserved": "{{reserved}} રિઝર્વ",
+    "tableAria": "ટેબલ {{number}}: {{status}}",
+    "seats": "{{count}} સીટ",
+    "status": {
+      "Free": "ખાલી",
+      "Occupied": "ભરેલું",
+      "Reserved": "રિઝર્વ"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "waitlistJoin": {
+    "notFound": {
+      "title": "Restaurant not found",
+      "message": "Please ask the staff at the entrance to add you to the waitlist."
+    },
+    "subtitleNow": "Join the waitlist",
+    "subtitleLater": "Book a table for later",
+    "offline": {
+      "title": "Please check in with our staff",
+      "message": "Online check-in isn't available right now. Our host at the entrance will add you to the list."
+    },
+    "modeNow": "⏳ Wait for a table now",
+    "modeLater": "📅 Reserve for later",
+    "queue": {
+      "partyAhead": "party ahead",
+      "partiesAhead": "parties ahead",
+      "now": "Now",
+      "minutes": "~{{minutes}}m",
+      "expectedWait": "expected wait"
+    },
+    "form": {
+      "nameLabel": "Your name",
+      "namePlaceholder": "Name",
+      "nameRequired": "Please enter your name",
+      "mobileLabel": "Mobile (WhatsApp)",
+      "mobilePlaceholder": "10-digit mobile",
+      "mobileInvalid": "Please enter a valid mobile number",
+      "mobileHintNow": "We'll message you when your table is ready.",
+      "mobileHintLater": "We'll confirm your booking on WhatsApp.",
+      "partySizeLabel": "How many people?",
+      "partySizeAria": "Number of people",
+      "dateLabel": "Date",
+      "timeLabel": "Time",
+      "tooSoon": "Please pick a time at least 30 minutes from now.",
+      "tooSoonOrWait": "Please pick a time at least 30 minutes from now, or wait for a table now.",
+      "notesLabel": "Special requests (optional)",
+      "notesPlaceholder": "Birthday, high chair…"
+    },
+    "actions": {
+      "joining": "Joining…",
+      "join": "Join waitlist",
+      "sending": "Sending…",
+      "requestBooking": "Request booking"
+    },
+    "laterHint": "The restaurant will confirm your booking. You'll get a link to check or cancel it.",
+    "poweredBy": "Powered by",
+    "errors": {
+      "joinFailed": "Something went wrong. Please ask the staff at the entrance.",
+      "bookingFailed": "Could not send your booking. Please ask the staff at the entrance."
+    }
+  }
+}

@@ -1,0 +1,156 @@
+<div class="page-header">
+  <h1>🧾 Purchases</h1>
+  <div class="header-actions">
+    <a class="secondary-btn" routerLink="/admin/accounting">📒 Accounting</a>
+    <button class="primary-btn" (click)="openAdd()">+ Add supplier bill</button>
+  </div>
+</div>
+
+<div class="range-bar">
+  <label>From <input type="date" [(ngModel)]="from" (change)="load()" [max]="to" /></label>
+  <label>To <input type="date" [(ngModel)]="to" (change)="load()" [min]="from" /></label>
+  <div class="quick">
+    <button class="chip" (click)="thisMonth()">This month</button>
+    <button class="chip" (click)="lastMonth()">Last month</button>
+  </div>
+</div>
+
+<div class="msg error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+<div class="msg success" *ngIf="successMessage">✅ {{ successMessage }}</div>
+
+<div class="loading" *ngIf="loading">Loading purchases...</div>
+<div class="empty-state" *ngIf="!loading && !bills.length">No supplier bills in this period.</div>
+
+<div class="table-wrap" *ngIf="!loading && bills.length">
+  <table class="bills">
+    <thead>
+      <tr>
+        <th>Date</th><th>Supplier</th><th>Invoice no.</th><th>Description</th>
+        <th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th><th>Status</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of bills">
+        <td class="nowrap">{{ b.invoiceDate | date:'d MMM y' }}</td>
+        <td><strong>{{ b.supplierName }}</strong><div class="sub" *ngIf="b.supplierGstin">{{ b.supplierGstin }}</div></td>
+        <td>{{ b.invoiceNumber }}</td>
+        <td>{{ b.description || '—' }}<div class="sub" *ngIf="b.expenseLedger">{{ b.expenseLedger }}</div></td>
+        <td class="num">{{ b.taxableAmount | number:'1.2-2' }}</td>
+        <td class="num">{{ gst(b) | number:'1.2-2' }}<div class="sub">{{ b.igst ? 'IGST' : 'CGST+SGST' }}</div></td>
+        <td class="num strong">{{ b.totalAmount | number:'1.2-2' }}</td>
+        <td>
+          <span class="badge paid" *ngIf="b.paidAccountKey">Paid ({{ accountLabel(b.paidAccountKey) }})</span>
+          <div class="sub" *ngIf="b.paidAccountKey && b.paidAt">{{ b.paidAt | date:'d MMM y' }}</div>
+          <span class="badge credit" *ngIf="!b.paidAccountKey">On credit</span>
+        </td>
+        <td class="actions">
+          <button class="secondary-btn" *ngIf="!b.paidAccountKey" (click)="openPay(b)">Mark paid</button>
+          <button class="icon-btn" (click)="openEdit(b)" title="Edit" aria-label="Edit">✏️</button>
+          <button class="icon-btn" (click)="remove(b)" title="Delete" aria-label="Delete">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4">Total ({{ bills.length }} bills · ₹{{ totals.unpaid | number:'1.2-2' }} on credit)</td>
+        <td class="num">{{ totals.taxable | number:'1.2-2' }}</td>
+        <td class="num">{{ totals.gst | number:'1.2-2' }}</td>
+        <td class="num">{{ totals.total | number:'1.2-2' }}</td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- Add / edit -->
+<div class="modal-overlay" *ngIf="form" (click)="closeForm()">
+  <form class="modal" (click)="$event.stopPropagation()" (ngSubmit)="saveForm()" role="dialog" aria-label="Supplier bill">
+    <h2>{{ editing ? 'Edit supplier bill' : 'Add supplier bill' }}</h2>
+
+    <div class="grid-2">
+      <label class="field span-2">Supplier name *
+        <input name="supplierName" [(ngModel)]="form.supplierName" maxlength="100" required />
+      </label>
+      <label class="field">Supplier GSTIN <span class="opt">(optional)</span>
+        <input name="supplierGstin" [(ngModel)]="form.supplierGstin" maxlength="15" placeholder="15 characters" autocomplete="off" class="upper" />
+      </label>
+      <label class="field">Invoice no. *
+        <input name="invoiceNumber" [(ngModel)]="form.invoiceNumber" maxlength="50" required />
+      </label>
+      <label class="field">Invoice date *
+        <input name="invoiceDate" type="date" [(ngModel)]="form.invoiceDate" required />
+      </label>
+      <label class="field">Purchase ledger <span class="opt">(optional)</span>
+        <input name="expenseLedger" [(ngModel)]="form.expenseLedger" maxlength="100" placeholder="Purchases" />
+      </label>
+      <label class="field span-2">Description
+        <input name="description" [(ngModel)]="form.description" maxlength="200" placeholder="e.g. Vegetables, gas cylinder" />
+      </label>
+      <label class="field">Taxable amount (₹) *
+        <input name="taxableAmount" type="number" min="0" step="0.01" [(ngModel)]="form.taxableAmount" required />
+      </label>
+      <div class="field">Tax type
+        <div class="segmented" role="radiogroup">
+          <button type="button" [class.active]="form.taxMode === 'intra'" (click)="form.taxMode = 'intra'">CGST + SGST <small>same state</small></button>
+          <button type="button" [class.active]="form.taxMode === 'inter'" (click)="form.taxMode = 'inter'">IGST <small>other state</small></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rates">
+      <span class="sub">Fill GST at:</span>
+      <button type="button" class="chip" *ngFor="let r of gstRates" (click)="applyRate(r)" [disabled]="!form.taxableAmount">{{ r }}%</button>
+    </div>
+
+    <div class="grid-2" *ngIf="form.taxMode === 'intra'">
+      <label class="field">CGST (₹)
+        <input name="cgst" type="number" min="0" step="0.01" [(ngModel)]="form.cgst" (ngModelChange)="syncSgst()" />
+      </label>
+      <label class="field">SGST (₹)
+        <input name="sgst" type="number" min="0" step="0.01" [(ngModel)]="form.sgst" />
+      </label>
+    </div>
+    <div class="grid-2" *ngIf="form.taxMode === 'inter'">
+      <label class="field">IGST (₹)
+        <input name="igst" type="number" min="0" step="0.01" [(ngModel)]="form.igst" />
+      </label>
+    </div>
+
+    <div class="total-line">Invoice total <strong>₹{{ formTotal | number:'1.2-2' }}</strong></div>
+
+    <label class="field">Paid now from
+      <select name="paidAccountKey" [(ngModel)]="form.paidAccountKey">
+        <option value="">Not paid yet (on credit)</option>
+        <option *ngFor="let a of accounts" [value]="a.key">{{ a.label }}</option>
+      </select>
+    </label>
+
+    <div class="msg error" *ngIf="formError">❌ {{ formError }}</div>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary-btn" (click)="closeForm()">Cancel</button>
+      <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving…' : (editing ? 'Save changes' : 'Add bill') }}</button>
+    </div>
+  </form>
+</div>
+
+<!-- Mark paid -->
+<div class="modal-overlay" *ngIf="paying" (click)="paying = null">
+  <div class="modal small" (click)="$event.stopPropagation()" role="dialog" aria-label="Mark paid">
+    <h2>Mark paid</h2>
+    <p class="sub">{{ paying.supplierName }} · invoice {{ paying.invoiceNumber }} · ₹{{ paying.totalAmount | number:'1.2-2' }}</p>
+    <label class="field">Paid from
+      <select [(ngModel)]="payAccountKey">
+        <option *ngFor="let a of accounts" [value]="a.key">{{ a.label }}</option>
+      </select>
+    </label>
+    <label class="field">Paid on
+      <input type="date" [(ngModel)]="payDate" />
+    </label>
+    <div class="msg error" *ngIf="payError">❌ {{ payError }}</div>
+    <div class="modal-actions">
+      <button class="secondary-btn" (click)="paying = null">Cancel</button>
+      <button class="primary-btn" (click)="confirmPay()" [disabled]="saving || !payAccountKey">{{ saving ? 'Saving…' : 'Mark paid' }}</button>
+    </div>
+  </div>
+</div>

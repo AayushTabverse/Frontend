@@ -1,0 +1,113 @@
+/* Sticky, pulsing alert strip; amber for warnings, red for critical */
+
+.alert-banner {
+  --ab-color: var(--ui-warning, #d97706);
+  --ab-soft: var(--ui-warning-soft, rgba(217, 119, 6, 0.12));
+  --ab-text: var(--ui-warning-text, #b45309);
+
+  position: sticky;
+  top: 8px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 12px 10px 14px;
+  border-radius: var(--ui-radius, 12px);
+  border: 1.5px solid var(--ab-color);
+  background: var(--ui-surface-strong, rgba(255, 255, 255, 0.92));
+  background-image: linear-gradient(var(--ab-soft), var(--ab-soft));
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  animation: ab-pulse 1.4s ease-in-out infinite;
+
+  &.critical {
+    --ab-color: var(--ui-danger, #dc2626);
+    --ab-soft: var(--ui-danger-soft, rgba(220, 38, 38, 0.10));
+    --ab-text: var(--ui-danger-text, #b91c1c);
+    animation-duration: 0.9s;
+  }
+}
+
+.ab-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--ab-color);
+  animation: ab-blink 1.4s steps(2, jump-none) infinite;
+  .critical & { animation-duration: 0.9s; }
+}
+
+.ab-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ui-text, #1f2937);
+  font: inherit;
+
+  strong { color: var(--ab-text); font-size: 0.92rem; }
+  &:hover strong { text-decoration: underline; }
+}
+
+.ab-message {
+  font-size: 0.82rem;
+  color: var(--ui-text-2, #4b5563);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ab-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ab-more {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ab-text);
+  text-decoration: none;
+  white-space: nowrap;
+  &:hover { text-decoration: underline; }
+}
+
+.ab-ack {
+  padding: 7px 12px;
+  border: none;
+  border-radius: var(--ui-radius-sm, 8px);
+  background: var(--ab-color);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+
+@keyframes ab-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--ab-soft), var(--ui-shadow, 0 8px 24px rgba(26, 26, 46, 0.06)); }
+  50% { box-shadow: 0 0 0 6px var(--ab-soft), var(--ui-shadow, 0 8px 24px rgba(26, 26, 46, 0.06)); border-color: transparent; }
+}
+
+@keyframes ab-blink {
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert-banner, .ab-icon { animation: none; }
+}
+
+@media (max-width: 600px) {
+  .alert-banner { flex-wrap: wrap; }
+  .ab-text { flex-basis: calc(100% - 44px); }
+  .ab-message { white-space: normal; }
+  .ab-actions { width: 100%; justify-content: flex-end; }
+}

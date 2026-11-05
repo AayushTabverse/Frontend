@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
 import { UploadService } from '../../services/upload.service';
 import { InventoryService } from '../../services/inventory.service';
-import { MenuCategory, MenuItem, InventoryItem, MenuItemIngredient, MenuImportResult, MenuImportRow } from '../../models/api.models';
+import { MenuCategory, MenuItem, InventoryItem, MenuItemIngredient, MenuImportResult, MenuImportRow, MenuText, MenuTranslations } from '../../models/api.models';
 import { ExcelImportComponent, ExcelImportConfig } from '../../shared/components/excel-import/excel-import.component';
 
 @Component({
@@ -42,13 +42,19 @@ export class MenuManagementComponent implements OnInit {
   // Category form
   showCategoryForm = false;
   editingCategory: MenuCategory | null = null;
-  categoryForm = { name: '', description: '', imageUrl: '', sortOrder: 0 };
+  categoryForm: { name: string; description: string; imageUrl: string; sortOrder: number; translations: Record<'hi' | 'gu', MenuText> } =
+    { name: '', description: '', imageUrl: '', sortOrder: 0, translations: emptyTranslations() };
+
+  /** Other-language fields shown in the forms. */
+  readonly translationLangs = [{ code: 'hi' as const, label: 'हिन्दी' }, { code: 'gu' as const, label: 'ગુજરાતી' }];
+  translating = false;
+  translateMessage = '';
 
   // Item form
   showItemForm = false;
   editingItem: MenuItem | null = null;
   itemForm: any = {
-    name: '', description: '', price: 0, imageUrl: '', isAvailable: true,
+    name: '', description: '', price: 0, packagingCharge: 0, imageUrl: '', isAvailable: true,
     isVeg: false, sortOrder: 0, arModelUrl: '', preparationTimeMinutes: 15, categoryId: ''
   };
   uploading: { [key: string]: boolean } = {};
@@ -75,6 +81,16 @@ export class MenuManagementComponent implements OnInit {
     this.loadCategories();
   }
 
+  /** Fills in Hindi and Gujarati for dishes and categories that don't have them yet. */
+  autoTranslate(): void {
+    this.translating = true;
+    this.translateMessage = '';
+    this.menuService.autoTranslate().subscribe({
+      next: (msg) => { this.translating = false; this.translateMessage = msg; this.loadCategories(); },
+      error: (err) => { this.translating = false; this.translateMessage = err.error?.message || 'Auto-translate failed.'; }
+    });
+  }
+
   loadCategories(): void {
     this.loading = true;
     this.menuService.getCategories().subscribe({
@@ -87,14 +103,17 @@ export class MenuManagementComponent implements OnInit {
 
   openAddCategory(): void {
     this.editingCategory = null;
-    this.categoryForm = { name: '', description: '', imageUrl: '', sortOrder: 0 };
+    this.categoryForm = { name: '', description: '', imageUrl: '', sortOrder: 0, translations: emptyTranslations() };
     this.showCategoryForm = true;
     this.catSubmitted = false;
   }
 
   openEditCategory(cat: MenuCategory): void {
     this.editingCategory = cat;
-    this.categoryForm = { name: cat.name, description: cat.description || '', imageUrl: cat.imageUrl || '', sortOrder: cat.sortOrder };
+    this.categoryForm = {
+      name: cat.name, description: cat.description || '', imageUrl: cat.imageUrl || '', sortOrder: cat.sortOrder,
+      translations: emptyTranslations(cat.translations)
+    };
     this.showCategoryForm = true;
   }
 
@@ -126,8 +145,9 @@ export class MenuManagementComponent implements OnInit {
   openAddItem(categoryId: string): void {
     this.editingItem = null;
     this.itemForm = {
-      name: '', description: '', price: 0, imageUrl: '', isAvailable: true,
-      isVeg: false, sortOrder: 0, arModelUrl: '', preparationTimeMinutes: 15, categoryId
+      name: '', description: '', price: 0, packagingCharge: 0, imageUrl: '', isAvailable: true,
+      isVeg: false, sortOrder: 0, arModelUrl: '', preparationTimeMinutes: 15, categoryId,
+      translations: emptyTranslations()
     };
     this.showItemForm = true;
     this.itemSubmitted = false;
@@ -135,7 +155,7 @@ export class MenuManagementComponent implements OnInit {
 
   openEditItem(item: MenuItem): void {
     this.editingItem = item;
-    this.itemForm = { ...item };
+    this.itemForm = { ...item, translations: emptyTranslations(item.translations) };
     this.showItemForm = true;
   }
 
@@ -262,4 +282,12 @@ export class MenuManagementComponent implements OnInit {
       event.preventDefault();
     }
   }
+}
+
+/** Hindi and Gujarati slots for the form, pre-filled with whatever is saved. */
+function emptyTranslations(saved?: MenuTranslations): Record<'hi' | 'gu', MenuText> {
+  return {
+    hi: { name: saved?.hi?.name ?? '', description: saved?.hi?.description ?? '' },
+    gu: { name: saved?.gu?.name ?? '', description: saved?.gu?.description ?? '' }
+  };
 }

@@ -13,7 +13,7 @@
          [style.border-left-color]="getStatusColor(order.status)">
       <div class="order-header">
         <strong>#{{ order.orderNumber }}</strong>
-        <span class="table-badge">Table {{ order.tableNumber }}</span>
+        <span class="table-badge">{{ order.type === 'RoomService' ? 'Room' : order.type === 'Takeaway' ? 'Takeaway' : 'Table' }} {{ order.tableNumber }}</span>
         <span class="status" [style.background]="getStatusColor(order.status)">{{ order.status }}</span>
       </div>
       <div class="order-items">

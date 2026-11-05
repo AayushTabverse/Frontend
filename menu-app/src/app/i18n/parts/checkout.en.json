@@ -1,0 +1,37 @@
+{
+  "checkout": {
+    "back": "← Back",
+    "title": "Checkout",
+    "roomService": "🛎️ Room service",
+    "roomPinPlaceholder": "Room PIN (from check-in)",
+    "chargeToRoom": "Add to my room bill (pay at checkout)",
+    "payOnDelivery": "Pay on delivery",
+    "table": "Table",
+    "tableAutoDetected": "Auto-detected from QR scan",
+    "takeawayDetails": "🥡 Takeaway: your details",
+    "takeawayInfo": "We'll show your token here and call you when it's ready.",
+    "namePlaceholder": "Your name",
+    "mobilePlaceholder": "10-digit mobile number",
+    "orderSummary": "Order Summary",
+    "parcel": "parcel",
+    "specialInstructions": "Special Instructions",
+    "specialInstructionsPlaceholder": "Any allergies or special requests...",
+    "locationNotice": "📍 We'll check your location once, so orders only come from inside the restaurant.",
+    "packingCharges": "Packing charges",
+    "totalInclTaxes": "Total (incl. taxes)",
+    "checkingLocation": "Checking location...",
+    "placingOrder": "Placing Order...",
+    "placeOrder": "Place Order",
+    "errors": {
+      "roomPinRequired": "Please enter the 4-digit room PIN from your check-in.",
+      "contactRequired": "Please enter your name and 10-digit mobile number.",
+      "locationRequired": "Please allow location access to order. We only take QR orders from inside the restaurant.",
+      "placeOrderFailed": "Failed to place order. Please try again.",
+      "tooFar": "You seem to be away from the restaurant. QR orders can only be placed from inside.",
+      "closed": "We're closed for orders right now.",
+      "wrongPin": "That room PIN isn't right. It's on your check-in slip, or ask reception.",
+      "pinLocked": "Too many wrong PINs. Please call reception.",
+      "roomNotCheckedIn": "This room isn't checked in. Please call reception."
+    }
+  }
+}

@@ -1,8 +1,10 @@
+<ng-container *transloco="let t">
 <!-- Admin layout with sidebar -->
 <div class="admin-layout" *ngIf="usesSidebar; else noSidebar">
   <app-sidebar [(collapsed)]="sidebarCollapsed" [(mobileOpen)]="mobileSidebarOpen"></app-sidebar>
 
   <main class="content" [class.sidebar-collapsed]="sidebarCollapsed">
+    <app-alert-banner></app-alert-banner>
     <ng-container *ngTemplateOutlet="waiterContent"></ng-container>
   </main>
 </div>
@@ -12,24 +14,28 @@
 </ng-template>
 
 <ng-template #waiterContent>
-<div class="waiter-dashboard">
+<div class="waiter-dashboard" [class.building]="activeTab === 'tables' && !!selectedTable"
+     [class.has-cart]="activeTab === 'tables' && !!selectedTable && cart.length > 0" [class.cart-open]="cartOpen">
   <!-- Admin mobile header with hamburger -->
   <div class="page-header admin-order-header" *ngIf="usesSidebar">
     <button class="mobile-menu-btn" (click)="mobileSidebarOpen = true" aria-label="Open menu">
       <lucide-icon [img]="MenuIcon" [size]="20"></lucide-icon>
     </button>
-    <h1>Take Order</h1>
+    <h1>{{ t('waiter.title') }}</h1>
+    <!-- Language: here for panel users, in the top bar below for waiters (only one of the two shows) -->
+    <app-language-switcher [compact]="true"></app-language-switcher>
   </div>
 
   <!-- ── Top Bar ── -->
   <header class="top-bar" *ngIf="!usesSidebar">
-    <div class="brand">🍽️ Order Panel</div>
+    <div class="brand">🍽️ {{ t('waiter.orderPanel') }}</div>
     <div class="user-info">
       <button class="dark-mode-toggle" (click)="themeService.toggle()">
         {{ themeService.isDark() ? '☀️' : '🌙' }}
       </button>
-      <span class="greeting">Hello, {{ userName }}</span>
-      <button class="logout-btn" (click)="logout()">Logout</button>
+      <app-language-switcher [compact]="true"></app-language-switcher>
+      <span class="greeting">{{ t('waiter.hello', { name: userName }) }}</span>
+      <button class="logout-btn" (click)="logout()">{{ t('waiter.logout') }}</button>
     </div>
   </header>
 
@@ -42,15 +48,289 @@
   <div class="toast success" *ngIf="successMessage">✅ {{ successMessage }}</div>
   <div class="toast error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
 
+  <app-walkie></app-walkie>
+
+  <!-- Dragged table follows the pointer -->
+  <div class="drag-ghost" *ngIf="dragSource && dragGhost" [style.left.px]="dragGhost.x" [style.top.px]="dragGhost.y">
+    {{ t('waiter.tableN', { table: dragSource.tableNumber }) }}
+  </div>
+
+  <!-- Table dropped onto another: what should happen? -->
+  <div class="modal-overlay" *ngIf="drop" (click)="drop = null">
+    <div class="table-action-modal drop-modal" (click)="$event.stopPropagation()" role="dialog">
+      <h3>{{ t('waiter.drop.title', { from: drop.source.tableNumber, to: drop.target.tableNumber }) }}</h3>
+      <button class="drop-choice" (click)="applyDrop('mergeTables')" [disabled]="tableActionSaving">
+        <strong>🔗 {{ t('waiter.drop.mergeTables') }}</strong>
+        <span>{{ t('waiter.drop.mergeTablesHint', { from: drop.source.tableNumber, to: drop.target.tableNumber }) }}</span>
+      </button>
+      <button class="drop-choice" (click)="applyDrop('sameBill')" [disabled]="tableActionSaving">
+        <strong>➕ {{ t('waiter.drop.sameBill') }}</strong>
+        <span>{{ t('waiter.drop.sameBillHint', { from: drop.source.tableNumber, to: drop.target.tableNumber }) }}</span>
+      </button>
+      <button class="drop-choice" (click)="applyDrop('secondParty')" [disabled]="tableActionSaving">
+        <strong>👥 {{ t('waiter.drop.secondParty') }}</strong>
+        <span>{{ t('waiter.drop.secondPartyHint', { from: drop.source.tableNumber, to: drop.target.tableNumber }) }}</span>
+      </button>
+      <button class="drop-cancel" (click)="drop = null">{{ t('waiter.drop.cancel') }}</button>
+    </div>
+  </div>
+
+  <!-- Shared table: separate bills or one? -->
+  <div class="modal-overlay" *ngIf="showSplitChoice" (click)="showSplitChoice = false">
+    <div class="table-action-modal drop-modal" (click)="$event.stopPropagation()" role="dialog">
+      <h3>{{ t('waiter.split.title', { count: parties.length }) }}</h3>
+      <button class="drop-choice" (click)="billEachParty()">
+        <strong>🧾 {{ t('waiter.split.separate') }}</strong>
+        <span>{{ t('waiter.split.separateHint') }}</span>
+      </button>
+      <button class="drop-choice" (click)="billAllTogether()">
+        <strong>🧾 {{ t('waiter.split.combined') }}</strong>
+        <span>{{ t('waiter.split.combinedHint') }}</span>
+      </button>
+      <button class="drop-cancel" (click)="showSplitChoice = false">{{ t('waiter.drop.cancel') }}</button>
+    </div>
+  </div>
+
   <!-- ── Tabs ── -->
   <div class="tabs">
     <button [class.active]="activeTab === 'tables'" (click)="activeTab = 'tables'; loadTables()">
-      📋 Take Order
+      📋 {{ t('waiter.tabs.takeOrder') }}
+    </button>
+    <button [class.active]="activeTab === 'takeaway'" (click)="activeTab = 'takeaway'; loadTakeaway()">
+      🥡 {{ t('waiter.tabs.takeaway') }}
+      <span class="badge" *ngIf="takeawayOrders.length > 0">{{ takeawayOrders.length }}</span>
     </button>
     <button [class.active]="activeTab === 'orders'" (click)="activeTab = 'orders'; loadOrders()">
-      📦 Live Orders
+      📦 {{ t('waiter.tabs.liveOrders') }}
       <span class="badge" *ngIf="liveOrders && liveOrders.totalPending > 0">{{ liveOrders.totalPending }}</span>
     </button>
+  </div>
+
+  <!-- ── Bill Preview / Summary Modal ── -->
+  <div class="bill-overlay" *ngIf="showBillSummary && billSummary">
+    <div class="bill-modal">
+      <div class="bill-header-section">
+        <div class="bill-restaurant">{{ restaurantName }}</div>
+        <div class="bill-brand">{{ t('waiter.bill.poweredBy') }}</div>
+      </div>
+      <div class="bill-divider dashed"></div>
+      <h2>🧾 {{ t('waiter.bill.heading', { title: billTitle }) }}</h2>
+
+      <!-- Flat merged items list -->
+      <div class="bill-items-table">
+        <div class="bill-table-header">
+          <span class="col-item">{{ t('waiter.bill.item') }}</span>
+          <span class="col-qty">{{ t('waiter.bill.qty') }}</span>
+          <span class="col-price">{{ t('waiter.bill.price') }}</span>
+          <span class="col-total">{{ t('waiter.bill.total') }}</span>
+        </div>
+        <div class="bill-table-row" *ngFor="let item of mergedBillItems">
+          <span class="col-item">{{ item.baseName | dishName: item.menuItemId }}{{ item.isParcel ? ' (' + t('waiter.bill.parcel') + ')' : '' }}</span>
+          <span class="col-qty">{{ item.quantity }}</span>
+          <span class="col-price">₹{{ item.unitPrice | number:'1.0-0' }}</span>
+          <span class="col-total">₹{{ item.totalPrice | number:'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <!-- Customer Info -->
+      <div class="bill-customer-info">
+        <div class="bill-customer-row">
+          <div class="customer-autocomplete-wrapper">
+            <input type="text" [(ngModel)]="billCustomerName" [placeholder]="t('waiter.bill.customerName')"
+                   class="bill-input" autocomplete="off"
+                   (input)="onCustomerInput(billCustomerName)"
+                   (blur)="hideCustomerSuggestions()" />
+            <div class="customer-suggestions" *ngIf="showCustomerSuggestions && customerSuggestions.length > 0">
+              <div class="suggestion-item" *ngFor="let c of customerSuggestions" (mousedown)="selectCustomer(c)">
+                <span class="suggestion-name">{{ c.customerName }}</span>
+                <span class="suggestion-mobile">{{ c.customerMobile }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="customer-autocomplete-wrapper">
+            <input type="tel" [(ngModel)]="billCustomerMobile" [placeholder]="t('waiter.bill.mobileNumber')"
+                   class="bill-input" autocomplete="off" maxlength="10"
+                   (keypress)="onlyNumbers($event)"
+                   (input)="onCustomerInput(billCustomerMobile); checkLoyalty()"
+                   (blur)="hideCustomerSuggestions(); lookupPreviousDues()" />
+            <span class="field-error" *ngIf="billCustomerMobile && billCustomerMobile.length > 0 && billCustomerMobile.length !== 10">{{ t('waiter.bill.mobileMust10') }}</span>
+            <div class="customer-suggestions" *ngIf="showCustomerSuggestions && customerSuggestions.length > 0">
+              <div class="suggestion-item" *ngFor="let c of customerSuggestions" (mousedown)="selectCustomer(c)">
+                <span class="suggestion-name">{{ c.customerName }}</span>
+                <span class="suggestion-mobile">{{ c.customerMobile }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loyalty points -->
+      <div class="loyalty-box" *ngIf="loyalty && !billFinalized">
+        <div class="loyalty-head">
+          ⭐ <strong>{{ loyalty.customerName || t('waiter.loyalty.newMember') }}</strong>
+          <span>{{ t('waiter.loyalty.balance', { points: loyalty.pointsBalance, value: (loyalty.pointsBalance * loyalty.pointValue | number:'1.0-0') }) }}</span>
+        </div>
+        <label class="loyalty-use" *ngIf="maxRedeemablePoints > 0">
+          <input type="checkbox" [(ngModel)]="useLoyaltyPoints" />
+          {{ t('waiter.loyalty.use') }}
+          <input type="number" class="bill-input loyalty-points" [(ngModel)]="redeemPoints" [disabled]="!useLoyaltyPoints"
+                 min="1" [max]="maxRedeemablePoints" (keypress)="onlyNumbers($event)" />
+          <span class="loyalty-hint">{{ t('waiter.loyalty.max', { points: maxRedeemablePoints }) }}</span>
+        </label>
+        <div class="loyalty-hint" *ngIf="maxRedeemablePoints === 0 && loyalty.pointsBalance > 0">
+          {{ loyalty.pointsBalance < loyalty.minRedeemPoints
+             ? t('waiter.loyalty.needMin', { points: loyalty.minRedeemPoints })
+             : t('waiter.loyalty.billTooSmall') }}
+        </div>
+        <label class="loyalty-dob" *ngIf="loyalty.birthdayBonusOn && !loyalty.hasDateOfBirth">
+          🎂 {{ t('waiter.loyalty.dob') }}
+          <input type="date" class="bill-input" [(ngModel)]="billCustomerDob" />
+        </label>
+      </div>
+
+      <!-- Previous Dues Alert -->
+      <div class="previous-dues-alert" *ngIf="previousDueTotal > 0">
+        <div class="dues-header">⚠️ {{ t('waiter.bill.previousUdhaar') }}: <strong>₹{{ previousDueTotal | number:'1.0-0' }}</strong></div>
+        <div class="dues-list">
+          <div class="due-item" *ngFor="let d of previousDues">
+            <span>{{ d.billNumber }} — {{ d.createdAt | date:'dd MMM' }}</span>
+            <span class="due-amount">₹{{ d.dueAmount | number:'1.0-0' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="dues-loading" *ngIf="loadingDues">{{ t('waiter.bill.checkingDues') }}</div>
+
+      <div class="bill-divider dashed"></div>
+
+      <!-- Discount -->
+      <div class="bill-discount-section" *ngIf="!billFinalized">
+        <div class="wheel-discount-badge" *ngIf="billSummary.grandDiscount > 0">
+          🎁 {{ t('waiter.bill.luckyDraw', { amount: (billSummary.grandDiscount | number:'1.0-0') }) }}
+        </div>
+        <label class="discount-label">💰 {{ t('waiter.bill.extraDiscount') }}</label>
+        <input type="number" [(ngModel)]="billDiscountAmount" min="0" [max]="billSummary.grandTotal" placeholder="0" class="bill-input discount-input" (keypress)="onlyNumbers($event)" />
+      </div>
+
+      <div class="bill-grand-total">
+        <div class="grand-row">
+          <span>{{ t('waiter.bill.subtotal') }}</span>
+          <span>₹{{ billSummary.grandSubTotal | number:'1.0-0' }}</span>
+        </div>
+        <div class="grand-row" *ngIf="billSummary.grandPackaging">
+          <span>{{ t('waiter.bill.packing') }}</span>
+          <span>₹{{ billSummary.grandPackaging | number:'1.0-0' }}</span>
+        </div>
+        <div class="grand-row discount" *ngIf="billLoyaltyValue > 0">
+          <span>⭐ {{ t('waiter.loyalty.pointsLine') }}</span>
+          <span>- ₹{{ billLoyaltyValue | number:'1.0-0' }}</span>
+        </div>
+        <div class="grand-row" *ngIf="cgstPercent > 0">
+          <span>CGST ({{ cgstPercent }}%)</span>
+          <span>₹{{ billTaxable * cgstPercent / 100 | number:'1.0-2' }}</span>
+        </div>
+        <div class="grand-row" *ngIf="sgstPercent > 0">
+          <span>SGST ({{ sgstPercent }}%)</span>
+          <span>₹{{ billTaxable * sgstPercent / 100 | number:'1.0-2' }}</span>
+        </div>
+        <div class="grand-row" *ngIf="serviceChargePercent > 0">
+          <span>{{ t('waiter.bill.serviceCharge') }} ({{ serviceChargePercent }}%)</span>
+          <span>₹{{ billTaxable * serviceChargePercent / 100 | number:'1.0-2' }}</span>
+        </div>
+        <div class="grand-row discount" *ngIf="billDiscountTotal > 0">
+          <span>{{ t('waiter.bill.discount') }}</span>
+          <span>- ₹{{ billDiscountTotal | number:'1.0-0' }}</span>
+        </div>
+        <div class="grand-row previous-due" *ngIf="previousDueTotal > 0">
+          <span>{{ t('waiter.bill.previousUdhaar') }}</span>
+          <span>+ ₹{{ previousDueTotal | number:'1.0-0' }}</span>
+        </div>
+        <div class="grand-row total">
+          <span>{{ t('waiter.bill.grandTotal') }}</span>
+          <span>₹{{ getBillFinalTotal() | number:'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <!-- After settling: points earned -->
+      <div class="loyalty-box earned" *ngIf="billFinalized && billSummary.loyalty as l">
+        ⭐ {{ t('waiter.loyalty.earned', { earned: l.pointsEarned + l.bonusPoints, balance: l.balance }) }}
+      </div>
+
+      <!-- Payment Mode -->
+      <div class="bill-payment-section" *ngIf="!billFinalized">
+        <div class="payment-mode-toggle">
+          <button [class.active]="billPaymentMode === 'full'" (click)="billPaymentMode = 'full'" class="mode-btn">
+            ✅ {{ t('waiter.bill.fullPayment') }}
+          </button>
+          <button [class.active]="billPaymentMode === 'partial'" (click)="billPaymentMode = 'partial'" class="mode-btn">
+            📝 {{ t('waiter.bill.partialPayment') }}
+          </button>
+        </div>
+        <div class="partial-payment" *ngIf="billPaymentMode === 'partial'">
+          <div class="partial-row">
+            <label>{{ t('waiter.bill.payingNow') }}</label>
+            <input type="number" [(ngModel)]="billPaidAmount" min="0" [max]="getBillFinalTotal()" placeholder="0" class="bill-input" (keypress)="onlyNumbers($event)" *ngIf="!billPaySplit" />
+            <strong *ngIf="billPaySplit">₹{{ billPaidAmount | number:'1.0-0' }}</strong>
+          </div>
+          <div class="partial-due-display" *ngIf="getBillDueAmount() > 0">
+            <span>{{ t('waiter.bill.dueUdhaar') }}:</span>
+            <strong class="due-highlight">₹{{ getBillDueAmount() | number:'1.0-2' }}</strong>
+          </div>
+          <div class="partial-warning" *ngIf="billPaymentMode === 'partial' && !billCustomerName">
+            ⚠️ {{ t('waiter.bill.nameRequired') }}
+          </div>
+          <div class="partial-warning" *ngIf="billPaymentMode === 'partial' && billCustomerMobile && billCustomerMobile.length > 0 && billCustomerMobile.length !== 10">
+            ⚠️ {{ t('waiter.bill.mobileMust10') }}
+          </div>
+        </div>
+        <!-- How it was paid (cash / UPI / card…) -->
+        <div class="pay-accounts" *ngIf="paymentAccounts.length">
+          <label class="pay-accounts-label">{{ t(billPaymentMode === 'full' ? 'waiter.payment.paidBy' : 'waiter.payment.paidNowBy') }}</label>
+          <div class="payment-mode-toggle" *ngIf="!billPaySplit">
+            <button *ngFor="let a of paymentAccounts" class="mode-btn" [class.active]="billPayAccount === a.key" (click)="billPayAccount = a.key">
+              {{ a.key === 'cash' ? t('waiter.payment.cash') : a.key === 'upi' ? t('waiter.payment.upi') : a.key === 'card' ? t('waiter.payment.card') : a.label }}
+            </button>
+            <button *ngIf="paymentAccounts.length > 1" class="mode-btn split-btn" (click)="toggleBillSplit()">{{ t('waiter.payment.split') }}</button>
+          </div>
+          <div class="pay-split" *ngIf="billPaySplit">
+            <div class="partial-row" *ngFor="let a of paymentAccounts">
+              <label>{{ a.key === 'cash' ? t('waiter.payment.cash') : a.key === 'upi' ? t('waiter.payment.upi') : a.key === 'card' ? t('waiter.payment.card') : a.label }}</label>
+              <input type="number" [(ngModel)]="billSplitAmounts[a.key]" (ngModelChange)="onBillSplitInput()" min="0" placeholder="0" class="bill-input" (keypress)="onlyNumbers($event)" />
+            </div>
+            <div class="split-remaining" *ngIf="billPaymentMode === 'full'" [class.done]="!billSplitInvalid">
+              {{ billSplitRemaining >= 0 ? t('waiter.payment.remaining') : t('waiter.payment.over') }}:
+              <strong>₹{{ (billSplitRemaining >= 0 ? billSplitRemaining : -billSplitRemaining) | number:'1.0-0' }}</strong>
+            </div>
+            <div class="partial-warning" *ngIf="billPaymentMode === 'partial' && billSplitInvalid">
+              ⚠️ {{ t('waiter.payment.moreThanBill', { amount: (billOwnAmount | number:'1.0-0') }) }}
+            </div>
+            <button class="split-cancel" (click)="toggleBillSplit()">✕ {{ t('waiter.payment.oneAccount') }}</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="bill-notes-section" *ngIf="!billFinalized && billPaymentMode === 'partial'">
+        <input type="text" [(ngModel)]="billNotes" [placeholder]="t('waiter.bill.notesOptional')" class="bill-input" />
+      </div>
+
+      <div class="bill-revised" *ngIf="billRevised">
+        ✏️ {{ t('waiter.bill.revised') }}<ng-container *ngIf="billRefundAmount > 0">. <strong>{{ t('waiter.bill.refund', { amount: (billRefundAmount | number:'1.0-0') }) }}</strong></ng-container>
+      </div>
+
+      <div class="bill-actions">
+        <button class="cancel-bill-btn" (click)="cancelBillPreview()" *ngIf="!billFinalized">✕ {{ t('waiter.cancel') }}</button>
+        <button class="confirm-bill-btn" (click)="confirmClearTable()"
+                [disabled]="clearing || billSplitInvalid || (billPaymentMode === 'partial' && !billCustomerName) || (billCustomerMobile && billCustomerMobile.length > 0 && billCustomerMobile.length !== 10)" *ngIf="!billFinalized">
+          {{ clearing ? t('waiter.bill.clearing') : '✓ ' + t('waiter.bill.confirmPrint') }}
+        </button>
+        <button class="edit-bill-btn" (click)="showBillEdit = true" *ngIf="billFinalized && canSettleBill && billNumber">
+          ✏️ {{ t('waiter.bill.editBill') }}
+        </button>
+        <button class="close-bill-btn" (click)="closeBillSummary()" *ngIf="billFinalized">
+          ✓ {{ t('waiter.bill.done') }}
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
@@ -58,251 +338,135 @@
   <!-- ═══════════════════════════════════════════ -->
   <div class="tab-content" *ngIf="activeTab === 'tables'">
 
-    <!-- ── Bill Preview / Summary Modal ── -->
-    <div class="bill-overlay" *ngIf="showBillSummary && billSummary">
-      <div class="bill-modal">
-        <div class="bill-header-section">
-          <div class="bill-restaurant">{{ restaurantName }}</div>
-          <div class="bill-brand">Powered by TabVerse</div>
-        </div>
-        <div class="bill-divider dashed"></div>
-        <h2>🧾 Bill — Table {{ billSummary.tableNumber }}</h2>
-
-        <!-- Flat merged items list -->
-        <div class="bill-items-table">
-          <div class="bill-table-header">
-            <span class="col-item">Item</span>
-            <span class="col-qty">Qty</span>
-            <span class="col-price">Price</span>
-            <span class="col-total">Total</span>
-          </div>
-          <div class="bill-table-row" *ngFor="let item of mergedBillItems">
-            <span class="col-item">{{ item.itemName }}</span>
-            <span class="col-qty">{{ item.quantity }}</span>
-            <span class="col-price">₹{{ item.unitPrice | number:'1.0-0' }}</span>
-            <span class="col-total">₹{{ item.totalPrice | number:'1.0-0' }}</span>
-          </div>
-        </div>
-
-        <!-- Customer Info -->
-        <div class="bill-customer-info">
-          <div class="bill-customer-row">
-            <div class="customer-autocomplete-wrapper">
-              <input type="text" [(ngModel)]="billCustomerName" placeholder="Customer name"
-                     class="bill-input" autocomplete="off"
-                     (input)="onCustomerInput(billCustomerName)"
-                     (blur)="hideCustomerSuggestions()" />
-              <div class="customer-suggestions" *ngIf="showCustomerSuggestions && customerSuggestions.length > 0">
-                <div class="suggestion-item" *ngFor="let c of customerSuggestions" (mousedown)="selectCustomer(c)">
-                  <span class="suggestion-name">{{ c.customerName }}</span>
-                  <span class="suggestion-mobile">{{ c.customerMobile }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="customer-autocomplete-wrapper">
-              <input type="tel" [(ngModel)]="billCustomerMobile" placeholder="Mobile number"
-                     class="bill-input" autocomplete="off" maxlength="10"
-                     (keypress)="onlyNumbers($event)"
-                     (input)="onCustomerInput(billCustomerMobile)"
-                     (blur)="hideCustomerSuggestions(); lookupPreviousDues()" />
-              <span class="field-error" *ngIf="billCustomerMobile && billCustomerMobile.length > 0 && billCustomerMobile.length !== 10">Mobile must be 10 digits</span>
-              <div class="customer-suggestions" *ngIf="showCustomerSuggestions && customerSuggestions.length > 0">
-                <div class="suggestion-item" *ngFor="let c of customerSuggestions" (mousedown)="selectCustomer(c)">
-                  <span class="suggestion-name">{{ c.customerName }}</span>
-                  <span class="suggestion-mobile">{{ c.customerMobile }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Previous Dues Alert -->
-        <div class="previous-dues-alert" *ngIf="previousDueTotal > 0">
-          <div class="dues-header">⚠️ Previous Udhaar: <strong>₹{{ previousDueTotal | number:'1.0-0' }}</strong></div>
-          <div class="dues-list">
-            <div class="due-item" *ngFor="let d of previousDues">
-              <span>{{ d.billNumber }} — {{ d.createdAt | date:'dd MMM' }}</span>
-              <span class="due-amount">₹{{ d.dueAmount | number:'1.0-0' }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="dues-loading" *ngIf="loadingDues">Checking previous dues...</div>
-
-        <div class="bill-divider dashed"></div>
-
-        <!-- Discount -->
-        <div class="bill-discount-section" *ngIf="tableSession">
-          <div class="wheel-discount-badge" *ngIf="tableSession.grandDiscount > 0">
-            � Customer won ₹{{ tableSession.grandDiscount | number:'1.0-0' }} discount via Lucky Draw
-          </div>
-          <label class="discount-label">💰 Extra discount (₹)</label>
-          <input type="number" [(ngModel)]="billDiscountAmount" min="0" [max]="billSummary.grandTotal" placeholder="0" class="bill-input discount-input" (keypress)="onlyNumbers($event)" />
-        </div>
-
-        <div class="bill-grand-total">
-          <div class="grand-row">
-            <span>Subtotal</span>
-            <span>₹{{ billSummary.grandSubTotal | number:'1.0-0' }}</span>
-          </div>
-          <div class="grand-row" *ngIf="cgstPercent > 0">
-            <span>CGST ({{ cgstPercent }}%)</span>
-            <span>₹{{ billSummary.grandSubTotal * cgstPercent / 100 | number:'1.0-0' }}</span>
-          </div>
-          <div class="grand-row" *ngIf="sgstPercent > 0">
-            <span>SGST ({{ sgstPercent }}%)</span>
-            <span>₹{{ billSummary.grandSubTotal * sgstPercent / 100 | number:'1.0-0' }}</span>
-          </div>
-          <div class="grand-row" *ngIf="serviceChargePercent > 0">
-            <span>Service Charge ({{ serviceChargePercent }}%)</span>
-            <span>₹{{ billSummary.grandSubTotal * serviceChargePercent / 100 | number:'1.0-0' }}</span>
-          </div>
-          <div class="grand-row discount" *ngIf="billDiscountTotal > 0">
-            <span>Discount</span>
-            <span>- ₹{{ billDiscountTotal | number:'1.0-0' }}</span>
-          </div>
-          <div class="grand-row previous-due" *ngIf="previousDueTotal > 0">
-            <span>Previous Udhaar</span>
-            <span>+ ₹{{ previousDueTotal | number:'1.0-0' }}</span>
-          </div>
-          <div class="grand-row total">
-            <span>Grand Total</span>
-            <span>₹{{ getBillFinalTotal() | number:'1.0-0' }}</span>
-          </div>
-        </div>
-
-        <!-- Payment Mode -->
-        <div class="bill-payment-section" *ngIf="tableSession">
-          <div class="payment-mode-toggle">
-            <button [class.active]="billPaymentMode === 'full'" (click)="billPaymentMode = 'full'" class="mode-btn">
-              ✅ Full Payment
-            </button>
-            <button [class.active]="billPaymentMode === 'partial'" (click)="billPaymentMode = 'partial'" class="mode-btn">
-              📝 Partial (Udhaar)
-            </button>
-          </div>
-          <div class="partial-payment" *ngIf="billPaymentMode === 'partial'">
-            <div class="partial-row">
-              <label>Amount Paying Now (₹)</label>
-              <input type="number" [(ngModel)]="billPaidAmount" min="0" [max]="getBillFinalTotal()" placeholder="0" class="bill-input" (keypress)="onlyNumbers($event)" />
-            </div>
-            <div class="partial-due-display" *ngIf="getBillDueAmount() > 0">
-              <span>Due (Udhaar):</span>
-              <strong class="due-highlight">₹{{ getBillDueAmount() | number:'1.0-0' }}</strong>
-            </div>
-            <div class="partial-warning" *ngIf="billPaymentMode === 'partial' && !billCustomerName">
-              ⚠️ Customer name is required for udhaar
-            </div>
-            <div class="partial-warning" *ngIf="billPaymentMode === 'partial' && billCustomerMobile && billCustomerMobile.length > 0 && billCustomerMobile.length !== 10">
-              ⚠️ Mobile number must be 10 digits
-            </div>
-          </div>
-        </div>
-
-        <!-- Notes -->
-        <div class="bill-notes-section" *ngIf="tableSession && billPaymentMode === 'partial'">
-          <input type="text" [(ngModel)]="billNotes" placeholder="Notes (optional)" class="bill-input" />
-        </div>
-
-        <div class="bill-revised" *ngIf="billRevised">
-          ✏️ Bill revised<ng-container *ngIf="billRefundAmount > 0">. <strong>Return ₹{{ billRefundAmount | number:'1.0-0' }}</strong> to the customer.</ng-container>
-        </div>
-
-        <div class="bill-actions">
-          <button class="cancel-bill-btn" (click)="cancelBillPreview()" *ngIf="tableSession">✕ Cancel</button>
-          <button class="confirm-bill-btn" (click)="confirmClearTable()"
-                  [disabled]="clearing || (billPaymentMode === 'partial' && !billCustomerName) || (billCustomerMobile && billCustomerMobile.length > 0 && billCustomerMobile.length !== 10)" *ngIf="tableSession">
-            {{ clearing ? 'Clearing...' : '✓ Confirm & Print Bill' }}
-          </button>
-          <button class="edit-bill-btn" (click)="showBillEdit = true" *ngIf="!tableSession && billFinalized && canSettleBill && billNumber">
-            ✏️ Edit bill
-          </button>
-          <button class="close-bill-btn" (click)="closeBillSummary()" *ngIf="!tableSession">
-            ✓ Done
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- Step 1: Select a Table -->
     <div class="section" *ngIf="!selectedTable">
       <div class="table-header-row">
-        <h2>Select a Table</h2>
+        <h2>{{ t('waiter.tables.selectTable') }}</h2>
         <div class="table-header-actions">
           <select class="waiter-filter-select" *ngIf="canFilterByWaiter && allWaiters.length > 0"
                   [(ngModel)]="adminFilterWaiterId">
-            <option value="">All Tables</option>
+            <option value="">{{ t('waiter.tables.allTables') }}</option>
             <option *ngFor="let w of allWaiters" [value]="w.id">{{ w.fullName }}</option>
           </select>
           <button class="show-all-toggle" *ngIf="!seesAllTables && assignedTableIds.length > 0"
                   (click)="toggleShowAllTables()">
-            {{ showAllTables ? '👤 My Tables' : '📋 All Tables' }}
+            {{ showAllTables ? '👤 ' + t('waiter.tables.myTables') : '📋 ' + t('waiter.tables.allTables') }}
           </button>
         </div>
       </div>
-      <div class="loading-state" *ngIf="loading">Loading tables...</div>
+      <div class="loading-state" *ngIf="loading">{{ t('waiter.tables.loading') }}</div>
 
+      <!-- Counter: tables the waiters marked done eating -->
+      <div class="bill-ready-strip" *ngIf="canSettleBill && billRequestedTables.length">
+        <span class="bill-ready-label">🧾 {{ t('waiter.tables.readyForBill') }}</span>
+        <button class="bill-ready-chip" *ngFor="let tb of billRequestedTables" (click)="selectTable(tb)"
+                [title]="tb.billRequestedBy ? t('waiter.tables.markedBy', { name: tb.billRequestedBy }) : ''">
+          {{ t('waiter.tableN', { table: tb.tableNumber }) }} <small>· {{ t('waiter.minShort', { mins: minutesSince(tb.billRequestedAt!) }) }}</small>
+        </button>
+      </div>
+
+      <p class="drag-tip" *ngIf="!loading && tables.length > 1">💡 {{ t('waiter.drop.tip') }}</p>
       <div class="table-grid" *ngIf="!loading">
-        <div class="table-card" *ngFor="let t of getVisibleTables()"
-             [class.inactive]="!t.isActive"
-             [class.occupied]="t.isOccupied"
-             [class.held]="!t.isOccupied && !!t.waitlistEntryId"
-             [class.merged]="!!t.mergedIntoTableId"
-             [class.reserved]="!t.isOccupied && !t.waitlistEntryId && !!t.reservationTime"
-             [class.calling]="t.isCallingWaiter"
-             [class.unassigned]="!seesAllTables && !showAllTables && assignedTableIds.length > 0 && !assignedTableIds.includes(t.id)"
-             (click)="t.isActive && selectTable(t)">
-          <div class="calling-badge" *ngIf="t.isCallingWaiter">🔔 Calling!</div>
-          <div class="table-number">{{ t.tableNumber }}</div>
-          <div class="table-label">{{ t.label || 'Table' }}</div>
-          <div class="table-capacity">🪑 {{ t.capacity }} seats<span *ngIf="t.mergedTableNumbers?.length"> ({{ t.combinedCapacity }} merged)</span></div>
-          <div class="table-merge" *ngIf="t.mergedTableNumbers?.length">🔗 + {{ t.mergedTableNumbers?.join(', ') }}</div>
-          <div class="table-waitlist" *ngIf="t.waitlistCustomerName && !t.mergedIntoTableId">
-            👥 {{ t.waitlistCustomerName }} ({{ t.waitlistPartySize }})
+        <div class="table-card" *ngFor="let tb of getVisibleTables()"
+             [class.inactive]="!tb.isActive"
+             [class.occupied]="tb.isOccupied"
+             [class.held]="!tb.isOccupied && !!tb.waitlistEntryId"
+             [class.merged]="!!tb.mergedIntoTableId"
+             [class.reserved]="!tb.isOccupied && !tb.waitlistEntryId && !!tb.reservationTime"
+             [class.calling]="tb.isCallingWaiter"
+             [class.bill-requested]="!!tb.billRequestedAt && !tb.isCallingWaiter"
+             [class.unassigned]="!seesAllTables && !showAllTables && assignedTableIds.length > 0 && !assignedTableIds.includes(tb.id)"
+             [class.dragging]="dragSource?.id === tb.id"
+             [class.drag-over]="dragOverId === tb.id"
+             [attr.data-table-id]="tb.id"
+             (pointerdown)="onTablePointerDown($event, tb)"
+             (click)="onTableCardClick(tb)">
+          <div class="calling-badge" *ngIf="tb.isCallingWaiter">🔔 {{ t('waiter.tables.calling') }}</div>
+          <div class="bill-badge" *ngIf="tb.billRequestedAt && !tb.isCallingWaiter">🧾 {{ t('waiter.tables.billBadge') }}</div>
+          <div class="table-number">{{ tb.tableNumber }}</div>
+          <div class="table-label">{{ tb.label || t('waiter.table') }}</div>
+          <div class="table-capacity">🪑 {{ t('waiter.seats', { count: tb.capacity }) }}<span *ngIf="tb.mergedTableNumbers?.length"> ({{ t('waiter.tables.mergedSeats', { count: tb.combinedCapacity }) }})</span></div>
+          <div class="table-merge" *ngIf="tb.mergedTableNumbers?.length">🔗 + {{ tb.mergedTableNumbers?.join(', ') }}</div>
+          <div class="table-waitlist" *ngIf="tb.waitlistCustomerName && !tb.mergedIntoTableId">
+            👥 {{ tb.waitlistCustomerName }} ({{ tb.waitlistPartySize }})
           </div>
-          <div class="table-reservation" *ngIf="t.reservationTime && !t.isOccupied && !t.waitlistEntryId">
-            📅 {{ t.reservationTime | date:'h:mm a' }} · {{ t.reservationCustomerName }} ({{ t.reservationPartySize }})
+          <div class="table-reservation" *ngIf="tb.reservationTime && !tb.isOccupied && !tb.waitlistEntryId">
+            📅 {{ tb.reservationTime | date:'h:mm a' }} · {{ tb.reservationCustomerName }} ({{ tb.reservationPartySize }})
           </div>
           <div class="table-status"
-               [class.active]="t.isActive && !t.isOccupied"
-               [class.occupied]="t.isOccupied"
-               [class.held]="!t.isOccupied && (!!t.waitlistEntryId || !!t.mergedIntoTableId)"
-               [class.reserved]="!t.isOccupied && !t.waitlistEntryId && !t.mergedIntoTableId && !!t.reservationTime">
-            {{ !t.isActive ? 'Inactive'
-               : t.mergedIntoTableId ? '🔗 Merged with ' + t.mergedIntoTableNumber
-               : t.isOccupied ? 'Occupied (' + t.activeOrderCount + ' order' + (t.activeOrderCount > 1 ? 's' : '') + ')'
-               : t.waitlistEntryId ? 'Seated · no order yet'
-               : t.reservationTime ? 'Reserved'
-               : 'Free' }}
+               [class.active]="tb.isActive && !tb.isOccupied"
+               [class.occupied]="tb.isOccupied"
+               [class.held]="!tb.isOccupied && (!!tb.waitlistEntryId || !!tb.mergedIntoTableId)"
+               [class.reserved]="!tb.isOccupied && !tb.waitlistEntryId && !tb.mergedIntoTableId && !!tb.reservationTime">
+            {{ !tb.isActive ? t('waiter.tables.inactive')
+               : tb.mergedIntoTableId ? '🔗 ' + t('waiter.tables.mergedWith', { table: tb.mergedIntoTableNumber })
+               : tb.billRequestedAt ? '🧾 ' + t('waiter.tables.readyForBill')
+               : tb.isOccupied ? t(tb.activeOrderCount > 1 ? 'waiter.tables.occupiedMany' : 'waiter.tables.occupiedOne', { count: tb.activeOrderCount })
+               : tb.waitlistEntryId ? t('waiter.tables.seatedNoOrder')
+               : tb.reservationTime ? t('waiter.tables.reserved')
+               : t('waiter.tables.free') }}
           </div>
-          <button class="dismiss-call-btn" *ngIf="t.isCallingWaiter"
-                  (click)="dismissCall(t, $event)">✓ Dismiss</button>
+          <button class="dismiss-call-btn" *ngIf="tb.isCallingWaiter"
+                  (click)="dismissCall(tb, $event)">✓ {{ t('waiter.tables.dismiss') }}</button>
         </div>
       </div>
     </div>
 
     <!-- Step 2: Table Detail + Menu + Cart -->
-    <div class="order-builder" *ngIf="selectedTable">
+    <div class="order-builder" *ngIf="selectedTable" [class.big-text]="bigText">
       <div class="builder-header">
         <div class="builder-header-top">
-          <button class="back-btn" (click)="deselectTable()">← Tables</button>
-          <h2>Table {{ selectedTable.tableNumber }}
-            <span class="occupied-tag" *ngIf="tableSession && tableSession.activeOrderCount > 0">
-              {{ tableSession.activeOrderCount }} active order{{ tableSession.activeOrderCount > 1 ? 's' : '' }}
+          <button class="back-btn" (click)="deselectTable()" [attr.aria-label]="t('waiter.builder.tables')">←</button>
+          <div class="bh-title">
+            <h2>{{ t('waiter.tableN', { table: selectedTable.tableNumber }) }}</h2>
+            <span class="table-meta">
+              {{ t('waiter.seats', { count: selectedTable.combinedCapacity || selectedTable.capacity }) }}<ng-container *ngIf="tableSession && tableSession.activeOrderCount > 0"> · {{ t(tableSession.activeOrderCount > 1 ? 'waiter.builder.activeOrdersMany' : 'waiter.builder.activeOrdersOne', { count: tableSession.activeOrderCount }) }}</ng-container>
             </span>
-          </h2>
-          <span class="table-meta">{{ selectedTable.label }} · {{ selectedTable.combinedCapacity || selectedTable.capacity }} seats</span>
-          <div class="table-actions-bar">
-            <button class="table-action-btn" (click)="openTableAction('merge')" title="Join tables for a bigger party">🔗 Merge</button>
-            <button class="table-action-btn" (click)="openTableAction('transfer')" [disabled]="!canTransfer"
-                    [title]="canTransfer ? 'Move this party to another table' : 'Nothing to move yet'">⇄ Transfer</button>
-            <button class="table-action-btn" *ngIf="selectedTable.mergedTableNumbers?.length" (click)="unmergeAll()">✂️ Un-merge</button>
           </div>
+
+          <!-- Merge / transfer / ready for bill: inline on tablets, behind ⋯ on phones -->
+          <div class="table-actions-bar" [class.open]="showTableMenu" (click)="showTableMenu = false">
+            <button class="table-action-btn" (click)="openTableAction('merge')" [title]="t('waiter.builder.mergeHint')">🔗 {{ t('waiter.builder.merge') }}</button>
+            <button class="table-action-btn" (click)="openTableAction('transfer')" [disabled]="!canTransfer"
+                    [title]="canTransfer ? t('waiter.builder.transferHint') : t('waiter.builder.nothingToMove')">⇄ {{ t('waiter.builder.transfer') }}</button>
+            <button class="table-action-btn" *ngIf="selectedTable.mergedTableNumbers?.length" (click)="unmergeAll()">✂️ {{ t('waiter.builder.unmerge') }}</button>
+            <ng-container *ngIf="canSettleBill">
+              <button class="table-action-btn bill-request-btn"
+                      *ngIf="!selectedTable.billRequestedAt && tableSession && tableSession.activeOrderCount > 0"
+                      (click)="requestBill()" [disabled]="requestingBill"
+                      [title]="t('waiter.builder.readyForBillHint')">🧾 {{ t('waiter.tables.readyForBill') }}</button>
+              <button class="table-action-btn bill-requested-btn" *ngIf="selectedTable.billRequestedAt"
+                      (click)="cancelBillRequest()" [disabled]="requestingBill">🧾 {{ t('waiter.builder.billRequestedUndo') }}</button>
+            </ng-container>
+          </div>
+
+          <!-- Main bill action: the counter prints the bill, a waiter tells the counter -->
+          <ng-container *ngIf="tableSession && tableSession.activeOrderCount > 0">
+            <button class="head-bill-btn" *ngIf="canSettleBill" (click)="startClearTable()" [disabled]="clearing">
+              🧾 <span>{{ t('waiter.builder.bill') }}</span>
+            </button>
+            <ng-container *ngIf="!canSettleBill">
+              <button class="head-bill-btn" *ngIf="!selectedTable.billRequestedAt" (click)="requestBill()" [disabled]="requestingBill"
+                      [title]="t('waiter.builder.readyForBillHint')">🧾 <span class="long">{{ t('waiter.tables.readyForBill') }}</span><span class="short">{{ t('waiter.builder.bill') }}</span></button>
+              <button class="head-bill-btn done" *ngIf="selectedTable.billRequestedAt" (click)="cancelBillRequest()" [disabled]="requestingBill"
+                      [title]="selectedTable.billRequestedBy ? t('waiter.builder.markedAgoBy', { mins: minutesSince(selectedTable.billRequestedAt), name: selectedTable.billRequestedBy }) : t('waiter.builder.markedAgo', { mins: minutesSince(selectedTable.billRequestedAt) })">
+                ✓ <span class="long">{{ t('waiter.builder.billRequestedUndo') }}</span><span class="short">{{ t('waiter.builder.bill') }}</span>
+              </button>
+            </ng-container>
+          </ng-container>
+
+          <div class="text-size" role="group" [attr.aria-label]="t('waiter.builder.textSize')">
+            <button [class.active]="!bigText" (click)="setBigText(false)" [title]="t('waiter.builder.textNormal')">A</button>
+            <button [class.active]="bigText" (click)="setBigText(true)" [title]="t('waiter.builder.textBig')">A+</button>
+          </div>
+          <button class="more-btn" (click)="showTableMenu = !showTableMenu" [class.active]="showTableMenu" [attr.aria-label]="t('waiter.builder.more')">⋯</button>
         </div>
         <div class="table-context" *ngIf="selectedTable.mergedTableNumbers?.length || selectedTable.waitlistCustomerName || selectedTable.reservationTime">
-          <span *ngIf="selectedTable.mergedTableNumbers?.length">🔗 Merged with {{ selectedTable.mergedTableNumbers?.join(', ') }} · one bill</span>
+          <span *ngIf="selectedTable.mergedTableNumbers?.length">🔗 {{ t('waiter.builder.mergedOneBill', { tables: selectedTable.mergedTableNumbers?.join(', ') }) }}</span>
           <span *ngIf="selectedTable.waitlistCustomerName">👥 {{ selectedTable.waitlistCustomerName }} ({{ selectedTable.waitlistPartySize }})</span>
           <span *ngIf="selectedTable.reservationTime && !selectedTable.waitlistEntryId" class="ctx-reserved">
-            📅 Reserved {{ selectedTable.reservationTime | date:'h:mm a' }} for {{ selectedTable.reservationCustomerName }} ({{ selectedTable.reservationPartySize }})
+            📅 {{ t('waiter.builder.reservedFor', { time: (selectedTable.reservationTime | date:'h:mm a'), name: selectedTable.reservationCustomerName, size: selectedTable.reservationPartySize }) }}
           </span>
         </div>
 
@@ -310,46 +474,46 @@
         <div class="modal-overlay" *ngIf="tableAction" (click)="closeTableAction()">
           <div class="table-action-modal" (click)="$event.stopPropagation()">
             <ng-container *ngIf="tableAction === 'merge'">
-              <h3>🔗 Merge into Table {{ selectedTable.tableNumber }}</h3>
-              <p class="ta-sub">Pick tables to join. Everyone orders on one bill: Table {{ selectedTable.tableNumber }}'s.</p>
+              <h3>🔗 {{ t('waiter.modal.mergeTitle', { table: selectedTable.tableNumber }) }}</h3>
+              <p class="ta-sub">{{ t('waiter.modal.mergeSub', { table: selectedTable.tableNumber }) }}</p>
               <div class="ta-grid" *ngIf="mergeCandidates.length; else noMerge">
-                <button *ngFor="let t of mergeCandidates" class="ta-table"
-                        [class.selected]="mergeSelection.includes(t.id)" (click)="toggleMergeTable(t.id)">
-                  <strong>{{ t.tableNumber }}</strong>
-                  <small>{{ t.capacity }} seats</small>
-                  <small class="ta-warn" *ngIf="t.isOccupied">{{ t.activeOrderCount }} running order{{ t.activeOrderCount > 1 ? 's' : '' }}</small>
-                  <small class="ta-res" *ngIf="t.reservationTime">📅 {{ t.reservationTime | date:'h:mm a' }}</small>
+                <button *ngFor="let tb of mergeCandidates" class="ta-table"
+                        [class.selected]="mergeSelection.includes(tb.id)" (click)="toggleMergeTable(tb.id)">
+                  <strong>{{ tb.tableNumber }}</strong>
+                  <small>{{ t('waiter.seats', { count: tb.capacity }) }}</small>
+                  <small class="ta-warn" *ngIf="tb.isOccupied">{{ t(tb.activeOrderCount > 1 ? 'waiter.modal.runningOrdersMany' : 'waiter.modal.runningOrdersOne', { count: tb.activeOrderCount }) }}</small>
+                  <small class="ta-res" *ngIf="tb.reservationTime">📅 {{ tb.reservationTime | date:'h:mm a' }}</small>
                 </button>
               </div>
-              <ng-template #noMerge><p class="ta-sub">No tables available to merge.</p></ng-template>
+              <ng-template #noMerge><p class="ta-sub">{{ t('waiter.modal.noMerge') }}</p></ng-template>
               <p class="ta-summary" *ngIf="mergeSelection.length">
-                {{ mergeSeats }} seats in total.
-                <span *ngIf="mergeMovesOrders" class="ta-warn">Running orders on the selected tables move to Table {{ selectedTable.tableNumber }}'s bill.</span>
+                {{ t('waiter.modal.seatsTotal', { count: mergeSeats }) }}
+                <span *ngIf="mergeMovesOrders" class="ta-warn">{{ t('waiter.modal.mergeMoves', { table: selectedTable.tableNumber }) }}</span>
               </p>
               <div class="ta-actions">
-                <button class="ta-cancel" (click)="closeTableAction()">Cancel</button>
+                <button class="ta-cancel" (click)="closeTableAction()">{{ t('waiter.cancel') }}</button>
                 <button class="ta-confirm" (click)="confirmMerge()" [disabled]="!mergeSelection.length || tableActionSaving">
-                  {{ tableActionSaving ? 'Merging...' : 'Merge tables' }}
+                  {{ tableActionSaving ? t('waiter.modal.merging') : t('waiter.modal.mergeTables') }}
                 </button>
               </div>
             </ng-container>
 
             <ng-container *ngIf="tableAction === 'transfer'">
-              <h3>⇄ Move Table {{ selectedTable.tableNumber }} to…</h3>
-              <p class="ta-sub">Running orders<span *ngIf="selectedTable.mergedTableNumbers?.length">, merged tables</span> and the bill move to the new table.</p>
+              <h3>⇄ {{ t('waiter.modal.moveTitle', { table: selectedTable.tableNumber }) }}</h3>
+              <p class="ta-sub">{{ t(selectedTable.mergedTableNumbers?.length ? 'waiter.modal.moveSubMerged' : 'waiter.modal.moveSub') }}</p>
               <div class="ta-grid" *ngIf="transferCandidates.length; else noFreeTable">
-                <button *ngFor="let t of transferCandidates" class="ta-table"
-                        [class.selected]="transferTargetId === t.id" (click)="transferTargetId = t.id">
-                  <strong>{{ t.tableNumber }}</strong>
-                  <small>{{ t.capacity }} seats</small>
-                  <small class="ta-res" *ngIf="t.reservationTime">📅 {{ t.reservationTime | date:'h:mm a' }}</small>
+                <button *ngFor="let tb of transferCandidates" class="ta-table"
+                        [class.selected]="transferTargetId === tb.id" (click)="transferTargetId = tb.id">
+                  <strong>{{ tb.tableNumber }}</strong>
+                  <small>{{ t('waiter.seats', { count: tb.capacity }) }}</small>
+                  <small class="ta-res" *ngIf="tb.reservationTime">📅 {{ tb.reservationTime | date:'h:mm a' }}</small>
                 </button>
               </div>
-              <ng-template #noFreeTable><p class="ta-sub">No free tables right now.</p></ng-template>
+              <ng-template #noFreeTable><p class="ta-sub">{{ t('waiter.modal.noFree') }}</p></ng-template>
               <div class="ta-actions">
-                <button class="ta-cancel" (click)="closeTableAction()">Cancel</button>
+                <button class="ta-cancel" (click)="closeTableAction()">{{ t('waiter.cancel') }}</button>
                 <button class="ta-confirm" (click)="confirmTransfer()" [disabled]="!transferTargetId || tableActionSaving">
-                  {{ tableActionSaving ? 'Moving...' : 'Move here' }}
+                  {{ tableActionSaving ? t('waiter.modal.moving') : t('waiter.modal.moveHere') }}
                 </button>
               </div>
             </ng-container>
@@ -360,61 +524,72 @@
         <div class="table-nav-strip">
           <button class="table-nav-arrow left" (click)="scrollTableNav('left')" aria-label="Scroll left">‹</button>
           <div class="table-nav-scroll" #tableNavScroll>
-            <button *ngFor="let t of getVisibleTables()"
+            <button *ngFor="let tb of getVisibleTables()"
                     class="table-nav-chip"
-                    [class.active]="t.id === selectedTable.id"
-                    [class.occupied]="t.isOccupied && t.id !== selectedTable.id"
-                    [class.merged-chip]="!!t.mergedIntoTableId"
-                    [class.calling]="t.isCallingWaiter"
-                    [class.inactive]="!t.isActive"
-                    [disabled]="!t.isActive"
-                    (click)="t.isActive && switchTable(t)">
-              <span class="nav-chip-number">{{ t.tableNumber }}</span>
-              <span class="nav-chip-dot" *ngIf="t.isOccupied"></span>
-              <span class="nav-chip-bell" *ngIf="t.isCallingWaiter">🔔</span>
+                    [class.active]="tb.id === selectedTable.id"
+                    [class.occupied]="tb.isOccupied && tb.id !== selectedTable.id"
+                    [class.merged-chip]="!!tb.mergedIntoTableId"
+                    [class.calling]="tb.isCallingWaiter"
+                    [class.inactive]="!tb.isActive"
+                    [disabled]="!tb.isActive"
+                    (click)="tb.isActive && switchTable(tb)">
+              <span class="nav-chip-number">{{ tb.tableNumber }}</span>
+              <span class="nav-chip-dot" *ngIf="tb.isOccupied"></span>
+              <span class="nav-chip-bell" *ngIf="tb.isCallingWaiter">🔔</span>
             </button>
           </div>
           <button class="table-nav-arrow right" (click)="scrollTableNav('right')" aria-label="Scroll right">›</button>
         </div>
       </div>
 
-      <!-- ── Existing Orders for this Table ── -->
-      <div class="existing-orders" *ngIf="tableSession && tableSession.activeOrderCount > 0">
-        <div class="existing-header">
-          <h3>📦 Existing Orders</h3>
-          <div class="existing-totals">
-            <span class="running-total">Running Total: <strong>₹{{ tableSession.grandTotal | number:'1.0-0' }}</strong></span>
-            <button class="clear-table-btn" *ngIf="canSettleBill" (click)="previewBill()" [disabled]="clearing">
-              {{ clearing ? 'Clearing...' : '🧾 Clear Table / Bill Paid' }}
-            </button>
-          </div>
+      <!-- ── Already ordered: one line, expands to the order cards ── -->
+      <div class="existing-orders" *ngIf="tableSession && tableSession.activeOrderCount > 0" [class.expanded]="showExisting">
+        <button class="existing-summary" (click)="showExisting = !showExisting" [attr.aria-expanded]="showExisting">
+          <span class="es-total">
+            <small>{{ t('waiter.existing.alreadyOrdered') }}</small>
+            <strong>₹{{ tableSession.grandTotal | number:'1.0-0' }}</strong>
+          </span>
+          <span class="es-chips">
+            <span class="es-chip" *ngFor="let l of orderedSummary">{{ l.quantity }}× {{ l.name | dishName: l.menuItemId }}</span>
+          </span>
+          <span class="es-toggle">{{ showExisting ? t('waiter.existing.hide') + ' ▴' : t('waiter.existing.view') + ' ▾' }}</span>
+        </button>
+        <div class="existing-detail" *ngIf="showExisting">
+        <!-- Shared table: each party pays separately -->
+        <div class="party-bills" *ngIf="canSettleBill && parties.length > 1">
+          <span class="party-bills-label">{{ t('waiter.existing.splitByParty') }}:</span>
+          <button class="party-bill-btn" *ngFor="let p of parties" (click)="previewBill(p)" [disabled]="clearing"
+                  [title]="t(p.orders.length > 1 ? 'waiter.ordersMany' : 'waiter.ordersOne', { count: p.orders.length })">
+            🧾 {{ p.label }} · ₹{{ p.total | number:'1.0-0' }}
+          </button>
         </div>
         <div class="existing-orders-list">
           <div class="existing-order-card" *ngFor="let order of tableSession.orders"
                [style.border-left-color]="getStatusColor(order.status)">
             <div class="eo-header">
               <strong>#{{ order.orderNumber }}</strong>
-              <span class="status" [style.background]="getStatusColor(order.status)">{{ order.status }}</span>
+              <span class="party-tag" *ngIf="parties.length > 1">{{ partyLabelOf(order) }}</span>
+              <span class="status" [style.background]="getStatusColor(order.status)">{{ t('waiter.status.' + order.status) }}</span>
               <span class="eo-time">{{ order.createdAt | date:'shortTime' }}</span>
             </div>
             <div class="eo-items">
               <div *ngFor="let item of order.items" class="eo-item-row">
-                <span class="eo-item">{{ item.quantity }}x {{ item.itemName }}</span>
+                <span class="eo-item">{{ item.quantity }}x {{ item.itemName | dishName: item.menuItemId }}<span class="parcel-tag" *ngIf="item.isParcel"> 🥡</span></span>
                 <span class="eo-item-price">₹{{ item.totalPrice | number:'1.0-0' }}</span>
 
                 <!-- Cancel confirm -->
                 <div class="cancel-confirm-inline" *ngIf="confirmCancelItemId === item.id">
-                  <span class="cancel-msg">Cancel?</span>
+                  <span class="cancel-msg">{{ t('waiter.existing.cancelQ') }}</span>
                   <button class="cancel-yes" (click)="cancelOrderItem(order, item)" [disabled]="cancellingItemId === item.id">
-                    {{ cancellingItemId === item.id ? '...' : 'Yes' }}
+                    {{ cancellingItemId === item.id ? '...' : t('waiter.yes') }}
                   </button>
-                  <button class="cancel-no" (click)="dismissCancel()">No</button>
+                  <button class="cancel-no" (click)="dismissCancel()">{{ t('waiter.no') }}</button>
                 </div>
 
                 <!-- Cancel trigger -->
                 <button class="cancel-item-btn"
                         *ngIf="confirmCancelItemId !== item.id && order.status !== 'Completed' && order.status !== 'Served'"
-                        (click)="promptCancelItem(item.id)" title="Cancel item">
+                        (click)="promptCancelItem(item.id)" [title]="t('waiter.existing.cancelItem')">
                   ✕
                 </button>
               </div>
@@ -422,136 +597,189 @@
             <div class="eo-total">₹{{ order.totalAmount | number:'1.0-0' }}</div>
           </div>
         </div>
-      </div>
-
-      <!-- ── Add More Items Section ── -->
-      <div class="add-more-header" *ngIf="tableSession && tableSession.activeOrderCount > 0">
-        <h3>➕ Add More Items</h3>
+        </div>
       </div>
 
       <div class="builder-body">
         <!-- Left: Menu -->
         <div class="menu-panel">
-          <!-- Menu Search -->
-          <div class="menu-search-bar">
-            <input type="text" [value]="menuSearchQuery" (input)="onMenuSearch($any($event.target).value)"
-                   placeholder="🔍 Search menu items..." class="menu-search-input" />
-            <button class="menu-search-clear" *ngIf="menuSearchQuery" (click)="clearMenuSearch()">✕</button>
-            <button class="quick-add-floating" *ngIf="canQuickAdd" (click)="openQuickAdd()" title="Add item not on menu">
-              ＋ New
-            </button>
-          </div>
+          <div class="menu-sticky">
+            <div class="menu-search-bar">
+              <input type="search" [value]="menuSearchQuery" (input)="onMenuSearch($any($event.target).value)"
+                     [placeholder]="'🔍 ' + t('waiter.menu.search')" class="menu-search-input" enterkeyhint="search" />
+              <button class="menu-search-clear" *ngIf="menuSearchQuery" (click)="clearMenuSearch()" [attr.aria-label]="t('waiter.cancel')">✕</button>
+              <button class="veg-toggle veg" [class.active]="menuVegFilter === 'veg'" (click)="menuVegFilter = menuVegFilter === 'veg' ? 'all' : 'veg'"
+                      [title]="t('waiter.menu.veg')" [attr.aria-pressed]="menuVegFilter === 'veg'"><span></span></button>
+              <button class="veg-toggle non-veg" [class.active]="menuVegFilter === 'nonveg'" (click)="menuVegFilter = menuVegFilter === 'nonveg' ? 'all' : 'nonveg'"
+                      [title]="t('waiter.menu.nonVeg')" [attr.aria-pressed]="menuVegFilter === 'nonveg'"><span></span></button>
+              <button class="quick-add-floating" *ngIf="canQuickAdd" (click)="openQuickAdd()" [title]="t('waiter.menu.addNotOnMenu')">＋</button>
+            </div>
 
-          <div class="category-tabs" *ngIf="!menuSearchQuery">
-            <button *ngFor="let cat of categories"
-                    [class.active]="activeCategory === cat.id"
-                    (click)="setCategory(cat.id)">
-              {{ cat.name }}
-            </button>
-          </div>
-
-          <!-- Veg Filter -->
-          <div class="menu-veg-filter">
-            <button [class.active]="menuVegFilter === 'all'" (click)="menuVegFilter = 'all'">All</button>
-            <button [class.active]="menuVegFilter === 'veg'" (click)="menuVegFilter = 'veg'">🟢 Veg</button>
-            <button [class.active]="menuVegFilter === 'nonveg'" (click)="menuVegFilter = 'nonveg'">🔴 Non-Veg</button>
+            <div class="category-tabs" *ngIf="!menuSearchQuery">
+              <button *ngIf="popularItems.length" class="popular-tab" [class.active]="activeCategory === POPULAR" (click)="setCategory(POPULAR)">
+                ⭐ {{ t('waiter.menu.popular') }}
+              </button>
+              <button *ngFor="let cat of categories"
+                      [class.active]="activeCategory === cat.id"
+                      (click)="setCategory(cat.id)">
+                {{ cat.name | dishName: cat.id : 'category' }}
+              </button>
+            </div>
           </div>
 
           <!-- Quick Add Item Form -->
           <div class="quick-add-form" *ngIf="showQuickAdd">
             <div class="quick-add-header">
-              <span>➕ Add New Menu Item</span>
+              <span>➕ {{ t('waiter.menu.addNewItem') }}</span>
               <button class="quick-add-close" (click)="cancelQuickAdd()">✕</button>
             </div>
             <div class="quick-add-fields">
-              <input type="text" [(ngModel)]="quickAddName" placeholder="Item name (e.g. Paneer Special)" class="qa-input" />
-              <input type="number" [(ngModel)]="quickAddPrice" placeholder="Price (₹)" min="1" class="qa-input qa-price" (keypress)="onlyNumbers($event)" />
+              <input type="text" [(ngModel)]="quickAddName" [placeholder]="t('waiter.menu.itemNamePh')" class="qa-input" />
+              <input type="number" [(ngModel)]="quickAddPrice" [placeholder]="t('waiter.menu.pricePh')" min="1" class="qa-input qa-price" (keypress)="onlyNumbers($event)" />
               <div class="qa-row">
                 <div class="qa-veg-toggle">
-                  <button [class.active]="quickAddIsVeg" (click)="quickAddIsVeg = true" class="veg-btn">● Veg</button>
-                  <button [class.active]="!quickAddIsVeg" (click)="quickAddIsVeg = false" class="non-veg-btn">● Non-Veg</button>
+                  <button [class.active]="quickAddIsVeg" (click)="quickAddIsVeg = true" class="veg-btn">● {{ t('waiter.menu.veg') }}</button>
+                  <button [class.active]="!quickAddIsVeg" (click)="quickAddIsVeg = false" class="non-veg-btn">● {{ t('waiter.menu.nonVeg') }}</button>
                 </div>
                 <select [(ngModel)]="quickAddCategoryId" class="qa-select">
-                  <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+                  <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name | dishName: cat.id : 'category' }}</option>
                 </select>
               </div>
               <button class="qa-save-btn" (click)="saveQuickAddItem()"
                       [disabled]="quickAddSaving || !quickAddName.trim() || !quickAddPrice || quickAddPrice <= 0">
-                {{ quickAddSaving ? 'Adding...' : 'Add to Menu & Cart' }}
+                {{ quickAddSaving ? t('waiter.menu.adding') : t('waiter.menu.addToMenuCart') }}
               </button>
             </div>
           </div>
 
-          <div class="menu-items">
-            <div class="menu-item-card" *ngFor="let item of getActiveItems()">
-              <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="item-image" />
-              <div class="item-info">
-                <span class="veg-badge" [class.veg]="item.isVeg" [class.non-veg]="!item.isVeg">
-                  {{ item.isVeg ? '●' : '●' }}
-                </span>
-                <div class="item-details">
-                  <div class="item-name">{{ item.name }}</div>
-                  <div class="item-desc" *ngIf="item.description">{{ item.description }}</div>
-                  <div class="item-price">₹{{ item.price }}</div>
-                  <button class="ar-btn" *ngIf="item.arModelUrl" (click)="viewAR(item)">
-                    📱 View in AR
-                  </button>
-                </div>
+          <!-- One tap re-orders what this table already had -->
+          <div class="again-row" *ngIf="againItems.length && !menuSearchQuery">
+            <span class="again-label">🔁 {{ t('waiter.menu.againForTable') }}</span>
+            <button class="again-chip" *ngFor="let item of againItems" (click)="addToCart(item)">
+              +1 {{ item.name | dishName: item.id }}
+            </button>
+          </div>
+
+          <div class="menu-grid">
+            <div class="menu-tile" *ngFor="let item of getActiveItems()"
+                 [class.in-cart]="getCartInItem(item.id) > 0"
+                 role="button" tabindex="0"
+                 (click)="onTileClick(item)" (keydown.enter)="addToCart(item)"
+                 (pointerdown)="onTilePointerDown($event, item)" (pointermove)="onTilePointerMove($event)"
+                 (pointerup)="clearTileHold()" (pointerleave)="clearTileHold()" (pointercancel)="clearTileHold()"
+                 (contextmenu)="$event.preventDefault()">
+              <div class="tile-top">
+                <span class="tile-name">{{ item.name | dishName: item.id }}</span>
+                <span class="veg-mark" [class.non-veg]="!item.isVeg" [title]="item.isVeg ? t('waiter.menu.veg') : t('waiter.menu.nonVeg')"></span>
               </div>
-              <div class="item-actions">
-                <div class="qty-control" *ngIf="getCartInItem(item.id) > 0">
-                  <button (click)="updateQty(cart.indexOf(getCartEntry(item.id)!), -1)">−</button>
-                  <span>{{ getCartInItem(item.id) }}</span>
-                  <button (click)="updateQty(cart.indexOf(getCartEntry(item.id)!), 1)">+</button>
+              <div class="tile-flags" *ngIf="getCartEntry(item.id) as entry">
+                <span *ngIf="entry.isParcel">🥡</span><span *ngIf="entry.notes">📝</span>
+              </div>
+              <div class="tile-bottom">
+                <div class="tile-meta">
+                  <span class="tile-price">₹{{ item.price }}</span>
+                  <span class="tile-rank" *ngIf="rankOf(item) as rank">#{{ rank }}</span>
+                  <button class="ar-btn" *ngIf="item.arModelUrl" (click)="$event.stopPropagation(); viewAR(item)" (pointerdown)="$event.stopPropagation()">📱 AR</button>
                 </div>
-                <button class="add-btn" *ngIf="getCartInItem(item.id) === 0"
-                        (click)="addToCart(item)">+ Add</button>
+                <div class="tile-stepper" *ngIf="getCartInItem(item.id) > 0; else addMark"
+                     (click)="$event.stopPropagation()" (pointerdown)="$event.stopPropagation()">
+                  <button (click)="changeQty(item, -1)" aria-label="−">−</button>
+                  <span>{{ getCartInItem(item.id) }}</span>
+                  <button (click)="changeQty(item, 1)" aria-label="+">+</button>
+                </div>
+                <ng-template #addMark><span class="tile-add" aria-hidden="true">+</span></ng-template>
               </div>
             </div>
           </div>
+          <div class="empty-menu" *ngIf="!getActiveItems().length && categories.length">{{ t('waiter.menu.noMatch') }}</div>
+          <p class="tile-hint">{{ t('waiter.menu.tileHint') }}</p>
         </div>
 
-        <!-- Right: Cart -->
-        <div class="cart-panel">
-          <h3>🛒 New Items <span class="item-count" *ngIf="cart.length">({{ getCartItemCount() }} items)</span></h3>
+        <!-- Phone: dimmed page behind the cart sheet -->
+        <div class="sheet-backdrop" *ngIf="cartOpen" (click)="cartOpen = false"></div>
+
+        <!-- Right: Cart (side panel on tablets, bottom sheet on phones) -->
+        <div class="cart-panel" [class.open]="cartOpen">
+          <button class="sheet-handle" (click)="cartOpen = false" [attr.aria-label]="t('waiter.cancel')"></button>
+          <h3>🛒 {{ t('waiter.cart.newItems') }} <span class="item-count" *ngIf="cart.length">· {{ getCartItemCount() }}</span></h3>
 
           <div class="empty-cart" *ngIf="cart.length === 0">
-            <p>No new items added.</p>
-            <p class="hint">Tap "+ Add" on menu items</p>
+            <p>{{ t('waiter.cart.empty') }}</p>
+            <p class="hint">{{ t('waiter.cart.hint') }}</p>
           </div>
 
           <div class="cart-items" *ngIf="cart.length > 0">
             <div class="cart-row" *ngFor="let c of cart; let i = index">
               <div class="cart-item-info">
-                <span class="cart-item-name">{{ c.menuItem.name }}</span>
-                <input class="item-note" placeholder="Note (e.g. no onions)"
-                       [(ngModel)]="c.notes" />
-              </div>
-              <div class="cart-item-controls">
-                <div class="qty-control">
-                  <button (click)="updateQty(i, -1)">−</button>
-                  <span>{{ c.quantity }}</span>
-                  <button (click)="updateQty(i, 1)">+</button>
+                <span class="cart-item-name">{{ c.menuItem.name | dishName: c.menuItem.id }}</span>
+                <div class="cart-tags" *ngIf="c.isParcel || c.notes">
+                  <span class="cart-tag parcel" *ngIf="c.isParcel">🥡 {{ t('waiter.cart.parcel') }}</span>
+                  <span class="cart-tag note" *ngIf="c.notes">📝 {{ c.notes }}</span>
                 </div>
-                <span class="cart-item-price">₹{{ c.menuItem.price * c.quantity }}</span>
-                <button class="remove-btn" (click)="removeFromCart(i)">✕</button>
               </div>
+              <div class="qty-control">
+                <button (click)="updateQty(i, -1)" aria-label="−">−</button>
+                <span>{{ c.quantity }}</span>
+                <button (click)="updateQty(i, 1)" aria-label="+">+</button>
+              </div>
+              <span class="cart-item-price">₹{{ (c.menuItem.price + (c.isParcel ? c.menuItem.packagingCharge || 0 : 0)) * c.quantity }}</span>
+              <button class="edit-line-btn" (click)="openItemOptions(c)" [title]="t('waiter.cart.noteParcel')" [attr.aria-label]="t('waiter.cart.noteParcel')">✎</button>
             </div>
           </div>
 
           <div class="cart-footer" *ngIf="cart.length > 0">
-            <textarea class="special-instructions"
-                      placeholder="Special instructions (allergies, preferences...)"
-                      [(ngModel)]="specialInstructions"></textarea>
+            <input class="special-instructions" [placeholder]="t('waiter.cart.specialPh')" [(ngModel)]="specialInstructions" />
 
-            <div class="cart-total">
-              <span>New Order Total</span>
-              <span>₹{{ getCartTotal() | number:'1.0-0' }}</span>
+            <div class="party-picker" *ngIf="tableSession && tableSession.activeOrderCount > 0">
+              <span class="party-picker-label">{{ t('waiter.cart.billTo') }}</span>
+              <button *ngFor="let p of parties" class="party-chip" [class.active]="partyForNewOrder === p.id" (click)="partyForNewOrder = p.id">
+                {{ parties.length > 1 ? p.label : t('waiter.cart.sameBill') }}
+              </button>
+              <button class="party-chip" [class.active]="partyForNewOrder === 'new'" (click)="partyForNewOrder = 'new'">＋ {{ t('waiter.cart.newParty') }}</button>
             </div>
 
             <button class="place-order-btn" (click)="placeOrder()" [disabled]="submitting">
-              {{ submitting ? 'Placing Order...' : (tableSession && tableSession.activeOrderCount > 0 ? 'Add to Table →' : 'Place Order →') }}
+              {{ submitting ? t('waiter.cart.placing') : t('waiter.cart.sendToKitchen') + ' · ₹' + (getCartTotal() | number:'1.0-0') + ' →' }}
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone: always-visible send bar -->
+      <div class="send-bar" *ngIf="cart.length > 0 && !cartOpen" (click)="cartOpen = true">
+        <div class="send-bar-info">
+          <strong>{{ t('waiter.cart.itemsCount', { count: getCartItemCount() }) }} · ₹{{ getCartTotal() | number:'1.0-0' }}</strong>
+          <small>{{ t('waiter.cart.tapToReview') }}</small>
+        </div>
+        <button class="send-bar-btn" (click)="$event.stopPropagation(); placeOrder()" [disabled]="submitting">
+          {{ submitting ? '…' : t('waiter.cart.send') + ' →' }}
+        </button>
+      </div>
+
+      <!-- Note / parcel for one dish (hold the dish or tap ✎) -->
+      <div class="modal-overlay" *ngIf="editingEntry" (click)="editingEntry = null">
+        <div class="table-action-modal item-options" (click)="$event.stopPropagation()" role="dialog" [attr.aria-label]="editingEntry.menuItem.name">
+          <h3>{{ editingEntry.menuItem.name | dishName: editingEntry.menuItem.id }}</h3>
+          <div class="io-qty">
+            <span>₹{{ editingEntry.menuItem.price }}</span>
+            <div class="qty-control">
+              <button (click)="editingEntry.quantity > 1 ? editingEntry.quantity = editingEntry.quantity - 1 : null" aria-label="−">−</button>
+              <span>{{ editingEntry.quantity }}</span>
+              <button (click)="editingEntry.quantity = editingEntry.quantity + 1" aria-label="+">+</button>
+            </div>
+          </div>
+          <label class="io-label">{{ t('waiter.cart.noteLabel') }}</label>
+          <input class="io-note" [(ngModel)]="editingEntry.notes" [placeholder]="t('waiter.cart.notePh')" maxlength="200" />
+          <div class="io-quick">
+            <button *ngFor="let k of quickNotes" (click)="addQuickNote(k)">{{ t('waiter.notes.' + k) }}</button>
+          </div>
+          <label class="io-parcel">
+            <input type="checkbox" [(ngModel)]="editingEntry.isParcel" /> 🥡 {{ t('waiter.cart.parcel') }}
+            <span *ngIf="editingEntry.menuItem.packagingCharge">(+₹{{ editingEntry.menuItem.packagingCharge }})</span>
+          </label>
+          <div class="ta-actions">
+            <button class="ta-cancel io-remove" (click)="removeEditingEntry()">🗑 {{ t('waiter.cart.remove') }}</button>
+            <button class="ta-confirm" (click)="editingEntry = null">{{ t('waiter.cart.done') }}</button>
           </div>
         </div>
       </div>
@@ -561,27 +789,61 @@
   <!-- ═══════════════════════════════════════════ -->
   <!--          TAB 2 — LIVE ORDERS               -->
   <!-- ═══════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════ -->
+  <!--          TAB — TAKEAWAY                     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="tab-content" *ngIf="activeTab === 'takeaway'">
+    <div class="section">
+      <div class="table-header-row">
+        <h2>🥡 {{ t('waiter.takeaway.heading') }}</h2>
+        <button class="table-action-btn" (click)="openTakeawayCounter()">＋ {{ t('waiter.takeaway.newOrder') }}</button>
+      </div>
+      <div class="empty-state" *ngIf="!takeawayOrders.length">{{ t('waiter.takeaway.empty') }}</div>
+      <div class="takeaway-list">
+        <div class="takeaway-card" *ngFor="let o of takeawayOrders" [class.ready]="o.status === 'Ready'">
+          <div class="tk-head">
+            <span class="tk-token">{{ o.tokenNumber }}</span>
+            <span class="status" [style.background]="getStatusColor(o.status)">{{ t('waiter.status.' + o.status) }}</span>
+            <span class="tk-paid" [class.paid]="o.billNumber">{{ o.billNumber ? '✓ ' + t('waiter.takeaway.paid') : t('waiter.takeaway.notPaid') }}</span>
+          </div>
+          <div class="tk-customer" *ngIf="o.customerName">
+            {{ o.customerName }} <a *ngIf="o.customerMobile" [href]="'tel:' + o.customerMobile">📞 {{ o.customerMobile }}</a>
+          </div>
+          <div class="tk-items">
+            <span *ngFor="let i of o.items; let last = last">{{ i.quantity }}× {{ i.itemName | dishName: i.menuItemId }}{{ last ? '' : ', ' }}</span>
+          </div>
+          <div class="tk-foot">
+            <strong>₹{{ o.totalAmount | number:'1.0-0' }}</strong>
+            <span class="tk-time">{{ o.createdAt | date:'shortTime' }}</span>
+            <button class="table-action-btn" *ngIf="!o.billNumber && canSettleBill" (click)="previewTakeawayBill(o)">🧾 {{ t('waiter.tables.billBadge') }}</button>
+            <button class="table-action-btn tk-handover" *ngIf="o.billNumber" (click)="markPickedUp(o)">✓ {{ t('waiter.takeaway.handedOver') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="tab-content" *ngIf="activeTab === 'orders'">
     <div class="order-counts" *ngIf="liveOrders">
-      <span class="count pending">{{ liveOrders.totalPending }} Pending</span>
-      <span class="count preparing">{{ liveOrders.totalPreparing }} Preparing</span>
-      <span class="count ready">{{ liveOrders.totalReady }} Ready</span>
+      <span class="count pending">{{ t('waiter.live.pending', { count: liveOrders.totalPending }) }}</span>
+      <span class="count preparing">{{ t('waiter.live.preparing', { count: liveOrders.totalPreparing }) }}</span>
+      <span class="count ready">{{ t('waiter.live.ready', { count: liveOrders.totalReady }) }}</span>
     </div>
 
-    <div class="loading-state" *ngIf="ordersLoading">Loading orders...</div>
+    <div class="loading-state" *ngIf="ordersLoading">{{ t('waiter.live.loading') }}</div>
 
     <div class="orders-grid" *ngIf="liveOrders && liveOrders.orders.length > 0">
       <div class="order-card" *ngFor="let order of liveOrders.orders"
            [style.border-left-color]="getStatusColor(order.status)">
         <div class="order-header">
           <strong>#{{ order.orderNumber }}</strong>
-          <span class="table-badge">Table {{ order.tableNumber }}</span>
-          <span class="status" [style.background]="getStatusColor(order.status)">{{ order.status }}</span>
+          <span class="table-badge" [class.room]="order.type === 'RoomService'" [class.takeaway]="order.type === 'Takeaway'">{{ orderPlace(order) }}</span>
+          <span class="status" [style.background]="getStatusColor(order.status)">{{ t('waiter.status.' + orderStatusKey(order)) }}</span>
         </div>
         <div class="order-items">
           <div *ngFor="let item of order.items" class="order-item-row">
             <div class="order-item-info">
-              <span>{{ item.quantity }}x {{ item.itemName }}</span>
+              <span>{{ item.quantity }}x {{ item.itemName | dishName: item.menuItemId }}</span>
               <span class="notes" *ngIf="item.notes">📝 {{ item.notes }}</span>
             </div>
             <div class="order-item-actions">
@@ -589,17 +851,17 @@
 
               <!-- Cancel confirm -->
               <div class="cancel-confirm-inline" *ngIf="confirmCancelItemId === item.id">
-                <span class="cancel-msg">Cancel?</span>
+                <span class="cancel-msg">{{ t('waiter.existing.cancelQ') }}</span>
                 <button class="cancel-yes" (click)="cancelOrderItem(order, item)" [disabled]="cancellingItemId === item.id">
-                  {{ cancellingItemId === item.id ? '...' : 'Yes' }}
+                  {{ cancellingItemId === item.id ? '...' : t('waiter.yes') }}
                 </button>
-                <button class="cancel-no" (click)="dismissCancel()">No</button>
+                <button class="cancel-no" (click)="dismissCancel()">{{ t('waiter.no') }}</button>
               </div>
 
               <!-- Cancel trigger -->
               <button class="cancel-item-btn"
                       *ngIf="confirmCancelItemId !== item.id && order.status !== 'Completed' && order.status !== 'Served'"
-                      (click)="promptCancelItem(item.id)" title="Cancel item">
+                      (click)="promptCancelItem(item.id)" [title]="t('waiter.existing.cancelItem')">
                 ✕
               </button>
             </div>
@@ -608,17 +870,22 @@
         <div class="order-footer">
           <span class="total">₹{{ order.totalAmount | number:'1.0-0' }}</span>
           <span class="time">{{ order.createdAt | date:'shortTime' }}</span>
-          <button *ngIf="getNextStatus(order.status) as next" class="advance-btn"
+          <button *ngIf="nextKitchenStatus(order) as next" class="advance-btn"
                   (click)="updateStatus(order, next)">
-            → {{ next }}
+            → {{ t('waiter.status.' + next) }}
+          </button>
+          <button *ngIf="order.type === 'RoomService' && order.status === 'Ready' && !order.dispatchedAt" class="advance-btn"
+                  (click)="dispatchRoomOrder(order)">
+            🛎️ {{ t('waiter.live.pickedUpForRoom') }}
           </button>
         </div>
       </div>
     </div>
 
     <div class="empty-state" *ngIf="liveOrders && liveOrders.orders.length === 0 && !ordersLoading">
-      <p>No live orders right now.</p>
+      <p>{{ t('waiter.live.empty') }}</p>
     </div>
   </div>
 </div>
 </ng-template>
+</ng-container>

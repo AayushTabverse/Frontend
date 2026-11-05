@@ -91,7 +91,9 @@
                 <div class="bill-detail">
                   <div class="detail-summary">
                     <span>Subtotal: <strong>₹{{ bill.subTotal | number:'1.0-0' }}</strong></span>
-                    <span>Tax: <strong>₹{{ bill.tax | number:'1.0-0' }}</strong></span>
+                    <span *ngIf="bill.packagingCharge">Packing: <strong>₹{{ bill.packagingCharge | number:'1.0-2' }}</strong></span>
+                    <span *ngIf="bill.loyaltyDiscount">Loyalty points: <strong>- ₹{{ bill.loyaltyDiscount | number:'1.0-2' }}</strong></span>
+                    <span>Tax: <strong>₹{{ bill.tax | number:'1.0-2' }}</strong></span>
                     <span *ngIf="bill.discountAmount > 0">Discount: <strong class="discount-highlight">₹{{ bill.discountAmount | number:'1.0-0' }}</strong></span>
                     <span>Total: <strong class="total-highlight">₹{{ bill.totalAmount | number:'1.0-0' }}</strong></span>
                     <span *ngIf="bill.dueAmount > 0">Due (Udhaar): <strong class="due-highlight">₹{{ bill.dueAmount | number:'1.0-0' }}</strong></span>

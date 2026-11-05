@@ -43,6 +43,15 @@ export class CartService {
     }
   }
 
+  /** Dine-in: pack this item to take home. */
+  toggleParcel(menuItemId: string): void {
+    const item = this.cartItems.find(c => c.menuItem.id === menuItemId);
+    if (item) {
+      item.isParcel = !item.isParcel;
+      this.persist();
+    }
+  }
+
   clearCart(): void {
     this.cartItems = [];
     this.persist();
@@ -54,6 +63,18 @@ export class CartService {
 
   getTotal(): number {
     return this.cartItems.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0);
+  }
+
+  /**
+   * Packing for parcel items (all items for takeaway) plus the flat takeaway fee.
+   * Matches the server's calculation; it is taxed like the food.
+   */
+  getPackagingTotal(takeaway: boolean, takeawayFee = 0): number {
+    if (this.cartItems.length === 0) return 0;
+    const perItem = this.cartItems
+      .filter(c => takeaway || c.isParcel)
+      .reduce((sum, c) => sum + (c.menuItem.packagingCharge ?? 0) * c.quantity, 0);
+    return perItem + (takeaway ? takeawayFee : 0);
   }
 
   getItemCount(): number {

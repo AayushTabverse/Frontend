@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription, debounceTime, merge } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -7,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { SettingsService } from '../../services/settings.service';
 import { TableService } from '../../services/table.service';
 import { MenuService } from '../../services/menu.service';
+import { SignalRService } from '../../services/signalr.service';
 import { BillResponse, TableResponse, PastBillItem, MenuItem, MenuCategory } from '../../models/api.models';
 import { toDateKey } from '../../shared/date-utils';
 import { BillEditDialogComponent, BillEditResult } from '../../shared/components/bill-edit-dialog/bill-edit-dialog.component';
@@ -18,7 +20,9 @@ import { BillEditDialogComponent, BillEditResult } from '../../shared/components
   templateUrl: './bills.component.html',
   styleUrl: './bills.component.scss'
 })
-export class BillsComponent implements OnInit {
+export class BillsComponent implements OnInit, OnDestroy {
+  private liveSub?: Subscription;
+
   bills: BillResponse[] = [];
   loading = false;
 
@@ -86,7 +90,8 @@ export class BillsComponent implements OnInit {
     private authService: AuthService,
     private settingsService: SettingsService,
     private tableService: TableService,
-    private menuService: MenuService
+    private menuService: MenuService,
+    private signalR: SignalRService
   ) {}
 
   canCreatePastBill = false;
@@ -102,6 +107,23 @@ export class BillsComponent implements OnInit {
       this.loadTables();
       this.loadMenuItems();
     }
+    this.setupRealTime();
+  }
+
+  ngOnDestroy(): void {
+    this.liveSub?.unsubscribe();
+  }
+
+  /** Bills settled on other devices appear while today is in the selected range. */
+  private async setupRealTime(): Promise<void> {
+    const tenantId = this.authService.getTenantId();
+    if (!tenantId) return;
+    await this.signalR.startConnection(tenantId);
+    this.liveSub = merge(this.signalR.tableCleared$, this.signalR.reconnected$)
+      .pipe(debounceTime(1000))
+      .subscribe(() => {
+        if (this.toDate >= this.formatDate(new Date())) this.loadBills();
+      });
   }
 
   loadSettings(): void {
@@ -296,6 +318,8 @@ export class BillsComponent implements OnInit {
 
   downloadInvoice(bill: BillResponse): void {
     const items = this.getMergedItems(bill);
+    // Packing is taxed like the food
+    const taxable = bill.subTotal + (bill.packagingCharge ?? 0) - (bill.loyaltyDiscount ?? 0);
     const billDate = new Date(bill.completedAt).toLocaleString();
 
     const itemRows = items.map(i => {
@@ -339,9 +363,11 @@ export class BillsComponent implements OnInit {
         </table>
         <div class="totals">
           <div class="total-row"><span>Subtotal</span><span>₹${Math.round(bill.subTotal)}</span></div>
-          ${this.cgstPercent > 0 ? `<div class="total-row"><span>CGST (${this.cgstPercent}%)</span><span>₹${Math.round(bill.subTotal * this.cgstPercent / 100)}</span></div>` : ''}
-          ${this.sgstPercent > 0 ? `<div class="total-row"><span>SGST (${this.sgstPercent}%)</span><span>₹${Math.round(bill.subTotal * this.sgstPercent / 100)}</span></div>` : ''}
-          ${this.serviceChargePercent > 0 ? `<div class="total-row"><span>Service Charge (${this.serviceChargePercent}%)</span><span>₹${Math.round(bill.subTotal * this.serviceChargePercent / 100)}</span></div>` : ''}
+          ${bill.packagingCharge ? `<div class="total-row"><span>Packing charges</span><span>₹${Math.round(bill.packagingCharge)}</span></div>` : ''}
+          ${bill.loyaltyDiscount ? `<div class="total-row"><span>Loyalty points${bill.pointsRedeemed ? ` (${bill.pointsRedeemed})` : ''}</span><span>- ₹${Math.round(bill.loyaltyDiscount)}</span></div>` : ''}
+          ${this.cgstPercent > 0 ? `<div class="total-row"><span>CGST (${this.cgstPercent}%)</span><span>₹${Math.round(taxable * this.cgstPercent / 100)}</span></div>` : ''}
+          ${this.sgstPercent > 0 ? `<div class="total-row"><span>SGST (${this.sgstPercent}%)</span><span>₹${Math.round(taxable * this.sgstPercent / 100)}</span></div>` : ''}
+          ${this.serviceChargePercent > 0 ? `<div class="total-row"><span>Service Charge (${this.serviceChargePercent}%)</span><span>₹${Math.round(taxable * this.serviceChargePercent / 100)}</span></div>` : ''}
           ${bill.discountAmount > 0 ? `<div class="total-row" style="color:#e94560"><span>Discount</span><span>- ₹${Math.round(bill.discountAmount)}</span></div>` : ''}
           <div class="total-row grand"><span>Grand Total</span><span>₹${Math.round(bill.totalAmount)}</span></div>
           ${bill.dueAmount > 0 ? `<div class="total-row" style="color:#e94560;font-weight:700;margin-top:4px"><span>Due (Udhaar)</span><span>₹${Math.round(bill.dueAmount)}</span></div>` : ''}

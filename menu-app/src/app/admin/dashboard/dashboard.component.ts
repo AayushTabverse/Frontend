@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Subscription, debounceTime, merge } from 'rxjs';
 import { AnalyticsService } from '../../services/analytics.service';
 import { AuthService } from '../../services/auth.service';
+import { SignalRService } from '../../services/signalr.service';
 import { TodayDashboard } from '../../models/api.models';
 import { parseDateKey } from '../../shared/date-utils';
 import { LineChartComponent, LineSeries } from '../../shared/charts/line-chart.component';
@@ -46,17 +48,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly num = num;
   private timer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private analytics: AnalyticsService, private auth: AuthService) {}
+  private liveSub?: Subscription;
+
+  constructor(private analytics: AnalyticsService, private auth: AuthService, private signalR: SignalRService) {}
 
   ngOnInit(): void {
     this.auth.currentUser$.subscribe(u => this.userName = (u?.fullName || '').split(' ')[0]);
     this.load();
     // Keep the numbers fresh while the page is open (skip when the tab is hidden)
     this.timer = setInterval(() => { if (!document.hidden) this.load(true); }, DashboardComponent.REFRESH_MS);
+    this.setupRealTime();
   }
 
   ngOnDestroy(): void {
     if (this.timer) clearInterval(this.timer);
+    this.liveSub?.unsubscribe();
+  }
+
+  /** New orders, status changes and settled bills update the numbers (batched: rushes send many). */
+  private async setupRealTime(): Promise<void> {
+    const tenantId = this.auth.getTenantId();
+    if (!tenantId) return;
+    await this.signalR.startConnection(tenantId);
+    this.liveSub = merge(
+      this.signalR.newOrder$,
+      this.signalR.statusUpdate$,
+      this.signalR.tableCleared$,
+      this.signalR.inventoryChanged$,
+      this.signalR.reconnected$
+    ).pipe(debounceTime(2000)).subscribe(() => this.load(true));
   }
 
   load(background = false): void {

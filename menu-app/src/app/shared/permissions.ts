@@ -3,16 +3,20 @@
  * the backend enforces these rules; this file only decides what the UI shows.
  */
 
-export type AppRole = 'SuperAdmin' | 'RestaurantAdmin' | 'Manager' | 'Cashier' | 'Captain' | 'Waiter' | 'Kitchen' | 'Helper';
+export type AppRole = 'SuperAdmin' | 'RestaurantAdmin' | 'Manager' | 'Cashier' | 'Captain' | 'Waiter' | 'Kitchen' | 'Helper'
+  | 'FrontDesk' | 'RoomService';
 
 const OWNER: AppRole[] = ['SuperAdmin', 'RestaurantAdmin'];
 const MANAGEMENT: AppRole[] = [...OWNER, 'Manager'];
 const BILLING: AppRole[] = [...MANAGEMENT, 'Cashier'];
 const FLOOR: AppRole[] = [...BILLING, 'Captain', 'Waiter'];
+/** Hotel reception. */
+const FRONT_DESK: AppRole[] = [...MANAGEMENT, 'FrontDesk'];
 
 export const PERMISSIONS = {
   // Screens
   dashboard: MANAGEMENT,
+  notifications: MANAGEMENT,
   analytics: MANAGEMENT,
   aiMarketing: OWNER,
   reviews: OWNER,
@@ -30,6 +34,12 @@ export const PERMISSIONS = {
   dues: BILLING,
   subscription: OWNER,
   kitchen: [...MANAGEMENT, 'Kitchen'] as AppRole[],
+  printStation: BILLING,
+  customers: MANAGEMENT,
+  accounting: MANAGEMENT,
+  purchases: MANAGEMENT,
+  rooms: FRONT_DESK,
+  roomService: [...FRONT_DESK, 'RoomService'] as AppRole[],
 
   // Actions within screens
   staffSalary: OWNER,
@@ -43,7 +53,7 @@ export const PERMISSIONS = {
 export type Permission = keyof typeof PERMISSIONS;
 
 /** Roles that work inside the admin panel (sidebar layout). */
-export const PANEL_ROLES: AppRole[] = BILLING;
+export const PANEL_ROLES: AppRole[] = [...BILLING, 'FrontDesk'];
 
 export function can(role: string | null | undefined, permission: Permission): boolean {
   return !!role && (PERMISSIONS[permission] as string[]).includes(role);
@@ -57,6 +67,8 @@ export function isPanelRole(role: string | null | undefined): boolean {
 export function homeRouteFor(role: string | null | undefined): string {
   switch (role) {
     case 'Kitchen': return '/kitchen';
+    case 'FrontDesk': return '/admin/rooms';
+    case 'RoomService': return '/room-service';
     case 'Waiter':
     case 'Captain':
     case 'Cashier': return '/waiter';
@@ -71,8 +83,8 @@ export function homeRouteFor(role: string | null | undefined): string {
 export function manageableRoles(role: string | null | undefined): AppRole[] {
   switch (role) {
     case 'SuperAdmin':
-    case 'RestaurantAdmin': return ['Manager', 'Cashier', 'Captain', 'Waiter', 'Kitchen', 'Helper'];
-    case 'Manager': return ['Cashier', 'Captain', 'Waiter', 'Kitchen', 'Helper'];
+    case 'RestaurantAdmin': return ['Manager', 'Cashier', 'Captain', 'Waiter', 'Kitchen', 'FrontDesk', 'RoomService', 'Helper'];
+    case 'Manager': return ['Cashier', 'Captain', 'Waiter', 'Kitchen', 'FrontDesk', 'RoomService', 'Helper'];
     default: return [];
   }
 }
@@ -85,6 +97,8 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   Captain: '🎖️ Captain',
   Waiter: '🛎️ Waiter',
   Kitchen: '🍳 Kitchen',
+  FrontDesk: '🛎️ Front Desk (hotel)',
+  RoomService: '🧳 Room Service (hotel)',
   Helper: '🧹 No app access (payroll only)'
 };
 
@@ -93,6 +107,8 @@ export function roleDisplayName(role: string, jobTitle?: string | null): string 
   if (jobTitle) return jobTitle;
   if (role === 'RestaurantAdmin') return 'Owner';
   if (role === 'Helper') return 'Payroll only';
+  if (role === 'FrontDesk') return 'Front Desk';
+  if (role === 'RoomService') return 'Room Service';
   return role;
 }
 
@@ -104,7 +120,7 @@ export type NavGroup = typeof NAV_GROUPS[number];
 export type NavIcon =
   | 'dashboard' | 'analytics' | 'takeOrder' | 'tables' | 'waitlist' | 'reservations'
   | 'bills' | 'udhaar' | 'menu' | 'inventory' | 'website' | 'aiMarketing' | 'reviews'
-  | 'staff' | 'settings' | 'billing';
+  | 'staff' | 'settings' | 'billing' | 'notifications' | 'printStation' | 'rooms' | 'roomService' | 'customers' | 'accounting' | 'purchases';
 
 export interface NavItem {
   path: string;
@@ -113,18 +129,27 @@ export interface NavItem {
   group: NavGroup;
   permission: Permission;
   premium?: boolean;
+  /** Only shown when hotel mode is on. */
+  hotel?: boolean;
 }
 
 /** Sidebar entries, in display order within each group. Filtered by role (and plan, for premium ones). */
 export const NAV_ITEMS: NavItem[] = [
   { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard', group: 'Overview', permission: 'dashboard' },
   { path: '/admin/analytics', icon: 'analytics', label: 'Analytics', group: 'Overview', permission: 'analytics' },
+  { path: '/admin/notifications', icon: 'notifications', label: 'Notifications', group: 'Overview', permission: 'notifications' },
   { path: '/waiter', icon: 'takeOrder', label: 'Take Order', group: 'Floor', permission: 'takeOrder' },
   { path: '/admin/tables', icon: 'tables', label: 'Tables', group: 'Floor', permission: 'tables' },
+  { path: '/print-station', icon: 'printStation', label: 'Print Station', group: 'Floor', permission: 'printStation' },
+  { path: '/admin/rooms', icon: 'rooms', label: 'Rooms', group: 'Floor', permission: 'rooms', hotel: true },
+  { path: '/room-service', icon: 'roomService', label: 'Room Service', group: 'Floor', permission: 'roomService', hotel: true },
   { path: '/admin/waitlist', icon: 'waitlist', label: 'Waitlist', group: 'Floor', permission: 'waitlist' },
   { path: '/admin/reservations', icon: 'reservations', label: 'Reservations', group: 'Floor', permission: 'reservations' },
   { path: '/admin/bills', icon: 'bills', label: 'Bills', group: 'Sales', permission: 'bills' },
   { path: '/admin/dues', icon: 'udhaar', label: 'Udhaar', group: 'Sales', permission: 'dues' },
+  { path: '/admin/customers', icon: 'customers', label: 'Customers', group: 'Sales', permission: 'customers' },
+  { path: '/admin/purchases', icon: 'purchases', label: 'Purchases', group: 'Sales', permission: 'purchases' },
+  { path: '/admin/accounting', icon: 'accounting', label: 'Accounting (Tally)', group: 'Sales', permission: 'accounting' },
   { path: '/admin/menu', icon: 'menu', label: 'Menu', group: 'Menu & Stock', permission: 'menu' },
   { path: '/admin/inventory', icon: 'inventory', label: 'Inventory', group: 'Menu & Stock', permission: 'inventory', premium: true },
   { path: '/admin/website', icon: 'website', label: 'Website', group: 'Grow', permission: 'website' },
@@ -135,6 +160,6 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/admin/subscription', icon: 'billing', label: 'Billing', group: 'Manage', permission: 'subscription' }
 ];
 
-export function navItemsFor(role: string | null | undefined, hasPremium: boolean): NavItem[] {
-  return NAV_ITEMS.filter(i => can(role, i.permission) && (!i.premium || hasPremium));
+export function navItemsFor(role: string | null | undefined, hasPremium: boolean, hotelMode = false): NavItem[] {
+  return NAV_ITEMS.filter(i => can(role, i.permission) && (!i.premium || hasPremium) && (!i.hotel || hotelMode));
 }

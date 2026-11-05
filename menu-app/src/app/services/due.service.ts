@@ -28,8 +28,9 @@ export class DueService {
     );
   }
 
-  settleDue(id: string, amount: number): Observable<CustomerDue> {
-    return this.http.post<ApiResponse<CustomerDue>>(`${this.apiUrl}/${id}/settle`, { amount }).pipe(
+  /** accountKey: where the money went (cash, upi, card…); omitted = cash. */
+  settleDue(id: string, amount: number, accountKey?: string): Observable<CustomerDue> {
+    return this.http.post<ApiResponse<CustomerDue>>(`${this.apiUrl}/${id}/settle`, { amount, accountKey: accountKey || undefined }).pipe(
       map(res => res.data!)
     );
   }

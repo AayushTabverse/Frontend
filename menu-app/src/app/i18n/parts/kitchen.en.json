@@ -1,0 +1,24 @@
+{
+  "kitchen": {
+    "title": "Kitchen Display",
+    "cookingCount": "{{count}} COOKING",
+    "readyCount": "{{count}} READY",
+    "logout": "Logout",
+    "takeaway": "TAKEAWAY {{number}}",
+    "room": "ROOM {{number}}",
+    "table": "TABLE {{number}}",
+    "parcel": "PARCEL",
+    "start": "START",
+    "markReady": "READY",
+    "waitingPickup": "WAITING FOR PICKUP",
+    "reprintHint": "Print this KOT again at the Print Station",
+    "sentToPrinter": "Sent to printer",
+    "reprintKot": "Reprint KOT",
+    "allClear": "All Clear!",
+    "noPending": "No pending orders",
+    "loading": "Loading orders...",
+    "justNow": "Just now",
+    "minAgo": "{{mins}}m ago",
+    "accept": "Accept"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "waitlistStatus": {
+    "notFound": {
+      "title": "We couldn't find your spot",
+      "message": "Please check with the staff at the entrance."
+    },
+    "yourToken": "Your token",
+    "person": "{{count}} person",
+    "people": "{{count}} people",
+    "position": {
+      "next": "You're next!",
+      "inLine": "You're {{n}} in line"
+    },
+    "wait": {
+      "anyMinute": "Any minute now",
+      "minutes": "About {{minutes}} min",
+      "hours": "About {{hours}}h",
+      "hoursMinutes": "About {{hours}}h {{minutes}}m"
+    },
+    "waiting": {
+      "message": "Feel free to wait nearby. We'll message you on WhatsApp when your table is ready. This page updates on its own."
+    },
+    "notified": {
+      "headline": "Your table is ready!",
+      "showTokenBefore": "Please come to the entrance and show token",
+      "showTokenAfter": "."
+    },
+    "yourTable": "Your table:",
+    "seated": {
+      "headline": "Enjoy your meal!"
+    },
+    "completed": {
+      "headline": "Thanks for visiting!"
+    },
+    "cancelled": {
+      "headline": "You've left the waitlist",
+      "message": "Changed your mind? Ask the staff at the entrance to add you again."
+    },
+    "noShow": {
+      "headline": "Your spot has expired",
+      "message": "We called you but couldn't find you. Please speak to the staff at the entrance."
+    },
+    "leave": {
+      "button": "I'm not coming anymore",
+      "confirm": "Leave the waitlist? Your spot will go to the next party.",
+      "stay": "Stay in line",
+      "leaving": "Leaving…",
+      "leave": "Leave"
+    },
+    "poweredBy": "Powered by",
+    "errors": {
+      "leaveFailed": "Could not update. Please tell the staff."
+    }
+  }
+}

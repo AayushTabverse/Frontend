@@ -1,32 +1,35 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoDirective } from '@jsverse/transloco';
 import { PublicTableStatus } from '../../../models/api.models';
 
 /** Customer-facing live board of table numbers: Free / Occupied / Reserved. No customer details. */
 @Component({
   selector: 'app-table-board',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective],
   template: `
+    <ng-container *transloco="let t">
     <section class="tb" *ngIf="tables?.length">
       <div class="tb-head">
-        <span class="tb-title">Tables right now</span>
-        <span class="tb-summary">{{ count('Free') }} free · {{ count('Occupied') }} occupied<ng-container *ngIf="count('Reserved')"> · {{ count('Reserved') }} reserved</ng-container></span>
+        <span class="tb-title">{{ t('tableBoard.title') }}</span>
+        <span class="tb-summary">{{ t('tableBoard.summary', { free: count('Free'), occupied: count('Occupied') }) }}<ng-container *ngIf="count('Reserved')"> · {{ t('tableBoard.summaryReserved', { reserved: count('Reserved') }) }}</ng-container></span>
       </div>
       <div class="tb-grid">
-        <div class="tb-table" *ngFor="let t of tables" [ngClass]="'tb-' + t.status.toLowerCase()"
-             [attr.aria-label]="'Table ' + t.tableNumber + ': ' + t.status">
-          <span class="tb-number">{{ t.tableNumber }}</span>
-          <span class="tb-status">{{ t.status === 'Reserved' && t.reservedAt ? (t.reservedAt | date:'h:mm a') : t.status }}</span>
-          <span class="tb-seats">{{ t.capacity }} seats</span>
+        <div class="tb-table" *ngFor="let tb of tables" [ngClass]="'tb-' + tb.status.toLowerCase()"
+             [attr.aria-label]="t('tableBoard.tableAria', { number: tb.tableNumber, status: t('tableBoard.status.' + tb.status) })">
+          <span class="tb-number">{{ tb.tableNumber }}</span>
+          <span class="tb-status">{{ tb.status === 'Reserved' && tb.reservedAt ? (tb.reservedAt | date:'h:mm a') : t('tableBoard.status.' + tb.status) }}</span>
+          <span class="tb-seats">{{ t('tableBoard.seats', { count: tb.capacity }) }}</span>
         </div>
       </div>
       <div class="tb-legend">
-        <span><i class="dot tb-free"></i>Free</span>
-        <span><i class="dot tb-occupied"></i>Occupied</span>
-        <span><i class="dot tb-reserved"></i>Reserved</span>
+        <span><i class="dot tb-free"></i>{{ t('tableBoard.status.Free') }}</span>
+        <span><i class="dot tb-occupied"></i>{{ t('tableBoard.status.Occupied') }}</span>
+        <span><i class="dot tb-reserved"></i>{{ t('tableBoard.status.Reserved') }}</span>
       </div>
     </section>
+    </ng-container>
   `,
   styles: [`
     :host { display: block; }

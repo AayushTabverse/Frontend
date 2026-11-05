@@ -6,11 +6,16 @@ import { AuthService } from '../services/auth.service';
 import { OrderResponse, LiveOrdersResponse } from '../models/api.models';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
+import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
+
+import { DishNamePipe } from '../shared/dish-name.pipe';
+import { WalkieComponent } from '../shared/components/walkie/walkie.component';
 
 @Component({
   selector: 'app-kitchen',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoDirective, LanguageSwitcherComponent, DishNamePipe, WalkieComponent],
   templateUrl: './kitchen.component.html',
   styleUrl: './kitchen.component.scss'
 })
@@ -24,7 +29,8 @@ export class KitchenComponent implements OnInit, OnDestroy {
     private orderService: OrderService,
     private signalR: SignalRService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private transloco: TranslocoService
   ) {}
 
   ngOnInit(): void {
@@ -55,7 +61,9 @@ export class KitchenComponent implements OnInit, OnDestroy {
         }),
         this.signalR.statusUpdate$.subscribe(() => this.loadOrders()),
         this.signalR.tablesChanged$.subscribe(() => this.loadOrders()),
-        this.signalR.kitchenAlert$.subscribe(() => this.playAlert())
+        this.signalR.kitchenAlert$.subscribe(() => this.playAlert()),
+        // Orders placed while the connection was down never arrived as events
+        this.signalR.reconnected$.subscribe(() => this.loadOrders())
       );
     }
   }
@@ -70,6 +78,16 @@ export class KitchenComponent implements OnInit, OnDestroy {
 
   markReady(order: OrderResponse): void {
     this.orderService.updateOrderStatus(order.id, 'Ready').subscribe(() => this.loadOrders());
+  }
+
+  /** Order ids whose KOT was just sent to the Print Station (button shows ✓ briefly). */
+  reprinted = new Set<string>();
+
+  reprintKot(order: OrderResponse): void {
+    this.orderService.reprintKot(order.id).subscribe(() => {
+      this.reprinted.add(order.id);
+      setTimeout(() => this.reprinted.delete(order.id), 3000);
+    });
   }
 
   private playAlert(): void {
@@ -90,7 +108,9 @@ export class KitchenComponent implements OnInit, OnDestroy {
   getTimeSince(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    return mins < 1 ? 'Just now' : `${mins}m ago`;
+    return mins < 1
+      ? this.transloco.translate('kitchen.justNow')
+      : this.transloco.translate('kitchen.minAgo', { mins });
   }
 
   logout(): void {

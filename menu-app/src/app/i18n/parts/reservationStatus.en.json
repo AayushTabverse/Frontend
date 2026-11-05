@@ -1,0 +1,37 @@
+{
+  "reservationStatus": {
+    "notFound": {
+      "title": "We couldn't find this booking",
+      "message": "Please check the link, or call the restaurant."
+    },
+    "headline": {
+      "Pending": "Request sent",
+      "Confirmed": "Your table is booked!",
+      "Seated": "Enjoy your meal!",
+      "Completed": "Thanks for visiting!",
+      "Rejected": "Sorry, we can't take this booking",
+      "Cancelled": "Booking cancelled",
+      "NoShow": "This booking has expired"
+    },
+    "pendingMessage": "The restaurant will confirm shortly. This page updates by itself, and they may also message you on WhatsApp.",
+    "details": {
+      "date": "Date",
+      "time": "Time",
+      "guests": "Guests",
+      "name": "Name"
+    },
+    "call": "📞 Call {{name}}",
+    "cancel": {
+      "button": "Cancel booking",
+      "confirmRequest": "Cancel your request?",
+      "confirmBooking": "Cancel your booking?",
+      "keep": "Keep it",
+      "cancelling": "Cancelling…",
+      "yes": "Yes, cancel"
+    },
+    "poweredBy": "Powered by",
+    "errors": {
+      "cancelFailed": "Could not cancel. Please call the restaurant."
+    }
+  }
+}

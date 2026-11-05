@@ -1,0 +1,19 @@
+{
+  "cart": {
+    "back": "← Back",
+    "title": "Your Cart",
+    "titleTakeaway": "Your Takeaway",
+    "parcel": "Parcel",
+    "packToTakeHome": "Pack to take home?",
+    "packagingEach": "(+₹{{amount}} each)",
+    "empty": "🛒 Your cart is empty",
+    "browseMenu": "Browse Menu",
+    "subtotal": "Subtotal",
+    "packingCharges": "Packing charges",
+    "cgst": "CGST ({{percent}}%)",
+    "sgst": "SGST ({{percent}}%)",
+    "serviceCharge": "Service Charge ({{percent}}%)",
+    "total": "Total",
+    "proceedToCheckout": "Proceed to Checkout → ₹{{amount}}"
+  }
+}

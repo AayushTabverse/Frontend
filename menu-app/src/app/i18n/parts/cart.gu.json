@@ -1,0 +1,19 @@
+{
+  "cart": {
+    "back": "← પાછા",
+    "title": "તમારું કાર્ટ",
+    "titleTakeaway": "તમારું ટેકઅવે",
+    "parcel": "પાર્સલ",
+    "packToTakeHome": "ઘરે લઈ જવા પેક કરીએ?",
+    "packagingEach": "(+₹{{amount}} દરેક)",
+    "empty": "🛒 તમારું કાર્ટ ખાલી છે",
+    "browseMenu": "મેનુ જુઓ",
+    "subtotal": "સબટોટલ",
+    "packingCharges": "પેકિંગ ચાર્જ",
+    "cgst": "CGST ({{percent}}%)",
+    "sgst": "SGST ({{percent}}%)",
+    "serviceCharge": "સર્વિસ ચાર્જ ({{percent}}%)",
+    "total": "કુલ",
+    "proceedToCheckout": "ચેકઆઉટ કરો → ₹{{amount}}"
+  }
+}

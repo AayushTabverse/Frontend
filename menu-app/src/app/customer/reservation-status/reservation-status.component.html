@@ -1,10 +1,12 @@
-<div class="rs-page">
+<div class="rs-page" *transloco="let t">
+  <div class="lang-bar"><app-language-switcher></app-language-switcher></div>
+
   <div class="rs-card" *ngIf="loading"><div class="spinner"></div></div>
 
   <div class="rs-card" *ngIf="!loading && notFound">
     <div class="big-icon">🤔</div>
-    <h2>We couldn't find this booking</h2>
-    <p class="muted">Please check the link, or call the restaurant.</p>
+    <h2>{{ t('reservationStatus.notFound.title') }}</h2>
+    <p class="muted">{{ t('reservationStatus.notFound.message') }}</p>
   </div>
 
   <ng-container *ngIf="!loading && booking as b">
@@ -19,42 +21,42 @@
       </div>
       <div class="headline">
         <ng-container [ngSwitch]="b.status">
-          <span *ngSwitchCase="'Pending'">Request sent</span>
-          <span *ngSwitchCase="'Confirmed'">Your table is booked!</span>
-          <span *ngSwitchCase="'Seated'">Enjoy your meal!</span>
-          <span *ngSwitchCase="'Completed'">Thanks for visiting!</span>
-          <span *ngSwitchCase="'Rejected'">Sorry, we can't take this booking</span>
-          <span *ngSwitchCase="'Cancelled'">Booking cancelled</span>
-          <span *ngSwitchCase="'NoShow'">This booking has expired</span>
+          <span *ngSwitchCase="'Pending'">{{ t('reservationStatus.headline.Pending') }}</span>
+          <span *ngSwitchCase="'Confirmed'">{{ t('reservationStatus.headline.Confirmed') }}</span>
+          <span *ngSwitchCase="'Seated'">{{ t('reservationStatus.headline.Seated') }}</span>
+          <span *ngSwitchCase="'Completed'">{{ t('reservationStatus.headline.Completed') }}</span>
+          <span *ngSwitchCase="'Rejected'">{{ t('reservationStatus.headline.Rejected') }}</span>
+          <span *ngSwitchCase="'Cancelled'">{{ t('reservationStatus.headline.Cancelled') }}</span>
+          <span *ngSwitchCase="'NoShow'">{{ t('reservationStatus.headline.NoShow') }}</span>
         </ng-container>
       </div>
-      <p class="muted" *ngIf="b.status === 'Pending'">The restaurant will confirm shortly. This page updates by itself, and they may also message you on WhatsApp.</p>
+      <p class="muted" *ngIf="b.status === 'Pending'">{{ t('reservationStatus.pendingMessage') }}</p>
 
       <div class="details">
-        <div><span class="label">Date</span><span>{{ b.reservedFor | date:'EEEE, d MMMM' }}</span></div>
-        <div><span class="label">Time</span><span>{{ b.reservedFor | date:'h:mm a' }}</span></div>
-        <div><span class="label">Guests</span><span>{{ b.partySize }}</span></div>
-        <div><span class="label">Name</span><span>{{ b.customerName }}</span></div>
+        <div><span class="label">{{ t('reservationStatus.details.date') }}</span><span>{{ b.reservedFor | date:'EEEE, d MMMM' }}</span></div>
+        <div><span class="label">{{ t('reservationStatus.details.time') }}</span><span>{{ b.reservedFor | date:'h:mm a' }}</span></div>
+        <div><span class="label">{{ t('reservationStatus.details.guests') }}</span><span>{{ b.partySize }}</span></div>
+        <div><span class="label">{{ t('reservationStatus.details.name') }}</span><span>{{ b.customerName }}</span></div>
       </div>
 
       <div class="message" *ngIf="b.responseMessage">💬 {{ b.responseMessage }}</div>
 
-      <a class="btn-call" *ngIf="b.restaurantPhone" [href]="'tel:' + b.restaurantPhone">📞 Call {{ b.restaurantName }}</a>
+      <a class="btn-call" *ngIf="b.restaurantPhone" [href]="'tel:' + b.restaurantPhone">{{ t('reservationStatus.call', { name: b.restaurantName }) }}</a>
 
       <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
 
       <ng-container *ngIf="b.canCancel">
-        <button class="btn-cancel" *ngIf="!confirmCancel" (click)="confirmCancel = true">Cancel booking</button>
+        <button class="btn-cancel" *ngIf="!confirmCancel" (click)="confirmCancel = true">{{ t('reservationStatus.cancel.button') }}</button>
         <div class="confirm" *ngIf="confirmCancel">
-          <p>Cancel your {{ b.status === 'Pending' ? 'request' : 'booking' }}?</p>
+          <p>{{ b.status === 'Pending' ? t('reservationStatus.cancel.confirmRequest') : t('reservationStatus.cancel.confirmBooking') }}</p>
           <div class="confirm-actions">
-            <button class="btn-keep" (click)="confirmCancel = false">Keep it</button>
-            <button class="btn-confirm-cancel" (click)="cancel()" [disabled]="cancelling">{{ cancelling ? 'Cancelling…' : 'Yes, cancel' }}</button>
+            <button class="btn-keep" (click)="confirmCancel = false">{{ t('reservationStatus.cancel.keep') }}</button>
+            <button class="btn-confirm-cancel" (click)="cancel()" [disabled]="cancelling">{{ cancelling ? t('reservationStatus.cancel.cancelling') : t('reservationStatus.cancel.yes') }}</button>
           </div>
         </div>
       </ng-container>
     </div>
 
-    <p class="powered">Powered by <strong>TabVerse</strong></p>
+    <p class="powered">{{ t('reservationStatus.poweredBy') }} <strong>TabVerse</strong></p>
   </ng-container>
 </div>

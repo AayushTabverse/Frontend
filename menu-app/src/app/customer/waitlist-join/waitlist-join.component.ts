@@ -2,10 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { WaitlistService } from '../../services/waitlist.service';
 import { ReservationService } from '../../services/reservation.service';
 import { TableBoardComponent } from '../../shared/components/table-board/table-board.component';
 import { PublicWaitlistInfo } from '../../models/api.models';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 
 /**
  * Entrance QR page: walk-ins join the waitlist now, or book a table for later
@@ -14,7 +16,7 @@ import { PublicWaitlistInfo } from '../../models/api.models';
 @Component({
   selector: 'app-waitlist-join',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableBoardComponent],
+  imports: [CommonModule, FormsModule, TableBoardComponent, TranslocoDirective, LanguageSwitcherComponent],
   templateUrl: './waitlist-join.component.html',
   styleUrl: './waitlist-join.component.scss'
 })
@@ -27,7 +29,7 @@ export class WaitlistJoinComponent implements OnInit {
   name = '';
   mobile = '';
   partySize = 2;
-  readonly partySizes = [1, 2, 3, 4, 5, 6, 8];
+  readonly partySizes = [1, 2, 3, 4, 5, 6, 7, 8];
   submitted = false;
   joining = false;
   errorMessage = '';
@@ -44,7 +46,8 @@ export class WaitlistJoinComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private waitlistService: WaitlistService,
-    private reservationService: ReservationService
+    private reservationService: ReservationService,
+    private transloco: TranslocoService
   ) {}
 
   ngOnInit(): void {
@@ -106,7 +109,7 @@ export class WaitlistJoinComponent implements OnInit {
       },
       error: (err) => {
         this.joining = false;
-        this.errorMessage = err.error?.message || 'Something went wrong. Please ask the staff at the entrance.';
+        this.errorMessage = err.error?.message || this.transloco.translate('waitlistJoin.errors.joinFailed');
       }
     });
   }
@@ -152,7 +155,7 @@ export class WaitlistJoinComponent implements OnInit {
       next: (booking) => this.router.navigate(['/reservation', booking.id]),
       error: (err) => {
         this.joining = false;
-        this.errorMessage = err.error?.message || 'Could not send your booking. Please ask the staff at the entrance.';
+        this.errorMessage = err.error?.message || this.transloco.translate('waitlistJoin.errors.bookingFailed');
       }
     });
   }

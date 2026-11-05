@@ -1,0 +1,85 @@
+<ng-container *transloco="let t">
+<app-walkie></app-walkie>
+<div class="rs">
+  <header class="rs-header">
+    <h1>🛎️ {{ t('roomService.title') }}</h1>
+    <div class="rs-actions">
+      <app-language-switcher></app-language-switcher>
+      <a *ngIf="isPanelUser" routerLink="/admin/rooms">{{ t('roomService.rooms') }}</a>
+      <button (click)="logout()">{{ t('roomService.logout') }}</button>
+    </div>
+  </header>
+
+  <div class="rs-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="rs-empty" *ngIf="loading">{{ t('roomService.loading') }}</div>
+  <div class="rs-empty" *ngIf="!loading && !orders.length">{{ t('roomService.empty') }}</div>
+
+  <ng-template #card let-o let-action="action">
+    <ng-container *transloco="let t">
+    <div class="rs-card">
+      <div class="rs-card-head">
+        <span class="rs-room">{{ t('roomService.room', { room: o.tokenNumber }) }}</span>
+        <span class="rs-pay" [class.room]="o.chargeToRoom">{{ o.chargeToRoom ? t('roomService.onRoomBill') : t('roomService.collect', { amount: (o.totalAmount | number:'1.0-0') }) }}</span>
+      </div>
+      <div class="rs-guest" *ngIf="o.customerName">{{ o.customerName }}</div>
+      <ul class="rs-items">
+        <li *ngFor="let i of o.items">{{ i.quantity }}× {{ i.itemName | dishName: i.menuItemId }}<span *ngIf="i.notes"> · {{ i.notes }}</span></li>
+      </ul>
+      <div class="rs-note" *ngIf="o.specialInstructions">⚠️ {{ o.specialInstructions }}</div>
+      <div class="rs-foot" style="flex-wrap: wrap">
+        <span class="rs-time">{{ o.createdAt | date:'h:mm a' }} · {{ t('roomService.status.' + (o.deliveredAt ? 'Delivered' : o.dispatchedAt ? 'OnTheWay' : o.status)) }}</span>
+        <ng-container [ngSwitch]="action">
+          <button *ngSwitchCase="'dispatch'" class="go" (click)="dispatch(o)" [disabled]="busyId === o.id">{{ t('roomService.pickedUp') }}</button>
+          <button *ngSwitchCase="'deliver'" class="go" (click)="deliver(o)" [disabled]="busyId === o.id">{{ t('roomService.delivered') }}</button>
+          <ng-container *ngSwitchCase="'pay'">
+            <button *ngIf="!paymentAccounts.length" class="go" (click)="markPaid(o)" [disabled]="busyId === o.id">{{ t('roomService.paid', { amount: (o.totalAmount | number:'1.0-0') }) }}</button>
+            <ng-container *ngIf="paymentAccounts.length">
+              <span class="rs-time">{{ t('roomService.paidBy', { amount: (o.totalAmount | number:'1.0-0') }) }}</span>
+              <button *ngFor="let a of paymentAccounts" class="go" (click)="markPaid(o, a.key)" [disabled]="busyId === o.id">
+                {{ a.key === 'cash' ? t('roomService.payment.cash') : a.key === 'upi' ? t('roomService.payment.upi') : a.key === 'card' ? t('roomService.payment.card') : a.label }}
+              </button>
+            </ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+    </ng-container>
+  </ng-template>
+
+  <section *ngIf="readyToCarry.length">
+    <h2>{{ t('roomService.readyToCarry') }} <span>{{ readyToCarry.length }}</span></h2>
+    <div class="rs-grid">
+      <ng-container *ngFor="let o of readyToCarry">
+        <ng-container *ngTemplateOutlet="card; context: { $implicit: o, action: 'dispatch' }"></ng-container>
+      </ng-container>
+    </div>
+  </section>
+
+  <section *ngIf="onTheWay.length">
+    <h2>{{ t('roomService.onTheWay') }} <span>{{ onTheWay.length }}</span></h2>
+    <div class="rs-grid">
+      <ng-container *ngFor="let o of onTheWay">
+        <ng-container *ngTemplateOutlet="card; context: { $implicit: o, action: 'deliver' }"></ng-container>
+      </ng-container>
+    </div>
+  </section>
+
+  <section *ngIf="collectPayment.length">
+    <h2>{{ t('roomService.paymentToRecord') }} <span>{{ collectPayment.length }}</span></h2>
+    <div class="rs-grid">
+      <ng-container *ngFor="let o of collectPayment">
+        <ng-container *ngTemplateOutlet="card; context: { $implicit: o, action: 'pay' }"></ng-container>
+      </ng-container>
+    </div>
+  </section>
+
+  <section *ngIf="inKitchen.length">
+    <h2>{{ t('roomService.inKitchen') }} <span>{{ inKitchen.length }}</span></h2>
+    <div class="rs-grid">
+      <ng-container *ngFor="let o of inKitchen">
+        <ng-container *ngTemplateOutlet="card; context: { $implicit: o, action: 'none' }"></ng-container>
+      </ng-container>
+    </div>
+  </section>
+</div>
+</ng-container>

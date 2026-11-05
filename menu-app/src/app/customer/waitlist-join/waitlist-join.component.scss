@@ -75,3 +75,4 @@
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .error.block { display: block; margin: -8px 0 12px; color: var(--ui-danger-text, #b91c1c); font-size: 0.8rem; }
 .hint.center { display: block; text-align: center; margin-top: 10px; color: var(--ui-text-3, #888); font-size: 0.78rem; }
+.lang-bar { width: 100%; max-width: 420px; display: flex; justify-content: flex-end; margin-bottom: 12px; }

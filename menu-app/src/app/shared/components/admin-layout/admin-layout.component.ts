@@ -4,11 +4,13 @@ import { RouterModule } from '@angular/router';
 import { LucideAngularModule, Menu } from 'lucide-angular';
 import { SettingsService } from '../../../services/settings.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { AlertBannerComponent } from '../alert-banner/alert-banner.component';
+import { WalkieComponent } from '../walkie/walkie.component';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, SidebarComponent],
+  imports: [CommonModule, RouterModule, LucideAngularModule, SidebarComponent, AlertBannerComponent, WalkieComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })

@@ -1,10 +1,12 @@
-<div class="wl-page">
+<div class="wl-page" *transloco="let t">
+  <div class="lang-bar"><app-language-switcher></app-language-switcher></div>
+
   <div class="wl-card" *ngIf="loading"><div class="spinner"></div></div>
 
   <div class="wl-card" *ngIf="!loading && notFound">
     <div class="big-icon">🤔</div>
-    <h2>We couldn't find your spot</h2>
-    <p class="muted">Please check with the staff at the entrance.</p>
+    <h2>{{ t('waitlistStatus.notFound.title') }}</h2>
+    <p class="muted">{{ t('waitlistStatus.notFound.message') }}</p>
   </div>
 
   <ng-container *ngIf="!loading && status">
@@ -14,62 +16,62 @@
     </header>
 
     <div class="wl-card" [ngClass]="'state-' + status.status.toLowerCase()">
-      <div class="token-label">Your token</div>
+      <div class="token-label">{{ t('waitlistStatus.yourToken') }}</div>
       <div class="token">#{{ status.tokenNumber }}</div>
-      <div class="party">{{ status.customerName }} · {{ status.partySize }} {{ status.partySize === 1 ? 'person' : 'people' }}</div>
+      <div class="party">{{ status.customerName }} · {{ status.partySize === 1 ? t('waitlistStatus.person', { count: status.partySize }) : t('waitlistStatus.people', { count: status.partySize }) }}</div>
 
       <!-- Waiting -->
       <ng-container *ngIf="status.status === 'Waiting'">
         <div class="headline">{{ positionLabel }}</div>
         <div class="wait">⏱️ {{ waitLabel }}</div>
-        <p class="muted">Feel free to wait nearby. We'll message you on WhatsApp when your table is ready. This page updates on its own.</p>
+        <p class="muted">{{ t('waitlistStatus.waiting.message') }}</p>
         <app-table-board [tables]="status.tables"></app-table-board>
       </ng-container>
 
       <!-- Called -->
       <ng-container *ngIf="status.status === 'Notified'">
         <div class="ready-icon">🎉</div>
-        <div class="headline">Your table is ready!</div>
-        <p>Please come to the entrance and show token <strong>#{{ status.tokenNumber }}</strong>.</p>
-        <p class="your-table" *ngIf="status.tableNumbers.length">Your table: <strong>{{ status.tableNumbers.join(' + ') }}</strong></p>
+        <div class="headline">{{ t('waitlistStatus.notified.headline') }}</div>
+        <p>{{ t('waitlistStatus.notified.showTokenBefore') }} <strong>#{{ status.tokenNumber }}</strong>{{ t('waitlistStatus.notified.showTokenAfter') }}</p>
+        <p class="your-table" *ngIf="status.tableNumbers.length">{{ t('waitlistStatus.yourTable') }} <strong>{{ status.tableNumbers.join(' + ') }}</strong></p>
       </ng-container>
 
       <!-- Seated -->
       <ng-container *ngIf="status.status === 'Seated'">
         <div class="ready-icon">🍽️</div>
-        <div class="headline">Enjoy your meal!</div>
-        <p class="your-table" *ngIf="status.tableNumbers.length">Your table: <strong>{{ status.tableNumbers.join(' + ') }}</strong></p>
+        <div class="headline">{{ t('waitlistStatus.seated.headline') }}</div>
+        <p class="your-table" *ngIf="status.tableNumbers.length">{{ t('waitlistStatus.yourTable') }} <strong>{{ status.tableNumbers.join(' + ') }}</strong></p>
       </ng-container>
 
       <ng-container *ngIf="status.status === 'Completed'">
         <div class="ready-icon">🙏</div>
-        <div class="headline">Thanks for visiting!</div>
+        <div class="headline">{{ t('waitlistStatus.completed.headline') }}</div>
       </ng-container>
 
       <ng-container *ngIf="status.status === 'Cancelled'">
-        <div class="headline muted-headline">You've left the waitlist</div>
-        <p class="muted">Changed your mind? Ask the staff at the entrance to add you again.</p>
+        <div class="headline muted-headline">{{ t('waitlistStatus.cancelled.headline') }}</div>
+        <p class="muted">{{ t('waitlistStatus.cancelled.message') }}</p>
       </ng-container>
 
       <ng-container *ngIf="status.status === 'NoShow'">
-        <div class="headline muted-headline">Your spot has expired</div>
-        <p class="muted">We called you but couldn't find you. Please speak to the staff at the entrance.</p>
+        <div class="headline muted-headline">{{ t('waitlistStatus.noShow.headline') }}</div>
+        <p class="muted">{{ t('waitlistStatus.noShow.message') }}</p>
       </ng-container>
 
       <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
 
       <ng-container *ngIf="isOpen">
-        <button class="btn-leave" *ngIf="!confirmLeave" (click)="confirmLeave = true">I'm not coming anymore</button>
+        <button class="btn-leave" *ngIf="!confirmLeave" (click)="confirmLeave = true">{{ t('waitlistStatus.leave.button') }}</button>
         <div class="confirm" *ngIf="confirmLeave">
-          <p>Leave the waitlist? Your spot will go to the next party.</p>
+          <p>{{ t('waitlistStatus.leave.confirm') }}</p>
           <div class="confirm-actions">
-            <button class="btn-stay" (click)="confirmLeave = false">Stay in line</button>
-            <button class="btn-confirm-leave" (click)="leave()" [disabled]="leaving">{{ leaving ? 'Leaving…' : 'Leave' }}</button>
+            <button class="btn-stay" (click)="confirmLeave = false">{{ t('waitlistStatus.leave.stay') }}</button>
+            <button class="btn-confirm-leave" (click)="leave()" [disabled]="leaving">{{ leaving ? t('waitlistStatus.leave.leaving') : t('waitlistStatus.leave.leave') }}</button>
           </div>
         </div>
       </ng-container>
     </div>
 
-    <p class="powered">Powered by <strong>TabVerse</strong></p>
+    <p class="powered">{{ t('waitlistStatus.poweredBy') }} <strong>TabVerse</strong></p>
   </ng-container>
 </div>

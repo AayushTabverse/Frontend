@@ -1,0 +1,62 @@
+{
+  "walkie": {
+    "title": "Walkie-talkie",
+    "close": "Close",
+    "enableSound": "Tap to turn on sound",
+    "enableHint": "Needed once so messages can play out loud",
+    "talkTo": "Talk to",
+    "channelsLabel": "Groups",
+    "people": "One person",
+    "channels": {
+      "All": "Everyone",
+      "Kitchen": "Kitchen",
+      "Floor": "Waiters",
+      "Counter": "Counter",
+      "Hotel": "Hotel (front desk & room service)"
+    },
+    "holdToTalk": "Hold to talk",
+    "recording": "Recording… {{seconds}}s (release to send)",
+    "sending": "Sending…",
+    "sent": "Sent ✓",
+    "tooShort": "Too short. Hold the button while you speak.",
+    "micDenied": "Microphone blocked. Allow it in the browser settings.",
+    "micUnsupported": "This browser can't record here (needs HTTPS).",
+    "sendFailed": "Could not send. Check the connection.",
+    "pickTable": "Enter the table number first",
+    "quickCalls": "Quick calls",
+    "tableNo": "Table no. (for table calls)",
+    "empty": "No messages in the last 24 hours.",
+    "you": "You",
+    "replay": "Play again",
+    "reply": "Reply",
+    "listening": "I listen to",
+    "quick": {
+      "foodReady": "Table {{table}} food is ready, please pick it up",
+      "pickUp": "Order is ready at the counter, please pick it up",
+      "needWater": "Water needed at table {{table}}",
+      "cleanTable": "Please clean table {{table}}",
+      "billPlease": "Table {{table}} is asking for the bill",
+      "callingWaiter": "Table {{table}} is calling a waiter",
+      "comeCounter": "Please come to the counter",
+      "comeKitchen": "Please come to the kitchen",
+      "guestsWaiting": "Guests are waiting at the entrance",
+      "itemFinished": "An item has run out, check with the kitchen before taking orders",
+      "urgent": "Need help urgently",
+      "ok": "OK, coming"
+    },
+    "quickShort": {
+      "foodReady": "🍽️ Food ready",
+      "pickUp": "📦 Pick up order",
+      "needWater": "💧 Water",
+      "cleanTable": "🧽 Clean table",
+      "billPlease": "🧾 Bill please",
+      "callingWaiter": "🔔 Table calling",
+      "comeCounter": "🧑‍💼 Come to counter",
+      "comeKitchen": "👨‍🍳 Come to kitchen",
+      "guestsWaiting": "🚪 Guests waiting",
+      "itemFinished": "⛔ Item finished",
+      "urgent": "🆘 Urgent help",
+      "ok": "👍 OK, coming"
+    }
+  }
+}

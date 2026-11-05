@@ -1,0 +1,39 @@
+{
+  "roomService": {
+    "title": "Room Service",
+    "rooms": "Rooms",
+    "logout": "Logout",
+    "loading": "Loading…",
+    "empty": "No room service orders right now.",
+    "room": "Room {{room}}",
+    "onRoomBill": "On room bill",
+    "collect": "Collect ₹{{amount}}",
+    "pickedUp": "Picked up from kitchen",
+    "delivered": "Delivered",
+    "paid": "Paid ₹{{amount}}",
+    "paidBy": "Paid ₹{{amount}} by",
+    "payment": {
+      "cash": "Cash",
+      "upi": "UPI",
+      "card": "Card"
+    },
+    "readyToCarry": "Ready to carry up",
+    "onTheWay": "On the way",
+    "paymentToRecord": "Delivered, payment to record",
+    "inKitchen": "In the kitchen",
+    "loadError": "Could not load room service orders.",
+    "updateError": "Could not update the order.",
+    "status": {
+      "Pending": "Pending",
+      "Accepted": "Accepted",
+      "Preparing": "Preparing",
+      "Ready": "Ready",
+      "Served": "Served",
+      "Completed": "Completed",
+      "Cancelled": "Cancelled",
+      "Rejected": "Rejected",
+      "OnTheWay": "On the way",
+      "Delivered": "Delivered"
+    }
+  }
+}

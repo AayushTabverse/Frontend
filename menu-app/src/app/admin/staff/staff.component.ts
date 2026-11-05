@@ -78,7 +78,7 @@ export class StaffComponent implements OnInit {
     this.loading = true;
     this.authService.getStaff().subscribe({
       next: (data) => {
-        const order: string[] = ['SuperAdmin', 'RestaurantAdmin', 'Manager', 'Cashier', 'Captain', 'Waiter', 'Kitchen', 'Helper'];
+        const order: string[] = ['SuperAdmin', 'RestaurantAdmin', 'Manager', 'Cashier', 'Captain', 'Waiter', 'Kitchen', 'FrontDesk', 'RoomService', 'Helper'];
         this.staff = data.sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role) || a.fullName.localeCompare(b.fullName));
         this.loading = false;
       },
@@ -181,6 +181,8 @@ export class StaffComponent implements OnInit {
   roleBadge(role: string): string {
     if (role === 'RestaurantAdmin') return 'Owner';
     if (role === 'Helper') return 'Payroll only';
+    if (role === 'FrontDesk') return 'Front Desk';
+    if (role === 'RoomService') return 'Room Service';
     return role;
   }
 
@@ -192,6 +194,8 @@ export class StaffComponent implements OnInit {
       case 'Captain': return 'role-captain';
       case 'Waiter': return 'role-waiter';
       case 'Kitchen': return 'role-kitchen';
+      case 'FrontDesk': return 'role-cashier';
+      case 'RoomService': return 'role-waiter';
       case 'Helper': return 'role-helper';
       default: return '';
     }

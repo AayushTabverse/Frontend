@@ -1,0 +1,19 @@
+{
+  "cart": {
+    "back": "← वापस",
+    "title": "आपका कार्ट",
+    "titleTakeaway": "आपका टेकअवे",
+    "parcel": "पार्सल",
+    "packToTakeHome": "घर ले जाने के लिए पैक करें?",
+    "packagingEach": "(+₹{{amount}} प्रति नग)",
+    "empty": "🛒 आपका कार्ट खाली है",
+    "browseMenu": "मेन्यू देखें",
+    "subtotal": "सबटोटल",
+    "packingCharges": "पैकिंग चार्ज",
+    "cgst": "CGST ({{percent}}%)",
+    "sgst": "SGST ({{percent}}%)",
+    "serviceCharge": "सर्विस चार्ज ({{percent}}%)",
+    "total": "कुल",
+    "proceedToCheckout": "चेकआउट करें → ₹{{amount}}"
+  }
+}

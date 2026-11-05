@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "groups": {
+      "Overview": "સારાંશ",
+      "Floor": "ફ્લોર",
+      "Sales": "વેચાણ",
+      "Menu & Stock": "મેનુ અને સ્ટોક",
+      "Grow": "વધારો",
+      "Manage": "વ્યવસ્થાપન"
+    },
+    "items": {
+      "dashboard": "ડેશબોર્ડ",
+      "analytics": "એનાલિટિક્સ",
+      "notifications": "સૂચનાઓ",
+      "takeOrder": "ઓર્ડર લો",
+      "tables": "ટેબલ",
+      "printStation": "પ્રિન્ટ સ્ટેશન",
+      "rooms": "રૂમ",
+      "roomService": "રૂમ સર્વિસ",
+      "waitlist": "વેઇટલિસ્ટ",
+      "reservations": "બુકિંગ",
+      "bills": "બિલ",
+      "udhaar": "ઉધાર",
+      "menu": "મેનુ",
+      "inventory": "ઇન્વેન્ટરી",
+      "website": "વેબસાઇટ",
+      "aiMarketing": "AI માર્કેટિંગ",
+      "reviews": "રિવ્યૂ",
+      "staff": "સ્ટાફ",
+      "settings": "સેટિંગ્સ",
+      "billing": "પ્લાન અને ચુકવણી",
+      "customers": "ગ્રાહકો",
+      "purchases": "ખરીદી",
+      "accounting": "હિસાબ (Tally)"
+    },
+    "lightMode": "લાઇટ મોડ",
+    "darkMode": "ડાર્ક મોડ",
+    "logout": "લોગ આઉટ",
+    "expand": "સાઇડબાર ખોલો",
+    "collapse": "સાઇડબાર નાનું કરો"
+  }
+}

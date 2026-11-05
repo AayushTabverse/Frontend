@@ -1,0 +1,24 @@
+{
+  "kitchen": {
+    "title": "किचन डिस्प्ले",
+    "cookingCount": "{{count}} बन रहे",
+    "readyCount": "{{count}} तैयार",
+    "logout": "लॉगआउट",
+    "takeaway": "टेकअवे {{number}}",
+    "room": "रूम {{number}}",
+    "table": "टेबल {{number}}",
+    "parcel": "पार्सल",
+    "start": "शुरू करें",
+    "markReady": "तैयार",
+    "waitingPickup": "ले जाने का इंतज़ार",
+    "reprintHint": "यह KOT प्रिंट स्टेशन पर फिर से प्रिंट करें",
+    "sentToPrinter": "प्रिंटर को भेजा",
+    "reprintKot": "KOT फिर प्रिंट करें",
+    "allClear": "सब हो गया!",
+    "noPending": "कोई ऑर्डर बाकी नहीं",
+    "loading": "ऑर्डर लोड हो रहे हैं...",
+    "justNow": "अभी",
+    "minAgo": "{{mins}} मिनट पहले",
+    "accept": "स्वीकार करें"
+  }
+}

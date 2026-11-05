@@ -1,0 +1,14 @@
+{
+  "tableBoard": {
+    "title": "Tables right now",
+    "summary": "{{free}} free · {{occupied}} occupied",
+    "summaryReserved": "{{reserved}} reserved",
+    "tableAria": "Table {{number}}: {{status}}",
+    "seats": "{{count}} seats",
+    "status": {
+      "Free": "Free",
+      "Occupied": "Occupied",
+      "Reserved": "Reserved"
+    }
+  }
+}

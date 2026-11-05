@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription, merge } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TableService } from '../../services/table.service';
 import { AuthService } from '../../services/auth.service';
 import { SettingsService } from '../../services/settings.service';
+import { SignalRService } from '../../services/signalr.service';
 import { TableResponse, StaffResponse, WaiterAssignmentResponse } from '../../models/api.models';
 
 @Component({
@@ -14,7 +16,9 @@ import { TableResponse, StaffResponse, WaiterAssignmentResponse } from '../../mo
   templateUrl: './tables.component.html',
   styleUrl: './tables.component.scss'
 })
-export class TablesComponent implements OnInit {
+export class TablesComponent implements OnInit, OnDestroy {
+  private liveSub?: Subscription;
+
   tables: TableResponse[] = [];
   loading = true;
   showForm = false;
@@ -50,7 +54,8 @@ export class TablesComponent implements OnInit {
   constructor(
     private tableService: TableService,
     private authService: AuthService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private signalR: SignalRService
   ) {}
 
   ngOnInit(): void {
@@ -58,6 +63,25 @@ export class TablesComponent implements OnInit {
     this.loadRestaurantInfo();
     this.loadWaiters();
     this.loadAssignments();
+    this.setupRealTime();
+  }
+
+  ngOnDestroy(): void {
+    this.liveSub?.unsubscribe();
+  }
+
+  /** Waiter calls, merges and cleared tables show up without a refresh. */
+  private async setupRealTime(): Promise<void> {
+    const tenantId = this.authService.getTenantId();
+    if (!tenantId) return;
+    await this.signalR.startConnection(tenantId);
+    this.liveSub = merge(
+      this.signalR.tablesChanged$,
+      this.signalR.tableCleared$,
+      this.signalR.waiterCalled$,
+      this.signalR.waiterCallDismissed$,
+      this.signalR.reconnected$
+    ).subscribe(() => this.loadTables());
   }
 
   loadTables(): void {

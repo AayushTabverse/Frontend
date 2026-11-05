@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "groups": {
+      "Overview": "Overview",
+      "Floor": "Floor",
+      "Sales": "Sales",
+      "Menu & Stock": "Menu & Stock",
+      "Grow": "Grow",
+      "Manage": "Manage"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "analytics": "Analytics",
+      "notifications": "Notifications",
+      "takeOrder": "Take Order",
+      "tables": "Tables",
+      "printStation": "Print Station",
+      "rooms": "Rooms",
+      "roomService": "Room Service",
+      "waitlist": "Waitlist",
+      "reservations": "Reservations",
+      "bills": "Bills",
+      "udhaar": "Udhaar",
+      "menu": "Menu",
+      "inventory": "Inventory",
+      "website": "Website",
+      "aiMarketing": "AI Marketing",
+      "reviews": "Reviews",
+      "staff": "Staff",
+      "settings": "Settings",
+      "billing": "Billing",
+      "customers": "Customers",
+      "purchases": "Purchases",
+      "accounting": "Accounting (Tally)"
+    },
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "logout": "Log out",
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar"
+  }
+}

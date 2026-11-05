@@ -1,37 +1,61 @@
+<ng-container *transloco="let t">
 <div class="menu-page" *ngIf="!loading; else loadingTpl">
   <!-- Session Expired Banner -->
   <div class="session-expired-banner" *ngIf="sessionExpired">
-    <p>🔒 Your session has ended as the table was cleared.</p>
-    <button (click)="startNewSession()">Start New Session</button>
+    <p>🔒 {{ partyBilled ? t('menu.partyBilled') : t('menu.sessionEnded') }}</p>
+    <button (click)="startNewSession()">{{ t('menu.startNewSession') }}</button>
   </div>
 
   <!-- Header -->
   <header class="menu-header">
     <div class="header-left">
-      <img *ngIf="menu?.logoUrl" [src]="menu!.logoUrl" alt="Logo" class="restaurant-logo" />
+      <img *ngIf="menu?.logoUrl" [src]="menu!.logoUrl" [alt]="t('menu.logoAlt')" class="restaurant-logo" />
       <h1>{{ menu?.restaurantName }}</h1>
     </div>
     <div class="header-right">
-      <button class="theme-toggle" (click)="themeService.toggle()">
+      <app-language-switcher></app-language-switcher>
+      <button class="theme-toggle" (click)="themeService.toggle()" [attr.aria-label]="t('menu.toggleTheme')">
         {{ themeService.isDark() ? '☀️' : '🌙' }}
       </button>
-      <button class="orders-btn" *ngIf="tableId && activeOrders.length > 0" (click)="viewOrders()">
+      <button class="orders-btn" *ngIf="tableId && activeOrders.length > 0" (click)="viewOrders()" [attr.aria-label]="t('menu.viewOrders')">
         📋 <span class="badge">{{ activeOrders.length }}</span>
       </button>
     </div>
   </header>
 
+  <!-- Hotel room QR -->
+  <div class="merged-banner takeaway-banner" *ngIf="isRoom && room && !roomUnavailable" role="status">
+    🛎️ <span><strong>{{ t('menu.roomDining', { room: room.roomNumber }) }}</strong>
+      {{ room.guestFirstName ? t('menu.roomWelcome', { name: room.guestFirstName }) + ' ' : '' }}{{ t('menu.roomOrderHere') }}</span>
+  </div>
+  <div class="merged-banner" *ngIf="roomUnavailable" role="status">
+    🛎️ <span>{{ room?.roomNumber ? t('menu.roomNotCheckedIn', { room: room?.roomNumber }) : t('menu.roomServiceUnavailable') }} {{ t('menu.callReception') }}</span>
+  </div>
+
+  <!-- Outside opening hours: browse only -->
+  <div class="merged-banner closed-banner" *ngIf="menu?.orderingOpen === false && !isRoom" role="status">
+    🕒 <span>{{ closedText }}</span>
+  </div>
+
+  <!-- Takeaway counter QR -->
+  <div class="merged-banner takeaway-banner" *ngIf="isTakeaway && !takeawayUnavailable && menu?.orderingOpen !== false" role="status">
+    🥡 <span><strong>{{ t('menu.takeawayTitle') }}</strong> {{ t('menu.takeawayInfo') }}</span>
+  </div>
+  <div class="merged-banner" *ngIf="takeawayUnavailable" role="status">
+    🥡 <span>{{ t('menu.takeawayUnavailable') }}</span>
+  </div>
+
   <!-- Merged table: orders go through the main table -->
-  <div class="merged-banner" *ngIf="orderingBlocked" role="status">
-    🔗 <span>Table {{ menu?.tableNumber }} is joined with <strong>Table {{ menu?.mergedIntoTableNumber }}</strong>.
-    Please order from Table {{ menu?.mergedIntoTableNumber }}'s QR code, or ask your waiter.</span>
+  <div class="merged-banner" *ngIf="menu?.mergedIntoTableNumber" role="status">
+    🔗 <span>{{ t('menu.tableJoined', { table: menu?.tableNumber, main: menu?.mergedIntoTableNumber }) }}
+    {{ t('menu.orderFromMainTable', { main: menu?.mergedIntoTableNumber }) }}</span>
   </div>
 
   <!-- Search Bar -->
   <div class="search-bar">
     <input type="text" [value]="searchQuery" (input)="onSearch($any($event.target).value)"
-           placeholder="🔍 Search menu items..." class="search-input" />
-    <button class="search-clear" *ngIf="searchQuery" (click)="clearSearch()">✕</button>
+           [placeholder]="t('menu.searchPlaceholder')" class="search-input" />
+    <button class="search-clear" *ngIf="searchQuery" (click)="clearSearch()" [attr.aria-label]="t('menu.clearSearch')">✕</button>
   </div>
 
   <!-- Category Tabs -->
@@ -46,15 +70,15 @@
 
   <!-- Veg Filter -->
   <div class="veg-filter-bar">
-    <button [class.active]="vegFilter === 'all'" (click)="vegFilter = 'all'">All</button>
-    <button [class.active]="vegFilter === 'veg'" (click)="vegFilter = 'veg'">🟢 Veg</button>
-    <button [class.active]="vegFilter === 'nonveg'" (click)="vegFilter = 'nonveg'">🔴 Non-Veg</button>
+    <button [class.active]="vegFilter === 'all'" (click)="vegFilter = 'all'">{{ t('menu.filterAll') }}</button>
+    <button [class.active]="vegFilter === 'veg'" (click)="vegFilter = 'veg'">🟢 {{ t('menu.filterVeg') }}</button>
+    <button [class.active]="vegFilter === 'nonveg'" (click)="vegFilter = 'nonveg'">🔴 {{ t('menu.filterNonVeg') }}</button>
   </div>
 
   <!-- Search Results -->
   <div class="items-grid" *ngIf="isSearching">
     <div class="search-results-header" *ngIf="searchResults.length > 0">
-      <span>{{ searchResults.length }} result{{ searchResults.length > 1 ? 's' : '' }} for "{{ searchQuery }}"</span>
+      <span>{{ t(searchResults.length > 1 ? 'menu.resultsMany' : 'menu.resultsOne', { count: searchResults.length, query: searchQuery }) }}</span>
     </div>
     <div class="menu-card" *ngFor="let item of filteredSearchResults">
       <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="item-image" />
@@ -70,7 +94,7 @@
           <span class="price">₹{{ item.price | number:'1.0-0' }}</span>
           <div class="actions">
             <button class="ar-btn" *ngIf="item.arModelUrl" (click)="viewAR(item)">
-              📱 View in AR
+              📱 {{ t('menu.viewInAR') }}
             </button>
             <div class="qty-controls" *ngIf="getItemQuantity(item) > 0; else searchAddBtnTpl">
               <button class="qty-btn" (click)="decrementItem(item)">−</button>
@@ -79,7 +103,7 @@
             </div>
             <ng-template #searchAddBtnTpl>
               <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable || orderingBlocked">
-                {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
+                {{ item.isAvailable ? t('menu.add') : t('menu.unavailable') }}
               </button>
             </ng-template>
           </div>
@@ -87,7 +111,7 @@
       </div>
     </div>
     <div class="empty-state" *ngIf="filteredSearchResults.length === 0">
-      <p>No items found for "{{ searchQuery }}"</p>
+      <p>{{ t('menu.noResults', { query: searchQuery }) }}</p>
     </div>
   </div>
 
@@ -107,7 +131,7 @@
           <span class="price">₹{{ item.price | number:'1.0-0' }}</span>
           <div class="actions">
             <button class="ar-btn" *ngIf="item.arModelUrl" (click)="viewAR(item)">
-              📱 View in AR
+              📱 {{ t('menu.viewInAR') }}
             </button>
             <!-- Quantity controls when item is in cart -->
             <div class="qty-controls" *ngIf="getItemQuantity(item) > 0; else addBtnTpl">
@@ -117,7 +141,7 @@
             </div>
             <ng-template #addBtnTpl>
               <button class="add-btn" (click)="addToCart(item)" [disabled]="!item.isAvailable || orderingBlocked">
-                {{ item.isAvailable ? 'Add +' : 'Unavailable' }}
+                {{ item.isAvailable ? t('menu.add') : t('menu.unavailable') }}
               </button>
             </ng-template>
           </div>
@@ -127,30 +151,30 @@
   </div>
 
   <div class="empty-state" *ngIf="selectedCategory && filteredCategoryItems.length === 0 && !isSearching">
-    <p>No items available in this category.</p>
+    <p>{{ t('menu.emptyCategory') }}</p>
   </div>
 
   <!-- Social Links Footer -->
   <footer class="social-footer" *ngIf="menu && (menu.instagramUrl || menu.facebookUrl || menu.twitterUrl || menu.websiteUrl)">
-    <p class="follow-label">Follow us</p>
+    <p class="follow-label">{{ t('menu.followUs') }}</p>
     <div class="social-links">
       <a *ngIf="menu.instagramUrl" [href]="menu.instagramUrl" target="_blank" class="social-link instagram">📷 Instagram</a>
       <a *ngIf="menu.facebookUrl" [href]="menu.facebookUrl" target="_blank" class="social-link facebook">📘 Facebook</a>
       <a *ngIf="menu.twitterUrl" [href]="menu.twitterUrl" target="_blank" class="social-link twitter">🐦 Twitter</a>
-      <a *ngIf="menu.websiteUrl" [href]="menu.websiteUrl" target="_blank" class="social-link website">🌐 Website</a>
+      <a *ngIf="menu.websiteUrl" [href]="menu.websiteUrl" target="_blank" class="social-link website">🌐 {{ t('menu.website') }}</a>
     </div>
-    <a *ngIf="menu.googleMapsUrl" [href]="menu.googleMapsUrl" target="_blank" class="maps-link">📍 View on Google Maps</a>
+    <a *ngIf="menu.googleMapsUrl" [href]="menu.googleMapsUrl" target="_blank" class="maps-link">📍 {{ t('menu.viewOnMaps') }}</a>
   </footer>
 
   <!-- ═══════ GAMES PANEL ═══════ -->
-  <div class="games-fab" (click)="toggleGames()" [class.active]="showGames">
+  <div class="games-fab" (click)="toggleGames()" [class.active]="showGames" [attr.aria-label]="t('menu.games')">
     🎮
   </div>
 
   <div class="games-panel" *ngIf="showGames">
     <div class="games-panel-header">
-      <h2>🎮 While You Wait</h2>
-      <button class="games-close" (click)="toggleGames()">✕</button>
+      <h2>🎮 {{ t('menu.whileYouWait') }}</h2>
+      <button class="games-close" (click)="toggleGames()" [attr.aria-label]="t('menu.close')">✕</button>
     </div>
 
     <!-- Game List -->
@@ -158,43 +182,43 @@
       <div class="game-card" (click)="selectGame('tictactoe')">
         <span class="game-card-icon">❌⭕</span>
         <div>
-          <h3>Tic Tac Toe</h3>
-          <p>Classic X/O — play with a friend!</p>
+          <h3>{{ t('menu.ticTacToe') }}</h3>
+          <p>{{ t('menu.ticTacToeDesc') }}</p>
         </div>
       </div>
       <div class="game-card" (click)="selectGame('colormatch')">
         <span class="game-card-icon">🎨</span>
         <div>
-          <h3>Color Match</h3>
-          <p>Memorize the color, then pick it!</p>
+          <h3>{{ t('menu.colorMatch') }}</h3>
+          <p>{{ t('menu.colorMatchDesc') }}</p>
         </div>
       </div>
       <div class="game-card lucky-card" *ngIf="canShowLuckyDraw" (click)="selectGame('luckydraw')">
         <span class="game-card-icon">🎰</span>
         <div>
-          <h3>Lucky Draw</h3>
-          <p>Try your luck for a discount!</p>
+          <h3>{{ t('menu.luckyDraw') }}</h3>
+          <p>{{ t('menu.luckyDrawDesc') }}</p>
         </div>
       </div>
     </div>
 
     <!-- ── Tic Tac Toe ── -->
     <div class="game-area" *ngIf="activeGame === 'tictactoe'">
-      <button class="game-back" (click)="backToGameList()">← Back</button>
+      <button class="game-back" (click)="backToGameList()">← {{ t('menu.back') }}</button>
       <div class="ttt-scores">
         <span [class.active]="tttCurrentPlayer === 'X' && !tttWinner">❌ {{ tttScores.X }}</span>
-        <span class="ttt-vs">vs</span>
+        <span class="ttt-vs">{{ t('menu.vs') }}</span>
         <span [class.active]="tttCurrentPlayer === 'O' && !tttWinner">⭕ {{ tttScores.O }}</span>
       </div>
 
       <div class="ttt-status" *ngIf="!tttWinner">
-        {{ tttCurrentPlayer === 'X' ? '❌' : '⭕' }}'s turn
+        {{ t('menu.tttTurn', { player: tttCurrentPlayer === 'X' ? '❌' : '⭕' }) }}
       </div>
       <div class="ttt-status ttt-winner" *ngIf="tttWinner === 'X' || tttWinner === 'O'">
-        {{ tttWinner === 'X' ? '❌' : '⭕' }} wins! 🎉
+        {{ t('menu.tttWins', { player: tttWinner === 'X' ? '❌' : '⭕' }) }}
       </div>
       <div class="ttt-status ttt-draw" *ngIf="tttWinner === 'draw'">
-        It's a draw! 🤝
+        {{ t('menu.tttDraw') }}
       </div>
 
       <div class="ttt-board">
@@ -208,17 +232,17 @@
         </button>
       </div>
 
-      <button class="game-action-btn" *ngIf="tttWinner" (click)="resetTTT()">Play Again</button>
+      <button class="game-action-btn" *ngIf="tttWinner" (click)="resetTTT()">{{ t('menu.playAgain') }}</button>
     </div>
 
     <!-- ── Color Match ── -->
     <div class="game-area" *ngIf="activeGame === 'colormatch'">
-      <button class="game-back" (click)="backToGameList()">← Back</button>
-      <div class="cm-round-info">Round {{ cmRound }} / {{ cmTotalRounds }}</div>
+      <button class="game-back" (click)="backToGameList()">← {{ t('menu.back') }}</button>
+      <div class="cm-round-info">{{ t('menu.round', { round: cmRound, total: cmTotalRounds }) }}</div>
 
       <!-- Showing phase -->
       <div class="cm-showing" *ngIf="cmPhase === 'showing'">
-        <p class="cm-instruction">Memorize this color!</p>
+        <p class="cm-instruction">{{ t('menu.memorizeColor') }}</p>
         <div class="cm-target-display" [style.background]="cmTargetColor"></div>
         <div class="cm-countdown">
           <div class="cm-countdown-bar"></div>
@@ -227,7 +251,7 @@
 
       <!-- Guessing phase -->
       <div class="cm-guessing" *ngIf="cmPhase === 'guessing'">
-        <p class="cm-instruction">Pick the matching color!</p>
+        <p class="cm-instruction">{{ t('menu.pickColor') }}</p>
         <div class="cm-picker">
           <canvas #hueCanvas class="cm-hue-canvas"
                   (click)="onHueCanvasClick($event)"
@@ -237,7 +261,7 @@
                   (touchstart)="onSLCanvasClick($event)"></canvas>
           <div class="cm-picker-footer">
             <div class="cm-preview-swatch" [style.background]="cmPreviewColor"></div>
-            <button class="game-action-btn cm-confirm-btn" (click)="cmConfirmColor()">Confirm</button>
+            <button class="game-action-btn cm-confirm-btn" (click)="cmConfirmColor()">{{ t('menu.confirm') }}</button>
           </div>
         </div>
       </div>
@@ -247,53 +271,53 @@
         <div class="cm-compare">
           <div class="cm-compare-item">
             <div class="cm-color-box" [style.background]="cmTargetColor"></div>
-            <span>Target</span>
+            <span>{{ t('menu.target') }}</span>
           </div>
           <div class="cm-compare-item">
             <div class="cm-color-box" [style.background]="cmSelectedColor"></div>
-            <span>Your Pick</span>
+            <span>{{ t('menu.yourPick') }}</span>
           </div>
         </div>
         <div class="cm-match-score" [class.perfect]="cmMatchPercent === 100"
              [class.great]="cmMatchPercent >= 80 && cmMatchPercent < 100"
              [class.ok]="cmMatchPercent >= 50 && cmMatchPercent < 80"
              [class.bad]="cmMatchPercent < 50">
-          {{ cmMatchPercent }}% Match
+          {{ t('menu.match', { percent: cmMatchPercent }) }}
           <span class="cm-match-emoji">
             {{ cmMatchPercent === 100 ? '🎯' : cmMatchPercent >= 80 ? '🔥' : cmMatchPercent >= 50 ? '👍' : '😅' }}
           </span>
         </div>
-        <button class="game-action-btn" *ngIf="!cmIsFinished" (click)="cmNextOrFinish()">Next Round →</button>
+        <button class="game-action-btn" *ngIf="!cmIsFinished" (click)="cmNextOrFinish()">{{ t('menu.nextRound') }} →</button>
 
         <!-- Final Results -->
         <div class="cm-final" *ngIf="cmIsFinished">
-          <h3>Game Over!</h3>
+          <h3>{{ t('menu.gameOver') }}</h3>
           <div class="cm-final-score"
                [class.perfect]="cmFinalScore === 100"
                [class.great]="cmFinalScore >= 80 && cmFinalScore < 100"
                [class.ok]="cmFinalScore >= 50 && cmFinalScore < 80"
                [class.bad]="cmFinalScore < 50">
-            Average: {{ cmFinalScore }}%
-            {{ cmFinalScore >= 90 ? '🏆' : cmFinalScore >= 70 ? '⭐' : cmFinalScore >= 50 ? '👍' : '🎯 Keep trying!' }}
+            {{ t('menu.average', { percent: cmFinalScore }) }}
+            {{ cmFinalScore >= 90 ? '🏆' : cmFinalScore >= 70 ? '⭐' : cmFinalScore >= 50 ? '👍' : '🎯 ' + t('menu.keepTrying') }}
           </div>
           <div class="cm-history">
             <div class="cm-history-row" *ngFor="let r of cmHistory; let i = index">
-              <span class="cm-history-round">R{{ i + 1 }}</span>
+              <span class="cm-history-round">{{ t('menu.roundShort', { round: i + 1 }) }}</span>
               <div class="cm-history-swatch" [style.background]="r.target"></div>
               <span>→</span>
               <div class="cm-history-swatch" [style.background]="r.picked"></div>
               <span class="cm-history-pct">{{ r.percent }}%</span>
             </div>
           </div>
-          <button class="game-action-btn" (click)="startColorMatch()">Play Again</button>
+          <button class="game-action-btn" (click)="startColorMatch()">{{ t('menu.playAgain') }}</button>
         </div>
       </div>
     </div>
 
     <!-- ── Lucky Draw ── -->
     <div class="game-area" *ngIf="activeGame === 'luckydraw'">
-      <button class="game-back" (click)="backToGameList()">← Back</button>
-      <h3 class="lucky-title">🎰 Lucky Draw!</h3>
+      <button class="game-back" (click)="backToGameList()">← {{ t('menu.back') }}</button>
+      <h3 class="lucky-title">🎰 {{ t('menu.luckyDrawTitle') }}</h3>
 
       <!-- 3x3 Grid — show when not yet drawn -->
       <ng-container *ngIf="!luckyHasDrawn">
@@ -303,13 +327,13 @@
                [class.highlighted]="luckyHighlightIndex === i"
                [style.background]="luckyHighlightIndex === i ? block.color : ''"
                [class.running]="luckyDrawRunning">
-            <span class="lucky-block-label">{{ block.label.replace('\n', ' ') }}</span>
+            <span class="lucky-block-label">{{ block.type === 'percent' ? t('menu.percentOff', { value: block.value }) : block.type === 'flat' ? t('menu.flatOff', { value: block.value }) : t('menu.betterLuckShort') }}</span>
           </div>
         </div>
         <button class="game-action-btn lucky-btn"
                 [disabled]="luckyDrawRunning"
                 (click)="startLuckyDraw()">
-          {{ luckyDrawRunning ? 'Drawing...' : '🎰 TRY YOUR LUCK!' }}
+          {{ luckyDrawRunning ? t('menu.drawing') : '🎰 ' + t('menu.tryYourLuck') }}
         </button>
       </ng-container>
 
@@ -317,11 +341,11 @@
       <div class="lucky-result" *ngIf="luckyResult">
         <div class="lucky-result-card" [class.win]="luckyResult.type !== 'none'" [class.lose]="luckyResult.type === 'none'">
           <span class="lucky-result-emoji">{{ luckyResult.type !== 'none' ? '🎉' : '😅' }}</span>
-          <h3>{{ luckyResult.type !== 'none' ? 'You Won!' : 'Better Luck Next Time!' }}</h3>
-          <p class="lucky-result-discount" *ngIf="luckyResult.type === 'percent'">{{ luckyResult.value }}% OFF</p>
-          <p class="lucky-result-discount" *ngIf="luckyResult.type === 'flat'">₹{{ luckyResult.value }} OFF</p>
-          <p class="lucky-result-hint" *ngIf="luckyResult.type !== 'none'">✅ Discount applied to your bill!</p>
-          <p class="lucky-result-hint" *ngIf="luckyResult.type === 'none'">No discount this time. Enjoy your meal!</p>
+          <h3>{{ luckyResult.type !== 'none' ? t('menu.youWon') : t('menu.betterLuck') }}</h3>
+          <p class="lucky-result-discount" *ngIf="luckyResult.type === 'percent'">{{ t('menu.percentOff', { value: luckyResult.value }) }}</p>
+          <p class="lucky-result-discount" *ngIf="luckyResult.type === 'flat'">{{ t('menu.flatOff', { value: luckyResult.value }) }}</p>
+          <p class="lucky-result-hint" *ngIf="luckyResult.type !== 'none'">✅ {{ t('menu.discountApplied') }}</p>
+          <p class="lucky-result-hint" *ngIf="luckyResult.type === 'none'">{{ t('menu.noDiscount') }}</p>
         </div>
       </div>
     </div>
@@ -330,19 +354,19 @@
   <!-- Bottom Action Bar -->
   <div class="bottom-action-bar">
     <!-- Call Waiter Button -->
-    <button class="call-waiter-fab" (click)="callWaiter()" [disabled]="callingWaiter || waiterCalled"
+    <button class="call-waiter-fab" *ngIf="!isTakeaway && !isRoom" (click)="callWaiter()" [disabled]="callingWaiter || waiterCalled"
             [class.called]="waiterCalled">
-      {{ waiterCalled ? '✅ Notified' : (callingWaiter ? '⏳...' : '🔔 Call Waiter') }}
+      {{ waiterCalled ? '✅ ' + t('menu.notified') : (callingWaiter ? '⏳...' : '🔔 ' + t('menu.callWaiter')) }}
     </button>
 
     <!-- Cart Slide Bar -->
     <div class="cart-slide-bar" *ngIf="cartCount > 0 && !orderingBlocked" (click)="goToCart()">
       <div class="cart-slide-info">
-        <span class="cart-slide-count">🛒 {{ cartCount }} item{{ cartCount > 1 ? 's' : '' }}</span>
+        <span class="cart-slide-count">🛒 {{ t(cartCount > 1 ? 'menu.itemMany' : 'menu.itemOne', { count: cartCount }) }}</span>
         <span class="cart-slide-total">₹{{ cartTotal | number:'1.0-0' }}</span>
       </div>
       <div class="cart-slide-action">
-        <span>View Cart</span>
+        <span>{{ t('menu.viewCart') }}</span>
         <span class="cart-arrow">→</span>
       </div>
     </div>
@@ -352,6 +376,7 @@
 <ng-template #loadingTpl>
   <div class="loading">
     <div class="spinner"></div>
-    <p>Loading menu...</p>
+    <p>{{ t('menu.loading') }}</p>
   </div>
 </ng-template>
+</ng-container>

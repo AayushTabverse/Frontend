@@ -10,8 +10,31 @@ export class OrderService {
 
   constructor(private http: HttpClient) {}
 
-  createOrder(request: CreateOrderRequest, tenantId: string): Observable<OrderResponse> {
-    return this.http.post<ApiResponse<OrderResponse>>(`${this.apiUrl}?tenantId=${tenantId}`, request).pipe(
+  /** partyId: waiter adding to a specific party at a shared table (one bill per party). */
+  createOrder(request: CreateOrderRequest, tenantId: string, partyId?: string): Observable<OrderResponse> {
+    const options = partyId ? { headers: { 'X-Customer-Session': partyId } } : {};
+    return this.http.post<ApiResponse<OrderResponse>>(`${this.apiUrl}?tenantId=${tenantId}`, request, options).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  /** Bill takeaway orders; they stay open until handed over. */
+  settleOrders(request: ClearTableRequest): Observable<TableSessionSummary> {
+    return this.http.post<ApiResponse<TableSessionSummary>>(`${this.apiUrl}/settle`, request).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  /** Takeaway orders not handed over yet, oldest first. */
+  getOpenTakeaway(): Observable<OrderResponse[]> {
+    return this.http.get<ApiResponse<OrderResponse[]>>(`${this.apiUrl}/takeaway`).pipe(
+      map(res => res.data!)
+    );
+  }
+
+  /** Takeaway handed over to the customer. */
+  markPickedUp(orderId: string): Observable<OrderResponse> {
+    return this.http.post<ApiResponse<OrderResponse>>(`${this.apiUrl}/${orderId}/picked-up`, {}).pipe(
       map(res => res.data!)
     );
   }
@@ -86,6 +109,13 @@ export class OrderService {
     return this.http.get<ApiResponse<PaginatedBillsResponse>>(
       `${this.apiUrl}/bills?from=${from}&to=${to}&page=${page}&pageSize=${pageSize}`
     ).pipe(map(res => res.data!));
+  }
+
+  /** Sends this order's KOT to the Print Station again. */
+  reprintKot(orderId: string): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${environment.apiUrl}/print/order/${orderId}/kot`, {}).pipe(
+      map(() => void 0)
+    );
   }
 
   cancelOrderItem(orderId: string, itemId: string): Observable<OrderResponse> {

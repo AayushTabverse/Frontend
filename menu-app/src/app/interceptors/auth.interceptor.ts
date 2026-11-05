@@ -13,7 +13,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  if (sessionId) {
+  // A waiter adding to a chosen party sets the header explicitly; keep theirs
+  if (sessionId && !req.headers.has('X-Customer-Session')) {
     headers['X-Customer-Session'] = sessionId;
   }
 

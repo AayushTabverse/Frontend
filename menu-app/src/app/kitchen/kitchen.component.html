@@ -1,11 +1,16 @@
+<ng-container *transloco="let t">
+<app-walkie></app-walkie>
 <div class="kds">
   <header class="kds-header">
-    <h1>🍳 Kitchen Display</h1>
+    <h1>🍳 {{ t('kitchen.title') }}</h1>
     <div class="header-stats" *ngIf="liveOrders">
-      <span class="stat preparing">{{ liveOrders.totalPreparing }} COOKING</span>
-      <span class="stat ready">{{ liveOrders.totalReady }} READY</span>
+      <span class="stat preparing">{{ t('kitchen.cookingCount', { count: liveOrders.totalPreparing }) }}</span>
+      <span class="stat ready">{{ t('kitchen.readyCount', { count: liveOrders.totalReady }) }}</span>
     </div>
-    <button class="logout-btn" (click)="logout()">Logout</button>
+    <div class="header-actions">
+      <app-language-switcher></app-language-switcher>
+      <button class="logout-btn" (click)="logout()">{{ t('kitchen.logout') }}</button>
+    </div>
   </header>
 
   <div class="kds-grid" *ngIf="liveOrders && !loading">
@@ -17,14 +22,15 @@
 
       <div class="card-header">
         <div class="order-id">#{{ order.orderNumber }}</div>
-        <div class="table-num">TABLE {{ order.tableNumber }}</div>
+        <div class="table-num">{{ order.type === 'Takeaway' ? '🥡 ' + t('kitchen.takeaway', { number: order.tableNumber }) : order.type === 'RoomService' ? '🛎️ ' + t('kitchen.room', { number: order.tableNumber }) : t('kitchen.table', { number: order.tableNumber }) }}</div>
         <div class="time-ago">{{ getTimeSince(order.createdAt) }}</div>
       </div>
 
       <div class="card-items">
         <div class="kds-item" *ngFor="let item of order.items">
           <span class="qty">{{ item.quantity }}x</span>
-          <span class="name">{{ item.itemName }}</span>
+          <span class="name">{{ item.itemName | dishName: item.menuItemId }}</span>
+          <span class="parcel-badge" *ngIf="item.isParcel && order.type === 'DineIn'">🥡 {{ t('kitchen.parcel') }}</span>
           <div class="item-notes" *ngIf="item.notes">📝 {{ item.notes }}</div>
           <div class="item-mods" *ngIf="item.modifiers">+ {{ item.modifiers }}</div>
         </div>
@@ -35,23 +41,30 @@
       </div>
 
       <div class="card-actions">
+        <button *ngIf="order.status === 'Pending'" class="btn accept" (click)="acceptOrder(order)">
+          👍 {{ t('kitchen.accept') }}
+        </button>
         <button *ngIf="order.status === 'Accepted'" class="btn prepare" (click)="startPreparing(order)">
-          🔥 START
+          🔥 {{ t('kitchen.start') }}
         </button>
         <button *ngIf="order.status === 'Preparing'" class="btn ready" (click)="markReady(order)">
-          ✅ READY
+          ✅ {{ t('kitchen.markReady') }}
         </button>
         <span *ngIf="order.status === 'Ready'" class="ready-badge">
-          WAITING FOR PICKUP
+          {{ t('kitchen.waitingPickup') }}
         </span>
+        <button class="reprint-btn" (click)="reprintKot(order)" [title]="t('kitchen.reprintHint')">
+          {{ reprinted.has(order.id) ? '✓ ' + t('kitchen.sentToPrinter') : '🖨️ ' + t('kitchen.reprintKot') }}
+        </button>
       </div>
     </div>
   </div>
 
   <div class="empty-kitchen" *ngIf="liveOrders && liveOrders.orders.length === 0 && !loading">
-    <h2>All Clear! 🎉</h2>
-    <p>No pending orders</p>
+    <h2>{{ t('kitchen.allClear') }} 🎉</h2>
+    <p>{{ t('kitchen.noPending') }}</p>
   </div>
 
-  <div class="loading-kds" *ngIf="loading">Loading orders...</div>
+  <div class="loading-kds" *ngIf="loading">{{ t('kitchen.loading') }}</div>
 </div>
+</ng-container>

@@ -1,0 +1,22 @@
+{
+  "tableOrders": {
+    "backToMenu": "← मेन्यू पर वापस",
+    "title": "आपके ऑर्डर",
+    "activeOrders": "चालू ऑर्डर",
+    "order": "ऑर्डर",
+    "track": "ट्रैक करें →",
+    "empty": "📋 इस टेबल से अभी तक कोई ऑर्डर नहीं",
+    "browseMenu": "मेन्यू देखें",
+    "orderMore": "➕ और ऑर्डर करें",
+    "loading": "ऑर्डर लोड हो रहे हैं...",
+    "status": {
+      "Pending": "इंतज़ार में",
+      "Accepted": "स्वीकार हुआ",
+      "Preparing": "बन रहा है",
+      "Ready": "तैयार",
+      "Served": "परोसा गया",
+      "Completed": "पूरा हुआ",
+      "Cancelled": "रद्द"
+    }
+  }
+}

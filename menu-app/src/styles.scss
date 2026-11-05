@@ -58,7 +58,8 @@ body.dark-mode {
 // ── Admin UI design tokens (glass) ──
 // Used through the mixins in src/styles/_ui.scss. Light values here, dark below.
 :root {
-  --ui-font: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Noto covers Hindi (Devanagari) and Gujarati script; Inter has Latin only */
+  --ui-font: 'Inter', 'Noto Sans Devanagari', 'Noto Sans Gujarati', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 
   // Surfaces
   --ui-surface: rgba(255, 255, 255, 0.78);          // cards: frosted, no blur (cheap to render)
@@ -142,7 +143,7 @@ body.dark-mode {
 html, body {
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+  font-family: 'Segoe UI', 'Noto Sans Devanagari', 'Noto Sans Gujarati', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -224,7 +225,7 @@ button {
   isolation: isolate;
   display: flex;
   min-height: 100vh;
-  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', 'Noto Sans Devanagari', 'Noto Sans Gujarati', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 // Soft brand-tinted backdrop that the glass sidebar frosts over (fixed, so it doesn't scroll)

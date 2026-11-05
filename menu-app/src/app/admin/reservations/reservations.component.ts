@@ -134,6 +134,7 @@ export class ReservationsComponent implements OnInit, OnDestroy {
     await this.signalR.startConnection(tenantId);
     this.subs.push(
       this.signalR.reservationsUpdated$.subscribe(() => this.load()),
+      this.signalR.reconnected$.subscribe(() => { this.load(); this.loadTables(); }),
       this.signalR.tablesChanged$.subscribe(() => this.loadTables()),
       this.signalR.reservationRequested$.subscribe((r) => {
         this.playChime();

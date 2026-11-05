@@ -2,16 +2,18 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { WaitlistService } from '../../services/waitlist.service';
 import { SignalRService } from '../../services/signalr.service';
 import { PublicWaitlistStatus } from '../../models/api.models';
 import { TableBoardComponent } from '../../shared/components/table-board/table-board.component';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 
 /** Customer's live place in line. Opened from the WhatsApp link or right after self check-in. */
 @Component({
   selector: 'app-waitlist-status',
   standalone: true,
-  imports: [CommonModule, TableBoardComponent],
+  imports: [CommonModule, TableBoardComponent, TranslocoDirective, LanguageSwitcherComponent],
   templateUrl: './waitlist-status.component.html',
   styleUrl: './waitlist-status.component.scss'
 })
@@ -31,7 +33,8 @@ export class WaitlistStatusComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private waitlistService: WaitlistService,
-    private signalR: SignalRService
+    private signalR: SignalRService,
+    private transloco: TranslocoService
   ) {}
 
   ngOnInit(): void {
@@ -73,16 +76,20 @@ export class WaitlistStatusComponent implements OnInit, OnDestroy {
 
   get positionLabel(): string {
     const p = this.status?.position ?? 0;
-    if (p <= 1) return "You're next!";
+    if (p <= 1) return this.transloco.translate('waitlistStatus.position.next');
+    if (this.transloco.getActiveLang() !== 'en') return this.transloco.translate('waitlistStatus.position.inLine', { n: p });
     const s = ['th', 'st', 'nd', 'rd'];
     const v = p % 100;
-    return `You're ${p}${s[(v - 20) % 10] || s[v] || s[0]} in line`;
+    return this.transloco.translate('waitlistStatus.position.inLine', { n: `${p}${s[(v - 20) % 10] || s[v] || s[0]}` });
   }
 
   get waitLabel(): string {
     const m = this.status?.estimatedWaitMinutes ?? 0;
-    if (m <= 0) return 'Any minute now';
-    return m < 60 ? `About ${m} min` : `About ${Math.floor(m / 60)}h ${m % 60 ? (m % 60) + 'm' : ''}`.trim();
+    if (m <= 0) return this.transloco.translate('waitlistStatus.wait.anyMinute');
+    if (m < 60) return this.transloco.translate('waitlistStatus.wait.minutes', { minutes: m });
+    return m % 60
+      ? this.transloco.translate('waitlistStatus.wait.hoursMinutes', { hours: Math.floor(m / 60), minutes: m % 60 })
+      : this.transloco.translate('waitlistStatus.wait.hours', { hours: Math.floor(m / 60) });
   }
 
   leave(): void {
@@ -92,7 +99,7 @@ export class WaitlistStatusComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.leaving = false;
         this.confirmLeave = false;
-        this.errorMessage = err.error?.message || 'Could not update. Please tell the staff.';
+        this.errorMessage = err.error?.message || this.transloco.translate('waitlistStatus.errors.leaveFailed');
         this.load();
       }
     });
@@ -101,11 +108,14 @@ export class WaitlistStatusComponent implements OnInit, OnDestroy {
   private async startRealtime(tenantId: string): Promise<void> {
     if (this.realtimeStarted || !this.isOpen) return;
     this.realtimeStarted = true;
-    await this.signalR.startConnection(tenantId);
+    await this.signalR.connectPublic();
     await this.signalR.followWaitlistEntry(this.entryId, tenantId);
     this.subs.push(
       this.signalR.waitlistEntryUpdated$.subscribe(id => { if (id === this.entryId) this.load(); }),
-      this.signalR.waitlistQueueChanged$.subscribe(() => { if (this.isOpen) this.load(); })
+      this.signalR.waitlistQueueChanged$.subscribe(() => { if (this.isOpen) this.load(); }),
+      this.signalR.tableBoardChanged$.subscribe(() => { if (this.isOpen && this.status?.tables) this.load(); }),
+      // Updates sent while the phone was offline are lost; catch up once the connection is back
+      this.signalR.reconnected$.subscribe(() => { if (this.isOpen) this.load(); })
     );
   }
 
